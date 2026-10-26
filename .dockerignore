@@ -1,0 +1,30 @@
+# Build context is the repository root. Keep the context small and keep
+# runtime state and secrets out of the image.
+
+# Dependencies and build output: rebuilt inside the image, never copied in.
+node_modules
+**/node_modules
+dist
+**/dist
+.vite
+**/.vite
+*.tsbuildinfo
+
+# Version control
+.git
+
+# Runtime state: a job folder is disposable, never baked in.
+apps/api/data
+**/__pycache__
+**/*.py[cod]
+**/.venv
+**/.pytest_cache
+**/.ruff_cache
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Documentation: not needed inside the runtime container image.
+docs
