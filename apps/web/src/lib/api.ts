@@ -148,6 +148,30 @@ export async function retryCleanup(jobId: string, sku: string): Promise<void> {
   if (!response.ok) throw await toApiError(response);
 }
 
+export type ExportRequest = components['schemas']['ExportRequest'];
+export type ExportResponse = components['schemas']['ExportResponse'];
+export type ExportKind = components['schemas']['ExportKind'];
+
+/**
+ * Posts the reviewed products and the seller to the exporter. The client is the source of
+ * truth after Review; the server only renders the files. A transport failure (offline, refused)
+ * surfaces as `ApiError(0, null)`, distinct from a server refusal that carries a `code`.
+ */
+export async function exportJob(jobId: string, body: ExportRequest): Promise<ExportResponse> {
+  let response: Response;
+  try {
+    response = await fetch(`/api/jobs/${encodeURIComponent(jobId)}/export`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new ApiError(0, null);
+  }
+  if (!response.ok) throw await toApiError(response);
+  return (await response.json()) as ExportResponse;
+}
+
 /** Poll cadence while a job runs. */
 export const POLL_INTERVAL_MS = 2000;
 

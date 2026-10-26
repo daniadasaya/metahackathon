@@ -116,3 +116,30 @@ export function PhotoIcon(props: IconProps) {
     </Svg>
   );
 }
+
+export function DownloadIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 4v11M7 11l5 5 5-5" />
+      <path d="M5 20h14" />
+    </Svg>
+  );
+}
+
+export function SheetIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="4" y="4" width="16" height="16" rx="3" />
+      <path d="M4 10h16M4 15h16M10 10v10" />
+    </Svg>
+  );
+}
+
+export function TextIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6 3h9l4 4v14H6z" />
+      <path d="M9 12h7M9 16h7" />
+    </Svg>
+  );
+}

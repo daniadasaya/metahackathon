@@ -3,10 +3,10 @@ import { useEffect } from 'react';
 
 import { AppHeader } from './components/AppHeader';
 import { useT } from './lib/locale';
+import { ExportScreen } from './screens/ExportScreen';
 import { PreviewScreen } from './screens/PreviewScreen';
 import { ProgressScreen } from './screens/ProgressScreen';
 import { ReviewScreen } from './screens/ReviewScreen';
-import { ExportScreen } from './screens/Stubs';
 import { UploadScreen } from './screens/UploadScreen';
 
 // Code-based routing: no routeTree.gen.ts, no file-based plugin.

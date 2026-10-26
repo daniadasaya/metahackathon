@@ -322,3 +322,40 @@ export function parseCatalog(value: unknown): ReviewedProduct[] | null {
   }
   return products;
 }
+
+// ---------------------------------------------------------------------------
+// Export scope
+// ---------------------------------------------------------------------------
+
+export interface ExportScope {
+  jobId: string;
+  /** Every product of that one job, left-out ones included; the exporter filters on `included`. */
+  products: ReviewedProduct[];
+  /** True when the catalog also holds products from another job, which are not exported. */
+  mixed: boolean;
+}
+
+/**
+ * The one job an export covers. The export route is per job, so a catalog that somehow holds
+ * several is narrowed to the current run (`kk:job`) or, failing that, the last job in the list.
+ */
+export function exportScope(
+  catalog: readonly ReviewedProduct[] | null,
+  currentJobId: string | null,
+): ExportScope | null {
+  if (catalog === null || catalog.length === 0) return null;
+  const jobIds = new Set(catalog.map((product) => product.job_id));
+  const last = catalog[catalog.length - 1];
+  const jobId = currentJobId !== null && jobIds.has(currentJobId) ? currentJobId : last?.job_id;
+  if (jobId === undefined) return null;
+  return {
+    jobId,
+    products: catalog.filter((product) => product.job_id === jobId),
+    mixed: jobIds.size > 1,
+  };
+}
+
+/** Digits only, international, no `+` (mirrors the `SellerInfo` contract). */
+export function isWaNumber(value: string): boolean {
+  return /^\d+$/.test(value);
+}

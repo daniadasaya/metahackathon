@@ -316,10 +316,18 @@ export function useSeller(): SellerInfo | null {
   return useSyncExternalStore(sellerStore.subscribe, sellerStore.get);
 }
 
-/** The shop name, typed in a text field. The WhatsApp number is the pipeline's and is carried through as is. */
+/** The shop name, typed in a text field. The WhatsApp number is carried through as is. */
 export function setStoreName(storeName: string): void {
   const current = sellerStore.get();
   sellerStore.set({ store_name: storeName, wa_number: current?.wa_number ?? '' });
+  if (sellerTimer !== null) window.clearTimeout(sellerTimer);
+  sellerTimer = window.setTimeout(persistSeller, TEXT_DEBOUNCE_MS);
+}
+
+/** The WhatsApp number (digits only, no `+`), typed in a text field. The shop name is carried through. */
+export function setWaNumber(waNumber: string): void {
+  const current = sellerStore.get();
+  sellerStore.set({ store_name: current?.store_name ?? '', wa_number: waNumber });
   if (sellerTimer !== null) window.clearTimeout(sellerTimer);
   sellerTimer = window.setTimeout(persistSeller, TEXT_DEBOUNCE_MS);
 }

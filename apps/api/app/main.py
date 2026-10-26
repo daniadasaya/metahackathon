@@ -51,19 +51,25 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ValidationError
 from pydantic.json_schema import models_json_schema
 
 from app import schemas
+from app import exporter
+from app.exporter import PriceMissingError
 from app.schemas import (
     ErrorCode,
     ErrorDetail,
     ErrorResponse,
+    ExportRequest,
+    ExportResponse,
     HealthResponse,
     JobState,
+    SellerInfo,
 )
 from app.settings import settings
 
@@ -81,6 +87,7 @@ INDEX_FILE = STATIC_DIR / "index.html"
 # Derived from this file's location so both layouts resolve without a setting.
 JOBS_DIR = Path(__file__).resolve().parent.parent / "data" / "jobs"
 JOB_RECORD_FILENAME = "job.json"
+EXPORTS_DIR = exporter.EXPORTS_DIR
 
 app = FastAPI(title="Katalog Kilat API")
 
@@ -171,6 +178,12 @@ def _openapi_with_full_contract() -> dict[str, Any]:
 app.openapi = _openapi_with_full_contract
 
 
+
+@app.exception_handler(RequestValidationError)
+async def _validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    return _error(400, ErrorCode.INVALID_REQUEST, "Request body failed validation.")
+
+
 def _error(status_code: int, code: ErrorCode, message: str) -> JSONResponse:
     """Return the standard error envelope for a failing request.
 
@@ -238,6 +251,147 @@ async def get_job(job_id: str) -> JobState | JSONResponse:
             ErrorCode.INTERNAL_ERROR,
             f"Job record for {job_id!r} is unreadable or does not match the contract.",
         )
+
+
+# --- export + public product routes -----------------------------------------
+
+import re as _re
+import urllib.parse as _urlparse
+
+_MOCK_JOB_RE = _re.compile(r"^mock-\d+-\d+$")
+
+
+def _exports_record_path(job_id: str, filename: str) -> Path | None:
+    root = EXPORTS_DIR.resolve()
+    candidate = (EXPORTS_DIR / job_id / filename).resolve()
+    if root not in candidate.parents and candidate != root:
+        # candidate must be inside exports root
+        if not str(candidate).startswith(str(root) + "/"):
+            return None
+    # containment check
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        return None
+    return candidate
+
+
+@app.post(
+    "/api/jobs/{job_id}/export",
+    response_model=ExportResponse,
+    responses={
+        400: {"model": ErrorResponse},
+        404: {"model": ErrorResponse},
+    },
+)
+async def export_job(job_id: str, body: ExportRequest) -> ExportResponse | JSONResponse:
+    if not exporter._safe_component(job_id):
+        return _error(400, ErrorCode.INVALID_REQUEST, f"Invalid job id {job_id!r}.")
+    if not _MOCK_JOB_RE.fullmatch(job_id):
+        record_path = _job_record_path(job_id)
+        if record_path is None or not record_path.is_file():
+            return _error(404, ErrorCode.NOT_FOUND, f"No job record for {job_id!r}.")
+    try:
+        files = exporter.run_export(job_id, body.products, body.seller, settings.base_url)
+    except PriceMissingError as exc:
+        return _error(
+            400,
+            ErrorCode.PRICE_MISSING,
+            f"Missing price for included items: {', '.join(exc.skus)}.",
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error("Export failed for %r: %s", job_id, exc)
+        return _error(500, ErrorCode.EXPORT_FAILED, "Export failed.")
+    return ExportResponse(job_id=job_id, files=files)
+
+
+@app.get(
+    "/api/exports/{job_id}/{filename}",
+    responses={
+        400: {"model": ErrorResponse},
+        404: {"model": ErrorResponse},
+    },
+)
+async def get_export_file(job_id: str, filename: str) -> Response:
+    if not exporter._safe_component(job_id) or not exporter._safe_component(filename):
+        return _error(400, ErrorCode.INVALID_REQUEST, "Invalid path component.")
+    path = _exports_record_path(job_id, filename)
+    if path is None or not path.is_file():
+        return _error(404, ErrorCode.NOT_FOUND, f"No export file {filename!r}.")
+    content_type = "text/csv"
+    if filename.endswith(".zip"):
+        content_type = "application/zip"
+    elif filename.endswith(".txt"):
+        content_type = "text/plain; charset=utf-8"
+    data = path.read_bytes()
+    return Response(content=data, media_type=content_type, headers={"Cache-Control": "public, max-age=3600"})
+
+
+def _validate_sku(sku: str) -> bool:
+    if not exporter._safe_component(sku):
+        return False
+    # Allow KK-0001 and KK-0001-crop
+    if not _re.fullmatch(r"KK-\d{4}(-crop)?", sku):
+        return False
+    return True
+
+
+@app.get("/p/{job_id}/{sku}.jpg")
+async def get_product_image(job_id: str, sku: str) -> Response:
+    if not exporter._safe_component(job_id) or not _validate_sku(sku):
+        return _error(400, ErrorCode.INVALID_REQUEST, f"Invalid path component.")
+    try:
+        data = exporter.resolve_image_bytes(job_id, sku)
+    except FileNotFoundError:
+        return _error(404, ErrorCode.NOT_FOUND, f"No image for {sku!r}.")
+    except Exception as exc:
+        logger.error("Image resolve failed for %r/%r: %s", job_id, sku, exc)
+        return _error(500, ErrorCode.INTERNAL_ERROR, "Image unavailable.")
+    return Response(content=data, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=3600"})
+
+
+@app.get("/p/{job_id}/{sku}")
+async def get_product_page(job_id: str, sku: str) -> Response:
+    if not exporter._safe_component(job_id) or not _validate_sku(sku):
+        return _error(400, ErrorCode.INVALID_REQUEST, f"Invalid path component.")
+    base = settings.base_url.rstrip("/")
+    img_url = f"{base}/p/{job_id}/{sku}.jpg"
+    record = exporter.read_export_record(job_id)
+    name = sku
+    price_text = ""
+    wa_number = None
+    via_chat = False
+    price_idr = None
+    if record:
+        for prod in record.get("products", []):
+            if prod.get("sku") == sku or prod.get("sku") == sku.replace("-crop", ""):
+                name = prod.get("name", name)
+                price_idr = prod.get("price_idr")
+                via_chat = bool(prod.get("price_via_chat", False))
+                break
+        seller = record.get("seller") or {}
+        wa_number = seller.get("wa_number")
+    if via_chat or price_idr is None:
+        price_text = "harga via chat"
+    else:
+        price_text = exporter.format_price_display(int(price_idr))
+    # WhatsApp button
+    if wa_number:
+        text = f"Halo, saya mau tanya {name} ({sku})"
+        wa_url = f"https://wa.me/{wa_number}?text=" + _urlparse.quote(text, safe="")
+        button = f'<a href="{wa_url}">WhatsApp</a>'
+    else:
+        button = "<p>hubungi toko</p>"
+    html = (
+        "<!doctype html><html><head><meta charset='utf-8'>"
+        f"<title>{name}</title></head><body>"
+        f'<img src="{img_url}" alt="{name}" width="256" />'
+        f"<h1>{name}</h1>"
+        f"<p>{price_text}</p>"
+        f"{button}"
+        "</body></html>"
+    )
+    return Response(content=html, media_type="text/html; charset=utf-8", headers={"Cache-Control": "public, max-age=3600"})
 
 
 # --- static mount and SPA catch-all -----------------------------------------
