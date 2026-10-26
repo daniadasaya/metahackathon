@@ -21,7 +21,7 @@ export function Toast({ text, onDismiss }: ToastProps) {
   }, [text, onDismiss]);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-4 z-20 flex justify-center px-4">
+    <div className="pointer-events-none fixed inset-x-0 bottom-28 z-20 flex justify-center px-4">
       <div
         role="alert"
         className="kk-toast pointer-events-auto flex w-full max-w-[392px] items-start gap-3 py-3 pr-1 pl-4"

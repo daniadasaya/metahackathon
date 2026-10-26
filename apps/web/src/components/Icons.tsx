@@ -90,6 +90,23 @@ export function AlertIcon(props: IconProps) {
   );
 }
 
+export function LayersIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 3l9 5-9 5-9-5z" />
+      <path d="M3 13l9 5 9-5" />
+    </Svg>
+  );
+}
+
+export function ChatIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 5h16v11H9l-5 4z" />
+    </Svg>
+  );
+}
+
 export function PhotoIcon(props: IconProps) {
   return (
     <Svg {...props}>

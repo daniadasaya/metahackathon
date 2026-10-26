@@ -155,11 +155,15 @@ export function isJobActive(job: JobState | undefined): boolean {
   return job === undefined || job.status === 'queued' || job.status === 'running';
 }
 
-/** Polls `GET /api/jobs/{id}` every 2s while queued/running; stops on done/failed. */
-export function useJob(jobId: string): UseQueryResult<JobState, ApiError> {
+/**
+ * Polls `GET /api/jobs/{id}` every 2s while queued/running; stops on done/failed.
+ * `null` disables the query: nothing is fetched until there is a job to ask about.
+ */
+export function useJob(jobId: string | null): UseQueryResult<JobState, ApiError> {
   return useQuery<JobState, ApiError>({
     queryKey: ['job', jobId],
-    queryFn: () => getJob(jobId),
+    queryFn: () => getJob(jobId ?? ''),
+    enabled: jobId !== null,
     refetchInterval: (query) => (isJobActive(query.state.data) ? POLL_INTERVAL_MS : false),
     retry: (failureCount, error) => error.status >= 500 && failureCount < 2,
   });

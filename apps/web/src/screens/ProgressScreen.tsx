@@ -110,7 +110,9 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
         : '';
   const title =
     job.status === 'done'
-      ? t('progress.titleDone')
+      ? errors.length > 0
+        ? t('progress.titleDoneWithNotes')
+        : t('progress.titleDone')
       : job.status === 'failed'
         ? t('progress.titleFailed')
         : t('progress.title');
@@ -118,6 +120,9 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
   return (
     <Column>
       <h1 className="text-2xl">{title}</h1>
+      {job.status === 'done' && errors.length > 0 && productCount > 0 ? (
+        <p className="mt-2 text-base text-fg-2">{t('progress.doneWithNotes', { n: productCount })}</p>
+      ) : null}
 
       {isMockJobId(jobId) ? (
         <p className="kk-card-flat mt-3 px-3 py-2 text-sm text-fg-2" role="note">

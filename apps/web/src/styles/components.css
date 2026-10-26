@@ -125,7 +125,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    height: 40px;
+    min-height: 44px;
     padding: 0 16px;
     border-radius: 999px;
     border: 1.5px solid var(--border-strong);
@@ -139,18 +139,26 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* 44px tap area around a 40px pill */
-  .kk-chip::before {
-    content: '';
-    position: absolute;
-    inset: -2px 0;
-  }
-
   .kk-chip[aria-pressed='true'] {
     --edge: var(--accent-secondary);
     background: var(--accent-primary);
     color: var(--accent-primary-fg);
     border-color: var(--accent-secondary);
+  }
+
+  /* Full-width 48px chip (Review Card "Harga via chat"); selected fills --bg-subtle, not saffron. */
+  .kk-chip-wide {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    justify-content: center;
+  }
+
+  .kk-chip-wide[aria-pressed='true'] {
+    --edge: var(--border-strong);
+    background: var(--bg-subtle);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
   }
 
   /* ---- Input ----------------------------------------------------------- */
@@ -227,7 +235,7 @@
 
   .kk-seg > button {
     min-width: 44px;
-    min-height: 41px;
+    min-height: 44px;
     padding: 0 8px;
     border: 0;
     background: transparent;
@@ -326,6 +334,10 @@
     .kk-switch-knob {
       transition: none;
     }
+
+    .kk-details > summary::after {
+      transition: none;
+    }
   }
 
   /* ---- Toast ----------------------------------------------------------- */
@@ -335,5 +347,173 @@
     border: 1.5px solid var(--status-danger);
     border-radius: var(--r-md);
     box-shadow: 0 2px 0 var(--border-strong);
+  }
+
+  /* ---- Sticky bottom bar (summary + primary action) ---------------------- */
+  .kk-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    margin-top: auto;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: var(--bg-canvas);
+    border-top: 1.5px solid var(--border-subtle);
+  }
+
+  /* ---- Review card (brandkit §4) ---------------------------------------- */
+  .kk-review[data-included='false'] {
+    border-style: dashed;
+  }
+
+  .kk-review[data-included='false'] .kk-photo img {
+    opacity: 0.45;
+  }
+
+  .kk-photo {
+    position: relative;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    border-radius: var(--r-sm);
+  }
+
+  .kk-photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .kk-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    border: 1.5px solid currentColor;
+    background: var(--bg-surface);
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .kk-pill[data-tone='pass'] {
+    color: var(--gate-pass);
+  }
+
+  .kk-pill[data-tone='fallback'] {
+    color: var(--gate-fallback);
+  }
+
+  .kk-pill[data-tone='neutral'] {
+    color: var(--text-secondary);
+  }
+
+  .kk-price {
+    position: relative;
+  }
+
+  .kk-price-input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 56px;
+    padding: 0 52px 0 14px;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--r-sm);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-family: var(--ff-mono);
+    font-size: 22px;
+    line-height: 28px;
+    font-weight: 700;
+  }
+
+  .kk-price-input::placeholder {
+    font-family: var(--ff-body);
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .kk-price[data-state='confirmed'] .kk-price-input {
+    border-color: var(--price-verified);
+  }
+
+  .kk-price[data-state='missing'] .kk-price-input {
+    border-color: var(--status-warning);
+  }
+
+  .kk-disc {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--price-verified);
+    color: var(--bg-surface);
+    pointer-events: none;
+  }
+
+  .kk-chatrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 56px;
+    padding: 0 14px;
+    border-radius: var(--r-sm);
+    background: var(--bg-subtle);
+    color: var(--text-primary);
+    font-family: var(--ff-display);
+    font-size: 19px;
+    line-height: 26px;
+    font-weight: 700;
+  }
+
+  .kk-details > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+    list-style: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+
+  .kk-details > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .kk-details > summary::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    margin-right: 6px;
+    border-right: 2.5px solid currentColor;
+    border-bottom: 2.5px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform 120ms ease-out;
+  }
+
+  .kk-details[open] > summary::after {
+    transform: translateY(2px) rotate(-135deg);
+  }
+
+  /* ---- Store preview tile ------------------------------------------------ */
+  .kk-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }

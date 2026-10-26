@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Switch } from '../components/Switch';
+import { StickyBar } from '../components/StickyBar';
 import { Toast } from '../components/Toast';
 import { CheckIcon, CloseIcon, PhotoIcon, PlusIcon } from '../components/Icons';
 import { ApiError, createJob, fetchSamplePack, type SamplePack } from '../lib/api';
@@ -107,7 +108,8 @@ export function UploadScreen() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-16">
+    <>
+    <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-6">
       <h1 className="text-2xl">{t('upload.title')}</h1>
       <p className="mt-2 text-base text-fg-2">{t('upload.lead')}</p>
 
@@ -160,7 +162,6 @@ export function UploadScreen() {
             <h2 id="photos-title" className="text-lg">
               {t('upload.photosHeading')}
             </h2>
-            <p className="text-sm text-fg-muted">{t('upload.photosCount', { n: photos.length })}</p>
           </div>
           <ul className="m-0 mt-3 flex list-none flex-col gap-3 p-0">
             {photos.map((photo, index) => (
@@ -245,19 +246,25 @@ export function UploadScreen() {
         <Switch checked={demoSafe} onChange={setDemoSafe} labelledBy="demo-title" describedBy="demo-help" />
       </section>
 
-      <div className="mt-6">
-        <button
-          type="button"
-          className="kk-btn kk-btn-primary kk-tactile w-full"
-          disabled={!canStart}
-          onClick={() => void start()}
-        >
-          {busy ? t('upload.ctaBusy') : t('upload.cta')}
-        </button>
-        {!canStart && !busy ? <p className="mt-2 text-center text-sm text-fg-muted">{t('upload.ctaNeed')}</p> : null}
-      </div>
-
       {toast !== null ? <Toast text={toast} onDismiss={dismissToast} /> : null}
     </div>
+
+    <StickyBar>
+      {photos.length > 0 ? (
+        <p className="text-center text-sm font-bold" aria-live="polite">
+          {t('upload.photosCount', { n: photos.length })}
+        </p>
+      ) : null}
+      <button
+        type="button"
+        className="kk-btn kk-btn-primary kk-tactile w-full"
+        disabled={!canStart}
+        onClick={() => void start()}
+      >
+        {busy ? t('upload.ctaBusy') : t('upload.cta')}
+      </button>
+      {!canStart && !busy ? <p className="text-center text-sm text-fg-muted">{t('upload.ctaNeed')}</p> : null}
+    </StickyBar>
+    </>
   );
 }

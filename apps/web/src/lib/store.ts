@@ -8,9 +8,9 @@
  */
 import { useSyncExternalStore } from 'react';
 
+import { applyEdit, parseCatalog, type ProductEdit, type ReviewedProduct } from './catalog';
 import type { components } from './types';
 
-type Product = components['schemas']['Product'];
 type SellerInfo = components['schemas']['SellerInfo'];
 
 export type Theme = 'system' | 'light' | 'dark';
@@ -194,6 +194,10 @@ window.addEventListener('storage', (event) => {
     demoSafeStore.set(event.newValue === 'true');
   } else if (event.key === STORAGE_KEYS.job) {
     jobStore.set(event.newValue);
+  } else if (event.key === STORAGE_KEYS.catalog) {
+    catalogStore.set(parseStoredCatalog(event.newValue));
+  } else if (event.key === STORAGE_KEYS.seller) {
+    sellerStore.set(parseStoredSeller(event.newValue));
   }
 });
 
@@ -201,11 +205,16 @@ applyTheme();
 applyLocale();
 
 // ---------------------------------------------------------------------------
-// Reserved for later screens: typed read/write only, no UI yet.
+// Catalog (`kk:catalog`) and seller (`kk:seller`).
+//
+// The catalog is `ReviewedProduct[]`, a type with no `price_suggestion_idr`: the AI price guess
+// has no field to live in, so it cannot be stored. State changes are visible to
+// the UI at once; the write follows immediately for a tap and after 300ms of quiet for typing.
 // ---------------------------------------------------------------------------
 
-function readJson(key: StorageKey): unknown {
-  const raw = readRaw(key);
+const TEXT_DEBOUNCE_MS = 300;
+
+function parseJson(raw: string | null): unknown {
   if (raw === null) return null;
   try {
     return JSON.parse(raw);
@@ -214,19 +223,12 @@ function readJson(key: StorageKey): unknown {
   }
 }
 
-/** `kk:catalog` — the reviewed products; the client is the source of truth after Review (live probe). */
-export function readCatalog(): Product[] | null {
-  const value = readJson(STORAGE_KEYS.catalog);
-  return Array.isArray(value) ? (value as Product[]) : null;
+function parseStoredCatalog(raw: string | null): ReviewedProduct[] | null {
+  return parseCatalog(parseJson(raw));
 }
 
-export function writeCatalog(products: Product[]): void {
-  writeRaw(STORAGE_KEYS.catalog, JSON.stringify(products));
-}
-
-/** `kk:seller` — store name and WhatsApp number for the export (live probe). */
-export function readSeller(): SellerInfo | null {
-  const value = readJson(STORAGE_KEYS.seller);
+function parseStoredSeller(raw: string | null): SellerInfo | null {
+  const value = parseJson(raw);
   if (typeof value !== 'object' || value === null) return null;
   const record = value as Record<string, unknown>;
   const storeName = record['store_name'];
@@ -235,6 +237,90 @@ export function readSeller(): SellerInfo | null {
   return { store_name: storeName, wa_number: waNumber };
 }
 
-export function writeSeller(seller: SellerInfo): void {
-  writeRaw(STORAGE_KEYS.seller, JSON.stringify(seller));
+const catalogStore = createValueStore<ReviewedProduct[] | null>(
+  parseStoredCatalog(readRaw(STORAGE_KEYS.catalog)),
+);
+const sellerStore = createValueStore<SellerInfo | null>(
+  parseStoredSeller(readRaw(STORAGE_KEYS.seller)),
+);
+
+let catalogTimer: number | null = null;
+let sellerTimer: number | null = null;
+
+function persistCatalog(): void {
+  if (catalogTimer !== null) {
+    window.clearTimeout(catalogTimer);
+    catalogTimer = null;
+  }
+  const catalog = catalogStore.get();
+  writeRaw(STORAGE_KEYS.catalog, catalog === null ? null : JSON.stringify(catalog));
 }
+
+function persistSeller(): void {
+  if (sellerTimer !== null) {
+    window.clearTimeout(sellerTimer);
+    sellerTimer = null;
+  }
+  const seller = sellerStore.get();
+  writeRaw(STORAGE_KEYS.seller, seller === null ? null : JSON.stringify(seller));
+}
+
+/** A pending debounced write must not be lost when the page is hidden or closed. */
+function flushPending(): void {
+  if (catalogTimer !== null) persistCatalog();
+  if (sellerTimer !== null) persistSeller();
+}
+
+window.addEventListener('pagehide', flushPending);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushPending();
+});
+
+export type WriteMode = 'now' | 'debounced';
+
+export function getCatalog(): ReviewedProduct[] | null {
+  return catalogStore.get();
+}
+
+export function useCatalog(): ReviewedProduct[] | null {
+  return useSyncExternalStore(catalogStore.subscribe, catalogStore.get);
+}
+
+/** Replaces the whole catalog (hydration, server-field sync). Written immediately. */
+export function replaceCatalog(products: ReviewedProduct[]): void {
+  catalogStore.set(products);
+  persistCatalog();
+}
+
+/**
+ * Applies a seller edit to one product. `now` for a tap (select, toggle, chip): durable before the
+ * finger leaves the screen. `debounced` for a text field: 300ms after the last keystroke.
+ */
+export function editProduct(sku: string, edit: ProductEdit, mode: WriteMode): void {
+  const current = catalogStore.get();
+  if (current === null) return;
+  catalogStore.set(current.map((product) => (product.sku === sku ? applyEdit(product, edit) : product)));
+  if (mode === 'now') {
+    persistCatalog();
+    return;
+  }
+  if (catalogTimer !== null) window.clearTimeout(catalogTimer);
+  catalogTimer = window.setTimeout(persistCatalog, TEXT_DEBOUNCE_MS);
+}
+
+export function getSeller(): SellerInfo | null {
+  return sellerStore.get();
+}
+
+export function useSeller(): SellerInfo | null {
+  return useSyncExternalStore(sellerStore.subscribe, sellerStore.get);
+}
+
+/** The shop name, typed in a text field. The WhatsApp number is the pipeline's and is carried through as is. */
+export function setStoreName(storeName: string): void {
+  const current = sellerStore.get();
+  sellerStore.set({ store_name: storeName, wa_number: current?.wa_number ?? '' });
+  if (sellerTimer !== null) window.clearTimeout(sellerTimer);
+  sellerTimer = window.setTimeout(persistSeller, TEXT_DEBOUNCE_MS);
+}
+
