@@ -1,0 +1,29 @@
+# Katalog Kilat — single service. Project name must always be passed: -p katalogkilat
+# Host port 8180 is the external service port; container port 8000 is internal.
+
+name: katalogkilat
+
+services:
+  api:
+    # Context is the repo root: the image build needs apps/web/ as well as apps/api/.
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: katalogkilat-api
+    restart: unless-stopped
+    environment:
+      MODEL_API_KEY: ${MODEL_API_KEY:-}
+      BASE_URL: ${BASE_URL:-http://127.0.0.1:8180}
+      META_MOCK: ${META_MOCK:-true}
+    ports:
+      - "127.0.0.1:8180:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3).status == 200 else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
