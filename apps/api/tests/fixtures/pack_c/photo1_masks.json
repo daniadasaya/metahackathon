@@ -1,0 +1,46 @@
+{
+  "placeholder": true,
+  "recorded_at": null,
+  "pack": "c",
+  "surface": "masks",
+  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
+  "model_id": "sam-3.1",
+  "payload": [
+    {
+      "concept": "instant noodle cup",
+      "bbox": [30, 40, 180, 240],
+      "width": 640,
+      "height": 480,
+      "revision": 1,
+      "score": 0.94,
+      "mask_png_base64": null
+    },
+    {
+      "concept": "instant noodle cup",
+      "bbox": [40, 50, 200, 260],
+      "width": 520,
+      "height": 660,
+      "revision": 1,
+      "score": 0.9,
+      "mask_png_base64": null
+    },
+    {
+      "concept": "instant noodle cup",
+      "bbox": [25, 35, 170, 220],
+      "width": 760,
+      "height": 570,
+      "revision": 1,
+      "score": 0.87,
+      "mask_png_base64": null
+    },
+    {
+      "concept": "biscuit pack",
+      "bbox": [60, 90, 300, 210],
+      "width": 600,
+      "height": 450,
+      "revision": 1,
+      "score": 0.91,
+      "mask_png_base64": null
+    }
+  ]
+}

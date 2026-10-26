@@ -1,0 +1,46 @@
+{
+  "placeholder": true,
+  "recorded_at": null,
+  "pack": "a",
+  "surface": "masks",
+  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
+  "model_id": "sam-3.1",
+  "payload": [
+    {
+      "concept": "smartphone",
+      "bbox": [40, 60, 300, 440],
+      "width": 640,
+      "height": 480,
+      "revision": 1,
+      "score": 0.94,
+      "mask_png_base64": null
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [60, 40, 280, 500],
+      "width": 512,
+      "height": 640,
+      "revision": 1,
+      "score": 0.89,
+      "mask_png_base64": null
+    },
+    {
+      "concept": "phone charger",
+      "bbox": [15, 20, 220, 180],
+      "width": 800,
+      "height": 600,
+      "revision": 1,
+      "score": 0.91,
+      "mask_png_base64": null
+    },
+    {
+      "concept": "phone case",
+      "bbox": [30, 50, 210, 330],
+      "width": 480,
+      "height": 640,
+      "revision": 1,
+      "score": 0.87,
+      "mask_png_base64": null
+    }
+  ]
+}

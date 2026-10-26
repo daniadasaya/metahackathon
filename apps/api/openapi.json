@@ -1,4 +1,1028 @@
 {
+  "components": {
+    "schemas": {
+      "Availability": {
+        "description": "Commerce Manager availability. Lowercase, exactly (Meta Commerce catalog).",
+        "enum": [
+          "in stock",
+          "out of stock"
+        ],
+        "title": "Availability",
+        "type": "string"
+      },
+      "CleanupMethod": {
+        "description": "Which Stage D path produced the clean image.\n\n``muse-image`` means a gate-passed generative edit; ``composite`` means the\ndeterministic studio composite that physically cannot distort the product.",
+        "enum": [
+          "muse-image",
+          "composite"
+        ],
+        "title": "CleanupMethod",
+        "type": "string"
+      },
+      "Concept": {
+        "additionalProperties": false,
+        "description": "A Stage A product concept, one per SAM request (never comma-joined).",
+        "properties": {
+          "phrase": {
+            "title": "Phrase",
+            "type": "string"
+          },
+          "scene_note": {
+            "title": "Scene Note",
+            "type": "string"
+          },
+          "visible_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Visible Text"
+          }
+        },
+        "required": [
+          "phrase",
+          "scene_note"
+        ],
+        "title": "Concept",
+        "type": "object"
+      },
+      "Condition": {
+        "description": "Commerce Manager condition. Lowercase, exactly (Meta Commerce catalog).",
+        "enum": [
+          "new",
+          "used"
+        ],
+        "title": "Condition",
+        "type": "string"
+      },
+      "Confidence": {
+        "description": "How sure Stage E is about the catalog entry it wrote.",
+        "enum": [
+          "high",
+          "medium",
+          "low"
+        ],
+        "title": "Confidence",
+        "type": "string"
+      },
+      "ErrorCode": {
+        "description": "Closed set of error codes. The UI maps each one to a locale key.\n\nAdding a member is a contract change: it needs a locale key in both\ndictionaries and a deliberate edit to the test that pins this set.",
+        "enum": [
+          "not_found",
+          "invalid_request",
+          "unsupported_file_type",
+          "file_too_large",
+          "model_not_found",
+          "model_unavailable",
+          "concepts_failed",
+          "segmentation_failed",
+          "no_products_found",
+          "cleanup_failed",
+          "extraction_failed",
+          "price_missing",
+          "export_failed",
+          "internal_error"
+        ],
+        "title": "ErrorCode",
+        "type": "string"
+      },
+      "ErrorDetail": {
+        "additionalProperties": false,
+        "description": "``code`` is the contract; ``message`` is English for logs only.",
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorDetail",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "additionalProperties": false,
+        "description": "Standard error envelope for every failing route.",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "ExportFile": {
+        "additionalProperties": false,
+        "description": "One downloadable artefact produced by an export request.",
+        "properties": {
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ExportKind"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "filename",
+          "url"
+        ],
+        "title": "ExportFile",
+        "type": "object"
+      },
+      "ExportKind": {
+        "description": "The four export artefacts, one per seller-facing button.",
+        "enum": [
+          "catalog_csv",
+          "images_zip",
+          "captions_instagram",
+          "price_list_whatsapp"
+        ],
+        "title": "ExportKind",
+        "type": "string"
+      },
+      "ExportRequest": {
+        "additionalProperties": false,
+        "description": "The export body: reviewed products plus the seller's own details.",
+        "properties": {
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewedProduct"
+            },
+            "title": "Products",
+            "type": "array"
+          },
+          "seller": {
+            "$ref": "#/components/schemas/SellerInfo"
+          }
+        },
+        "required": [
+          "products",
+          "seller"
+        ],
+        "title": "ExportRequest",
+        "type": "object"
+      },
+      "ExportResponse": {
+        "additionalProperties": false,
+        "description": "The four files an export produced, addressed by URL.",
+        "properties": {
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/ExportFile"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "files"
+        ],
+        "title": "ExportResponse",
+        "type": "object"
+      },
+      "ExtractContext": {
+        "additionalProperties": false,
+        "description": "What Stage E is allowed to know beyond the cleaned image.",
+        "properties": {
+          "concept": {
+            "title": "Concept",
+            "type": "string"
+          },
+          "seller_captions": {
+            "title": "Seller Captions",
+            "type": "string"
+          },
+          "visible_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Visible Text"
+          }
+        },
+        "required": [
+          "seller_captions",
+          "concept"
+        ],
+        "title": "ExtractContext",
+        "type": "object"
+      },
+      "FidelityVerdict": {
+        "additionalProperties": false,
+        "description": "Stage D gate decision: did the generative edit preserve the product?",
+        "properties": {
+          "color_match": {
+            "title": "Color Match",
+            "type": "boolean"
+          },
+          "logo_text_match": {
+            "title": "Logo Text Match",
+            "type": "boolean"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "same_product": {
+            "title": "Same Product",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "same_product",
+          "color_match",
+          "logo_text_match",
+          "reason"
+        ],
+        "title": "FidelityVerdict",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "additionalProperties": false,
+        "description": "Process liveness plus whether the service is in mock mode.",
+        "properties": {
+          "mock": {
+            "title": "Mock",
+            "type": "boolean"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "mock"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "JobProgress": {
+        "additionalProperties": false,
+        "description": "Honest counters: ``products_cleaned`` counts what Stage D finished.",
+        "properties": {
+          "photos_done": {
+            "minimum": 0.0,
+            "title": "Photos Done",
+            "type": "integer"
+          },
+          "photos_total": {
+            "minimum": 0.0,
+            "title": "Photos Total",
+            "type": "integer"
+          },
+          "products_cleaned": {
+            "minimum": 0.0,
+            "title": "Products Cleaned",
+            "type": "integer"
+          },
+          "products_total": {
+            "minimum": 0.0,
+            "title": "Products Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "photos_total",
+          "photos_done",
+          "products_total",
+          "products_cleaned"
+        ],
+        "title": "JobProgress",
+        "type": "object"
+      },
+      "JobStage": {
+        "description": "Pipeline stage a job is currently working on.",
+        "enum": [
+          "concepts",
+          "segment",
+          "cleanup",
+          "extract",
+          "done"
+        ],
+        "title": "JobStage",
+        "type": "string"
+      },
+      "JobState": {
+        "additionalProperties": false,
+        "description": "The polling payload and the on-disk job record.\n\nA job that ends ``failed`` keeps every product it already completed:\npartial output is a feature, not an error state.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/StageError"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            },
+            "title": "Products",
+            "type": "array"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/JobProgress"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/JobStage"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "status",
+          "stage",
+          "progress",
+          "products",
+          "errors",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "JobState",
+        "type": "object"
+      },
+      "JobStatus": {
+        "description": "Lifecycle of a job. Polling stops on ``done`` or ``failed``.",
+        "enum": [
+          "queued",
+          "running",
+          "done",
+          "failed"
+        ],
+        "title": "JobStatus",
+        "type": "string"
+      },
+      "MaskResult": {
+        "additionalProperties": false,
+        "description": "A Stage B mask. The mask carries **its own** box and dimensions.\n\nA segmentation mask is not necessarily full-frame, so aligning it against\nthe source photo's dimensions would silently misplace the cut-out. The\n``width`` and ``height`` here belong to the mask, not to the photo.\n\n``mask_png_base64`` is ``None`` when a surface returns only mask metadata;\nthe raster is filled in by the segmentation adapter whenever the model\nreturns one.",
+        "properties": {
+          "bbox": {
+            "maxItems": 4,
+            "minItems": 4,
+            "prefixItems": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Bbox",
+            "type": "array"
+          },
+          "concept": {
+            "title": "Concept",
+            "type": "string"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "mask_png_base64": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mask Png Base64"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "concept",
+          "bbox",
+          "width",
+          "height",
+          "revision",
+          "score"
+        ],
+        "title": "MaskResult",
+        "type": "object"
+      },
+      "Product": {
+        "additionalProperties": false,
+        "description": "One catalog product, field for field as the API contract declares.\n\nPrices are integer rupiah, never negative, never a float.\n``price_hint_idr`` is the only value that may pre-fill the review field;\n``price_suggestion_idr`` is AI grey text and never reaches an export;\n``price_idr`` is the seller's confirmed value and the only exportable one.\n\nEvery one of the 23 fields is **required**. ``| None`` marks a value\nthat may be absent — a null ``brand`` or an unpriced product — but never an\nomitted key. The extra ``undefined`` state has no meaning in the product and\nwould let a client omit ``price_via_chat`` and be read as ``false``, which\nthe price invariant forbids.",
+        "properties": {
+          "attributes": {
+            "$ref": "#/components/schemas/ProductAttributes"
+          },
+          "availability": {
+            "$ref": "#/components/schemas/Availability"
+          },
+          "bbox": {
+            "maxItems": 4,
+            "minItems": 4,
+            "prefixItems": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Bbox",
+            "type": "array"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "clean_url": {
+            "title": "Clean Url",
+            "type": "string"
+          },
+          "cleanup_method": {
+            "$ref": "#/components/schemas/CleanupMethod"
+          },
+          "concept": {
+            "title": "Concept",
+            "type": "string"
+          },
+          "condition": {
+            "$ref": "#/components/schemas/Condition"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "crop_url": {
+            "title": "Crop Url",
+            "type": "string"
+          },
+          "description_en": {
+            "title": "Description En",
+            "type": "string"
+          },
+          "description_id": {
+            "title": "Description Id",
+            "type": "string"
+          },
+          "fidelity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FidelityVerdict"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "included": {
+            "title": "Included",
+            "type": "boolean"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "price_hint_idr": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Hint Idr"
+          },
+          "price_idr": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Idr"
+          },
+          "price_suggestion_idr": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Suggestion Idr"
+          },
+          "price_via_chat": {
+            "title": "Price Via Chat",
+            "type": "boolean"
+          },
+          "sku": {
+            "title": "Sku",
+            "type": "string"
+          },
+          "source_photo_index": {
+            "title": "Source Photo Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sku",
+          "job_id",
+          "source_photo_index",
+          "concept",
+          "bbox",
+          "crop_url",
+          "clean_url",
+          "cleanup_method",
+          "fidelity",
+          "name",
+          "description_id",
+          "description_en",
+          "category",
+          "brand",
+          "condition",
+          "attributes",
+          "price_hint_idr",
+          "price_suggestion_idr",
+          "confidence",
+          "price_idr",
+          "price_via_chat",
+          "availability",
+          "included"
+        ],
+        "title": "Product",
+        "type": "object"
+      },
+      "ProductAttributes": {
+        "additionalProperties": false,
+        "description": "Variant attributes shown on the review screen.\n\nAll three are present on the wire and ``None`` when the seller has no value\nfor them. A missing key is a rejected payload, not an empty variant.",
+        "properties": {
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          },
+          "variant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variant"
+          }
+        },
+        "required": [
+          "color",
+          "size",
+          "variant"
+        ],
+        "title": "ProductAttributes",
+        "type": "object"
+      },
+      "ProductEntry": {
+        "additionalProperties": false,
+        "description": "Stage E output: the catalog text, without identity or file paths.\n\nThe pipeline assigns ``sku``, ``job_id`` and the image URLs after\nextraction, so they are not part of what the model returns. Every field is\nrequired: Stage E must name a null ``brand`` or a null price rather\nthan omit it.",
+        "properties": {
+          "attributes": {
+            "$ref": "#/components/schemas/ProductAttributes"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "condition": {
+            "$ref": "#/components/schemas/Condition"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "description_en": {
+            "title": "Description En",
+            "type": "string"
+          },
+          "description_id": {
+            "title": "Description Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "price_hint_idr": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Hint Idr"
+          },
+          "price_suggestion_idr": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Suggestion Idr"
+          }
+        },
+        "required": [
+          "name",
+          "description_id",
+          "description_en",
+          "category",
+          "brand",
+          "condition",
+          "attributes",
+          "price_hint_idr",
+          "price_suggestion_idr",
+          "confidence"
+        ],
+        "title": "ProductEntry",
+        "type": "object"
+      },
+      "ReviewedProduct": {
+        "additionalProperties": false,
+        "description": "A :class:`Product` as the client posts it back for export.\n\nEvery ``Product`` field except ``price_suggestion_idr``. The omission is\nthe price invariant expressed as a type: an AI price guess is never\ntransmitted to the exporter, so no code path can leak it into the CSV, the\ncaption pack, or the WhatsApp list. ``extra=\"forbid\"`` turns a leaked\nsuggestion into a rejected request instead of a silently ignored key.\n\nEvery one of its 22 fields is required, for the same reason ``Product``\nis.",
+        "properties": {
+          "attributes": {
+            "$ref": "#/components/schemas/ProductAttributes"
+          },
+          "availability": {
+            "$ref": "#/components/schemas/Availability"
+          },
+          "bbox": {
+            "maxItems": 4,
+            "minItems": 4,
+            "prefixItems": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Bbox",
+            "type": "array"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "clean_url": {
+            "title": "Clean Url",
+            "type": "string"
+          },
+          "cleanup_method": {
+            "$ref": "#/components/schemas/CleanupMethod"
+          },
+          "concept": {
+            "title": "Concept",
+            "type": "string"
+          },
+          "condition": {
+            "$ref": "#/components/schemas/Condition"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "crop_url": {
+            "title": "Crop Url",
+            "type": "string"
+          },
+          "description_en": {
+            "title": "Description En",
+            "type": "string"
+          },
+          "description_id": {
+            "title": "Description Id",
+            "type": "string"
+          },
+          "fidelity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FidelityVerdict"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "included": {
+            "title": "Included",
+            "type": "boolean"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "price_hint_idr": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Hint Idr"
+          },
+          "price_idr": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Idr"
+          },
+          "price_via_chat": {
+            "title": "Price Via Chat",
+            "type": "boolean"
+          },
+          "sku": {
+            "title": "Sku",
+            "type": "string"
+          },
+          "source_photo_index": {
+            "title": "Source Photo Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sku",
+          "job_id",
+          "source_photo_index",
+          "concept",
+          "bbox",
+          "crop_url",
+          "clean_url",
+          "cleanup_method",
+          "fidelity",
+          "name",
+          "description_id",
+          "description_en",
+          "category",
+          "brand",
+          "condition",
+          "attributes",
+          "price_hint_idr",
+          "confidence",
+          "price_idr",
+          "price_via_chat",
+          "availability",
+          "included"
+        ],
+        "title": "ReviewedProduct",
+        "type": "object"
+      },
+      "SellerInfo": {
+        "additionalProperties": false,
+        "description": "Store name plus WhatsApp number, digits only, international, no ``+``.",
+        "properties": {
+          "store_name": {
+            "title": "Store Name",
+            "type": "string"
+          },
+          "wa_number": {
+            "title": "Wa Number",
+            "type": "string"
+          }
+        },
+        "required": [
+          "store_name",
+          "wa_number"
+        ],
+        "title": "SellerInfo",
+        "type": "object"
+      },
+      "StageError": {
+        "additionalProperties": false,
+        "description": "One failed photo or product. Deliberately has no ``message``.",
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "photo_index": {
+            "title": "Photo Index",
+            "type": "integer"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/JobStage"
+          }
+        },
+        "required": [
+          "photo_index",
+          "stage",
+          "code"
+        ],
+        "title": "StageError",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
   "info": {
     "title": "Katalog Kilat API",
     "version": "0.1.0"
@@ -14,11 +1038,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "boolean"
-                  },
-                  "title": "Response Health Api Health Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/HealthResponse"
                 }
               }
             },
@@ -26,6 +1046,66 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/api/jobs/{job_id}": {
+      "get": {
+        "description": "Return the job record for ``job_id`` as a validated :class:`JobState`.\n\nA missing directory, a missing record, or a job id that resolves outside\nthe job tree is a 404 with the standard envelope. A record that is not\nvalid JSON, or does not satisfy the schema, is a 500: the pipeline wrote\nsomething this contract cannot describe, which is a server-side defect and\nmust not escape as an unhandled traceback.",
+        "operationId": "get_job_api_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get Job"
       }
     }
   }

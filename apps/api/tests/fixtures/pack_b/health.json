@@ -1,0 +1,12 @@
+{
+  "placeholder": true,
+  "recorded_at": null,
+  "pack": "b",
+  "surface": "health",
+  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
+  "model_id": null,
+  "payload": {
+    "ok": true,
+    "mock": true
+  }
+}

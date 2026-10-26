@@ -1,15 +1,21 @@
 """FastAPI application for Katalog Kilat.
 
-Scope of this module (live probe): the application object, the ``GET /api/health``
-route, the static mount that serves the built SPA assets, and the SPA
-catch-all that returns ``index.html`` for unknown non-API paths so a deep
-link survives a refresh.
+Scope of this module: the application object, ``GET /api/health``, the
+``GET /api/jobs/{job_id}`` poll route, the static mount that serves the built
+SPA assets, and the SPA catch-all that returns ``index.html`` for unknown
+non-API paths so a deep link survives a refresh.
+
+The poll route reads the job record the pipeline writes at
+``data/jobs/{job_id}/job.json`` and returns it as a validated
+:class:`~app.schemas.JobState`. It owns the record's *shape* (via the schema)
+but not its *content*: the pipeline writes it, this module only reads it.
 
 What this module deliberately does not do: it does not own the catalog, the
-job state, the pipeline, or any Meta call. It only wires HTTP.
+pipeline, the exporter, or any Meta call. The public ``/p/`` product pages are
+registered here, but they read what the pipeline and the exporter produced.
 
-Registration order is binding (spec, ``architecture specification`` §13): every API
-route is registered first, then the static mount, then the catch-all last.
+Registration order is binding: every API route is registered first, then the
+static mount, then the catch-all last.
 Reversing that order makes the catch-all swallow every ``/api/*`` request and
 answer 404. The catch-all therefore refuses to serve HTML for ``/api/*`` and
 for ``/assets/*``.
@@ -18,19 +24,47 @@ The public product pages under ``/p/`` are not here yet — the pipeline owns th
 then the catch-all answers them with the SPA shell, which is a known and
 accepted limitation (spec).
 
+This module also publishes the **complete** contract into
+``components.schemas``. A pydantic model reaches that map only when a
+route references it, so a model like
+:class:`~app.schemas.ReviewedProduct` — the export body the review screen
+posts — would be missing from the document that ``apps/web/src/lib/types.ts``
+is generated from, and the client would have to hand-write the type, which the
+type-contract invariant forbids. The override installed below therefore merges
+every schema declared in :mod:`app.schemas` into the route-derived document,
+using :func:`pydantic.json_schema.models_json_schema` so a model shared by
+several others is emitted once and referenced by ``$ref`` instead of copied
+into each parent. A schema a route already published is left untouched: the
+route-derived entry is authoritative, and this step only fills gaps. It
+publishes a contract — it adds no route, no handler, and no behaviour, so it
+is not stub code. Retire the override once every route references every model,
+at which point the merge becomes a no-op by construction.
+
 The module never crashes at import time when the built SPA is missing: a
 developer running bare ``uvicorn`` still gets a working ``/api/health``.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, ValidationError
+from pydantic.json_schema import models_json_schema
 
+from app import schemas
+from app.schemas import (
+    ErrorCode,
+    ErrorDetail,
+    ErrorResponse,
+    HealthResponse,
+    JobState,
+)
 from app.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -42,18 +76,168 @@ STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 ASSETS_DIR = STATIC_DIR / "assets"
 INDEX_FILE = STATIC_DIR / "index.html"
 
-# Error code from the closed enum owned by schemas.py (spec). schemas.py does
-# not exist yet — stage declares the enum — so the literal lives here and must be
-# kept in sync with it.
-ERROR_CODE_NOT_FOUND = "not_found"
+# Job records live one directory above the application package: /srv/data/jobs
+# in the image, apps/api/data/jobs in a checkout.
+# Derived from this file's location so both layouts resolve without a setting.
+JOBS_DIR = Path(__file__).resolve().parent.parent / "data" / "jobs"
+JOB_RECORD_FILENAME = "job.json"
 
 app = FastAPI(title="Katalog Kilat API")
 
+# --- complete-contract publication -----------------------------------------
+# A pydantic model enters ``components.schemas`` only when a route references
+# it, so the document that ``apps/web/src/lib/types.ts`` is
+# generated from would otherwise omit the export body and the stage payloads.
+# The merge below publishes every schema declared in :mod:`app.schemas` and
+# adds no route, no handler, and no behaviour.
 
-@app.get("/api/health")
-async def health() -> dict[str, bool]:
+# Every reference the published schemas emit points at the OpenAPI component
+# map, never at pydantic's ``$defs`` container: a ``#/$defs/...`` reference
+# resolves to nothing in an OpenAPI document and the generated TypeScript
+# would carry an unresolved alias.
+SCHEMA_REF_TEMPLATE = "#/components/schemas/{model}"
+
+# The bound method is captured before the override is installed, so the
+# override can call the real route-derived builder instead of recursing into
+# itself. ``FastAPI.openapi()`` memoizes its result in ``app.openapi_schema``,
+# so this is the document FastAPI itself builds and caches.
+_openapi_from_routes = app.openapi
+
+
+def _declared_models() -> list[type[BaseModel]]:
+    """Every pydantic model declared in :mod:`app.schemas`, sorted by name.
+
+    Filtering by ``__module__`` keeps the imported ``BaseModel`` base class
+    out. The sort is not cosmetic: the document is dumped to a committed file
+    and diffed byte for byte, so an iteration order that varied between
+    processes would turn the drift test red at random.
+    """
+    return sorted(
+        (
+            value
+            for value in vars(schemas).values()
+            if isinstance(value, type)
+            and issubclass(value, BaseModel)
+            and value.__module__ == schemas.__name__
+        ),
+        key=lambda model: model.__name__,
+    )
+
+
+def _published_schemas() -> dict[str, Any]:
+    """Build the component map for every schema declared in :mod:`app.schemas`.
+
+    ``models_json_schema`` walks all models in one pass, so a model shared by
+    several parents (``ProductAttributes``, ``FidelityVerdict``,
+    ``ErrorDetail``) is emitted once and referenced by ``$ref`` from each
+    parent rather than copied into every one of them. The enums a model uses
+    arrive in the same pass — ``ExportKind`` included, which is why it is
+    published here even though no route carries it yet.
+    """
+    _mapping, container = models_json_schema(
+        [(model, "validation") for model in _declared_models()],
+        ref_template=SCHEMA_REF_TEMPLATE,
+    )
+    # ``models_json_schema`` returns a bare JSON Schema document, so its
+    # definitions arrive wrapped in a ``$defs`` container. Only the contents
+    # belong in ``components.schemas``; a ``$defs`` key there would make the
+    # document invalid OpenAPI.
+    nested = container.get("$defs")
+    if not isinstance(nested, dict):
+        raise RuntimeError(
+            "models_json_schema returned no $defs mapping; the complete "
+            "OpenAPI contract cannot be published."
+        )
+    return dict(nested)
+
+
+def _openapi_with_full_contract() -> dict[str, Any]:
+    """Publish the complete contract on top of the route-derived document.
+
+    A schema a route already published is left exactly as FastAPI built it:
+    the route-derived entry is authoritative, and this step only fills gaps.
+    Iterating in sorted order keeps the merged map stable across processes.
+    """
+    document = _openapi_from_routes()
+    components = document.setdefault("components", {}).setdefault("schemas", {})
+    published = _published_schemas()
+    for name in sorted(published):
+        if name in components:
+            continue
+        components[name] = published[name]
+    return document
+
+
+app.openapi = _openapi_with_full_contract
+
+
+def _error(status_code: int, code: ErrorCode, message: str) -> JSONResponse:
+    """Return the standard error envelope for a failing request.
+
+    ``code`` is the contract the UI translates; ``message`` is English and
+    developer-facing, never rendered.
+    """
+    payload = ErrorResponse(error=ErrorDetail(code=code, message=message))
+    return JSONResponse(status_code=status_code, content=payload.model_dump(mode="json"))
+
+
+def _job_record_path(job_id: str) -> Path | None:
+    """Resolve ``job_id`` to a record path, or ``None`` if it escapes the root.
+
+    The job id is used as a path segment, so it is resolved and checked against
+    ``JOBS_DIR`` rather than trusted: a traversal attempt is a missing record
+    (404), never a read outside the job tree and never a 500.
+    """
+    root = JOBS_DIR.resolve()
+    candidate = (JOBS_DIR / job_id / JOB_RECORD_FILENAME).resolve()
+    if candidate != root and root not in candidate.parents:
+        return None
+    return candidate
+
+
+@app.get("/api/health", response_model=HealthResponse)
+async def health() -> HealthResponse:
     """Report process liveness and whether the service runs in mock mode."""
-    return {"ok": True, "mock": settings.meta_mock}
+    return HealthResponse(ok=True, mock=settings.meta_mock)
+
+
+@app.get(
+    "/api/jobs/{job_id}",
+    response_model=JobState,
+    responses={
+        404: {"model": ErrorResponse},
+        500: {"model": ErrorResponse},
+    },
+)
+async def get_job(job_id: str) -> JobState | JSONResponse:
+    """Return the job record for ``job_id`` as a validated :class:`JobState`.
+
+    A missing directory, a missing record, or a job id that resolves outside
+    the job tree is a 404 with the standard envelope. A record that is not
+    valid JSON, or does not satisfy the schema, is a 500: the pipeline wrote
+    something this contract cannot describe, which is a server-side defect and
+    must not escape as an unhandled traceback.
+    """
+    record_path = _job_record_path(job_id)
+    if record_path is None or not record_path.is_file():
+        return _error(
+            404,
+            ErrorCode.NOT_FOUND,
+            f"No job record for {job_id!r}.",
+        )
+
+    try:
+        raw = record_path.read_text(encoding="utf-8")
+        return JobState.model_validate(json.loads(raw))
+    except (OSError, json.JSONDecodeError, ValidationError) as exc:
+        # Logged with the job id only: the record may carry seller data, and
+        # the response never repeats it.
+        logger.error("Unreadable job record for %r: %s", job_id, exc)
+        return _error(
+            500,
+            ErrorCode.INTERNAL_ERROR,
+            f"Job record for {job_id!r} is unreadable or does not match the contract.",
+        )
 
 
 # --- static mount and SPA catch-all -----------------------------------------
@@ -66,15 +250,7 @@ RESERVED_PREFIXES = ("api", "assets")
 
 def _not_found(path: str) -> JSONResponse:
     """Return the standard error shape for a path that matches no route."""
-    return JSONResponse(
-        status_code=404,
-        content={
-            "error": {
-                "code": ERROR_CODE_NOT_FOUND,
-                "message": f"No route matches {path!r}.",
-            }
-        },
-    )
+    return _error(404, ErrorCode.NOT_FOUND, f"No route matches {path!r}.")
 
 
 def _mount_assets() -> None:

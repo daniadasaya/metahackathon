@@ -24,10 +24,470 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Job
+         * @description Return the job record for ``job_id`` as a validated :class:`JobState`.
+         *
+         *     A missing directory, a missing record, or a job id that resolves outside
+         *     the job tree is a 404 with the standard envelope. A record that is not
+         *     valid JSON, or does not satisfy the schema, is a 500: the pipeline wrote
+         *     something this contract cannot describe, which is a server-side defect and
+         *     must not escape as an unhandled traceback.
+         */
+        get: operations["get_job_api_jobs__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        /**
+         * Availability
+         * @description Commerce Manager availability. Lowercase, exactly (Meta Commerce catalog).
+         * @enum {string}
+         */
+        Availability: "in stock" | "out of stock";
+        /**
+         * CleanupMethod
+         * @description Which Stage D path produced the clean image.
+         *
+         *     ``muse-image`` means a gate-passed generative edit; ``composite`` means the
+         *     deterministic studio composite that physically cannot distort the product.
+         * @enum {string}
+         */
+        CleanupMethod: "muse-image" | "composite";
+        /**
+         * Concept
+         * @description A Stage A product concept, one per SAM request (never comma-joined).
+         */
+        Concept: {
+            /** Phrase */
+            phrase: string;
+            /** Scene Note */
+            scene_note: string;
+            /**
+             * Visible Text
+             * @default null
+             */
+            visible_text: string | null;
+        };
+        /**
+         * Condition
+         * @description Commerce Manager condition. Lowercase, exactly (Meta Commerce catalog).
+         * @enum {string}
+         */
+        Condition: "new" | "used";
+        /**
+         * Confidence
+         * @description How sure Stage E is about the catalog entry it wrote.
+         * @enum {string}
+         */
+        Confidence: "high" | "medium" | "low";
+        /**
+         * ErrorCode
+         * @description Closed set of error codes. The UI maps each one to a locale key.
+         *
+         *     Adding a member is a contract change: it needs a locale key in both
+         *     dictionaries and a deliberate edit to the test that pins this set.
+         * @enum {string}
+         */
+        ErrorCode: "not_found" | "invalid_request" | "unsupported_file_type" | "file_too_large" | "model_not_found" | "model_unavailable" | "concepts_failed" | "segmentation_failed" | "no_products_found" | "cleanup_failed" | "extraction_failed" | "price_missing" | "export_failed" | "internal_error";
+        /**
+         * ErrorDetail
+         * @description ``code`` is the contract; ``message`` is English for logs only.
+         */
+        ErrorDetail: {
+            code: components["schemas"]["ErrorCode"];
+            /** Message */
+            message: string;
+        };
+        /**
+         * ErrorResponse
+         * @description Standard error envelope for every failing route.
+         */
+        ErrorResponse: {
+            error: components["schemas"]["ErrorDetail"];
+        };
+        /**
+         * ExportFile
+         * @description One downloadable artefact produced by an export request.
+         */
+        ExportFile: {
+            /** Filename */
+            filename: string;
+            kind: components["schemas"]["ExportKind"];
+            /** Url */
+            url: string;
+        };
+        /**
+         * ExportKind
+         * @description The four export artefacts, one per seller-facing button.
+         * @enum {string}
+         */
+        ExportKind: "catalog_csv" | "images_zip" | "captions_instagram" | "price_list_whatsapp";
+        /**
+         * ExportRequest
+         * @description The export body: reviewed products plus the seller's own details.
+         */
+        ExportRequest: {
+            /** Products */
+            products: components["schemas"]["ReviewedProduct"][];
+            seller: components["schemas"]["SellerInfo"];
+        };
+        /**
+         * ExportResponse
+         * @description The four files an export produced, addressed by URL.
+         */
+        ExportResponse: {
+            /** Files */
+            files: components["schemas"]["ExportFile"][];
+            /** Job Id */
+            job_id: string;
+        };
+        /**
+         * ExtractContext
+         * @description What Stage E is allowed to know beyond the cleaned image.
+         */
+        ExtractContext: {
+            /** Concept */
+            concept: string;
+            /** Seller Captions */
+            seller_captions: string;
+            /**
+             * Visible Text
+             * @default null
+             */
+            visible_text: string | null;
+        };
+        /**
+         * FidelityVerdict
+         * @description Stage D gate decision: did the generative edit preserve the product?
+         */
+        FidelityVerdict: {
+            /** Color Match */
+            color_match: boolean;
+            /** Logo Text Match */
+            logo_text_match: boolean;
+            /** Reason */
+            reason: string;
+            /** Same Product */
+            same_product: boolean;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * HealthResponse
+         * @description Process liveness plus whether the service is in mock mode.
+         */
+        HealthResponse: {
+            /** Mock */
+            mock: boolean;
+            /** Ok */
+            ok: boolean;
+        };
+        /**
+         * JobProgress
+         * @description Honest counters: ``products_cleaned`` counts what Stage D finished.
+         */
+        JobProgress: {
+            /** Photos Done */
+            photos_done: number;
+            /** Photos Total */
+            photos_total: number;
+            /** Products Cleaned */
+            products_cleaned: number;
+            /** Products Total */
+            products_total: number;
+        };
+        /**
+         * JobStage
+         * @description Pipeline stage a job is currently working on.
+         * @enum {string}
+         */
+        JobStage: "concepts" | "segment" | "cleanup" | "extract" | "done";
+        /**
+         * JobState
+         * @description The polling payload and the on-disk job record.
+         *
+         *     A job that ends ``failed`` keeps every product it already completed:
+         *     partial output is a feature, not an error state.
+         */
+        JobState: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Errors */
+            errors: components["schemas"]["StageError"][];
+            /** Job Id */
+            job_id: string;
+            /** Products */
+            products: components["schemas"]["Product"][];
+            progress: components["schemas"]["JobProgress"];
+            stage: components["schemas"]["JobStage"];
+            status: components["schemas"]["JobStatus"];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * JobStatus
+         * @description Lifecycle of a job. Polling stops on ``done`` or ``failed``.
+         * @enum {string}
+         */
+        JobStatus: "queued" | "running" | "done" | "failed";
+        /**
+         * MaskResult
+         * @description A Stage B mask. The mask carries **its own** box and dimensions.
+         *
+         *     A segmentation mask is not necessarily full-frame, so aligning it against
+         *     the source photo's dimensions would silently misplace the cut-out. The
+         *     ``width`` and ``height`` here belong to the mask, not to the photo.
+         *
+         *     ``mask_png_base64`` is ``None`` when a surface returns only mask metadata;
+         *     the raster is filled in by the segmentation adapter whenever the model
+         *     returns one.
+         */
+        MaskResult: {
+            /** Bbox */
+            bbox: [
+                number,
+                number,
+                number,
+                number
+            ];
+            /** Concept */
+            concept: string;
+            /** Height */
+            height: number;
+            /**
+             * Mask Png Base64
+             * @default null
+             */
+            mask_png_base64: string | null;
+            /** Revision */
+            revision: number;
+            /** Score */
+            score: number;
+            /** Width */
+            width: number;
+        };
+        /**
+         * Product
+         * @description One catalog product, field for field as the API contract declares.
+         *
+         *     Prices are integer rupiah, never negative, never a float.
+         *     ``price_hint_idr`` is the only value that may pre-fill the review field;
+         *     ``price_suggestion_idr`` is AI grey text and never reaches an export;
+         *     ``price_idr`` is the seller's confirmed value and the only exportable one.
+         *
+         *     Every one of the 23 fields is **required**. ``| None`` marks a value
+         *     that may be absent — a null ``brand`` or an unpriced product — but never an
+         *     omitted key. The extra ``undefined`` state has no meaning in the product and
+         *     would let a client omit ``price_via_chat`` and be read as ``false``, which
+         *     the price invariant forbids.
+         */
+        Product: {
+            attributes: components["schemas"]["ProductAttributes"];
+            availability: components["schemas"]["Availability"];
+            /** Bbox */
+            bbox: [
+                number,
+                number,
+                number,
+                number
+            ];
+            /** Brand */
+            brand: string | null;
+            /** Category */
+            category: string;
+            /** Clean Url */
+            clean_url: string;
+            cleanup_method: components["schemas"]["CleanupMethod"];
+            /** Concept */
+            concept: string;
+            condition: components["schemas"]["Condition"];
+            confidence: components["schemas"]["Confidence"];
+            /** Crop Url */
+            crop_url: string;
+            /** Description En */
+            description_en: string;
+            /** Description Id */
+            description_id: string;
+            fidelity: components["schemas"]["FidelityVerdict"] | null;
+            /** Included */
+            included: boolean;
+            /** Job Id */
+            job_id: string;
+            /** Name */
+            name: string;
+            /** Price Hint Idr */
+            price_hint_idr: number | null;
+            /** Price Idr */
+            price_idr: number | null;
+            /** Price Suggestion Idr */
+            price_suggestion_idr: number | null;
+            /** Price Via Chat */
+            price_via_chat: boolean;
+            /** Sku */
+            sku: string;
+            /** Source Photo Index */
+            source_photo_index: number;
+        };
+        /**
+         * ProductAttributes
+         * @description Variant attributes shown on the review screen.
+         *
+         *     All three are present on the wire and ``None`` when the seller has no value
+         *     for them. A missing key is a rejected payload, not an empty variant.
+         */
+        ProductAttributes: {
+            /** Color */
+            color: string | null;
+            /** Size */
+            size: string | null;
+            /** Variant */
+            variant: string | null;
+        };
+        /**
+         * ProductEntry
+         * @description Stage E output: the catalog text, without identity or file paths.
+         *
+         *     The pipeline assigns ``sku``, ``job_id`` and the image URLs after
+         *     extraction, so they are not part of what the model returns. Every field is
+         *     required: Stage E must name a null ``brand`` or a null price rather
+         *     than omit it.
+         */
+        ProductEntry: {
+            attributes: components["schemas"]["ProductAttributes"];
+            /** Brand */
+            brand: string | null;
+            /** Category */
+            category: string;
+            condition: components["schemas"]["Condition"];
+            confidence: components["schemas"]["Confidence"];
+            /** Description En */
+            description_en: string;
+            /** Description Id */
+            description_id: string;
+            /** Name */
+            name: string;
+            /** Price Hint Idr */
+            price_hint_idr: number | null;
+            /** Price Suggestion Idr */
+            price_suggestion_idr: number | null;
+        };
+        /**
+         * ReviewedProduct
+         * @description A :class:`Product` as the client posts it back for export.
+         *
+         *     Every ``Product`` field except ``price_suggestion_idr``. The omission is
+         *     the price invariant expressed as a type: an AI price guess is never
+         *     transmitted to the exporter, so no code path can leak it into the CSV, the
+         *     caption pack, or the WhatsApp list. ``extra="forbid"`` turns a leaked
+         *     suggestion into a rejected request instead of a silently ignored key.
+         *
+         *     Every one of its 22 fields is required, for the same reason ``Product``
+         *     is.
+         */
+        ReviewedProduct: {
+            attributes: components["schemas"]["ProductAttributes"];
+            availability: components["schemas"]["Availability"];
+            /** Bbox */
+            bbox: [
+                number,
+                number,
+                number,
+                number
+            ];
+            /** Brand */
+            brand: string | null;
+            /** Category */
+            category: string;
+            /** Clean Url */
+            clean_url: string;
+            cleanup_method: components["schemas"]["CleanupMethod"];
+            /** Concept */
+            concept: string;
+            condition: components["schemas"]["Condition"];
+            confidence: components["schemas"]["Confidence"];
+            /** Crop Url */
+            crop_url: string;
+            /** Description En */
+            description_en: string;
+            /** Description Id */
+            description_id: string;
+            fidelity: components["schemas"]["FidelityVerdict"] | null;
+            /** Included */
+            included: boolean;
+            /** Job Id */
+            job_id: string;
+            /** Name */
+            name: string;
+            /** Price Hint Idr */
+            price_hint_idr: number | null;
+            /** Price Idr */
+            price_idr: number | null;
+            /** Price Via Chat */
+            price_via_chat: boolean;
+            /** Sku */
+            sku: string;
+            /** Source Photo Index */
+            source_photo_index: number;
+        };
+        /**
+         * SellerInfo
+         * @description Store name plus WhatsApp number, digits only, international, no ``+``.
+         */
+        SellerInfo: {
+            /** Store Name */
+            store_name: string;
+            /** Wa Number */
+            wa_number: string;
+        };
+        /**
+         * StageError
+         * @description One failed photo or product. Deliberately has no ``message``.
+         */
+        StageError: {
+            code: components["schemas"]["ErrorCode"];
+            /** Photo Index */
+            photo_index: number;
+            stage: components["schemas"]["JobStage"];
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Context */
+            ctx?: Record<string, never>;
+            /** Input */
+            input?: unknown;
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;
@@ -51,9 +511,56 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: boolean;
-                    };
+                    "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    get_job_api_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobState"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

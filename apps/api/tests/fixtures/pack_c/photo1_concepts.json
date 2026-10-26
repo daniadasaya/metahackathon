@@ -1,0 +1,20 @@
+{
+  "placeholder": true,
+  "recorded_at": null,
+  "pack": "c",
+  "surface": "concepts",
+  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
+  "model_id": "muse-spark-1.3",
+  "payload": [
+    {
+      "phrase": "instant noodle cup",
+      "scene_note": "Five instant noodle cups stacked inside and around a cardboard box.",
+      "visible_text": null
+    },
+    {
+      "phrase": "biscuit pack",
+      "scene_note": "Three biscuit packs lined up on the left side of the cardboard box.",
+      "visible_text": null
+    }
+  ]
+}

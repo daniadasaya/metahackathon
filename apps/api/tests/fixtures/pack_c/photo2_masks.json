@@ -1,0 +1,37 @@
+{
+  "placeholder": true,
+  "recorded_at": null,
+  "pack": "c",
+  "surface": "masks",
+  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
+  "model_id": "sam-3.1",
+  "payload": [
+    {
+      "concept": "chocolate bar",
+      "bbox": [45, 55, 260, 160],
+      "width": 640,
+      "height": 500,
+      "revision": 1,
+      "score": 0.92,
+      "mask_png_base64": null
+    },
+    {
+      "concept": "chocolate bar",
+      "bbox": [55, 65, 270, 170],
+      "width": 500,
+      "height": 640,
+      "revision": 1,
+      "score": 0.88,
+      "mask_png_base64": null
+    },
+    {
+      "concept": "potato chips bag",
+      "bbox": [70, 40, 330, 420],
+      "width": 580,
+      "height": 460,
+      "revision": 1,
+      "score": 0.93,
+      "mask_png_base64": null
+    }
+  ]
+}

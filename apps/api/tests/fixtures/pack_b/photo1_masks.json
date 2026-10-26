@@ -1,0 +1,37 @@
+{
+  "placeholder": true,
+  "recorded_at": null,
+  "pack": "b",
+  "surface": "masks",
+  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
+  "model_id": "sam-3.1",
+  "payload": [
+    {
+      "concept": "t-shirt",
+      "bbox": [20, 30, 260, 340],
+      "width": 700,
+      "height": 520,
+      "revision": 1,
+      "score": 0.92,
+      "mask_png_base64": null
+    },
+    {
+      "concept": "t-shirt",
+      "bbox": [45, 55, 300, 360],
+      "width": 560,
+      "height": 700,
+      "revision": 1,
+      "score": 0.86,
+      "mask_png_base64": null
+    },
+    {
+      "concept": "denim jacket",
+      "bbox": [60, 80, 420, 560],
+      "width": 640,
+      "height": 480,
+      "revision": 1,
+      "score": 0.95,
+      "mask_png_base64": null
+    }
+  ]
+}
