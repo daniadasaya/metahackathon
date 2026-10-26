@@ -1,0 +1,5 @@
+# Dev-only dependencies: runtime requirements plus pytest, pinned exactly.
+# Installed into the image so `pytest apps/api/tests` runs inside the
+# container, which is the reference Python environment for this service.
+-r requirements.txt
+pytest==9.1.1
