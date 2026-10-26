@@ -1,0 +1,755 @@
+"""Meta Model API adapter — the only module that may talk to ``api.meta.ai``.
+
+Single-adapter boundary: no other file imports ``openai``, points ``httpx`` at Meta,
+or constructs a Meta URL. The rest of the codebase calls exactly the six
+public functions below and nothing else::
+
+    discover_concepts(image_bytes, captions) -> list[Concept]
+    segment_concept(image_bytes, concept)    -> list[MaskResult]
+    clean_product_image(crop_png, label)    -> bytes
+    verify_fidelity(original_png, cleaned)  -> FidelityVerdict
+    extract_product(clean_png, context)     -> list[ProductEntry]
+    health_probe()                          -> HealthResponse
+
+MOCK MODE (``META_MOCK=true``, the default) is the only verified path today
+(2026-10-26). Every function serves the recorded
+fixtures under ``apps/api/tests/fixtures/pack_{a,b,c}/`` (see that
+directory's README for the envelope). All fixtures are hand-written
+placeholders (``placeholder: true``, ``recorded_at: null``); mock-green
+proves nothing about the live API (a green mock run proves wiring, not the contract).
+
+Deterministic input → fixture mapping (same input bytes → same output;
+every input maps to some fixture — mock never raises "not found").
+
+ONE shared slot scheme: every fixture-routed read derives its
+``(pack, photo)`` slot from the call's primary image bytes alone —
+``digest = sha256(image_bytes)``, ``digest[0] % 3`` picks ``a``/``b``/``c``,
+``digest[1] % 2`` picks photo 1/2. No other argument changes the slot:
+captions, concept phrases, and labels never move a call to a different
+photo, so Stage A concepts and Stage B masks for the same input photo
+always come from the same fixture photo.
+
+* ``discover_concepts`` serves that photo's ``photo{n}_concepts.json``
+  payload verbatim. ``captions`` is accepted (the live P1 prompt needs it)
+  but ignored for routing.
+* ``segment_concept`` serves the same slot's ``photo{n}_masks.json``,
+  filtered to records whose ``concept`` matches the requested phrase
+  (case-insensitive, stripped). Anything else — including a comma-joined
+  phrase, which is never a valid SAM request — matches nothing and yields
+  ``[]``, never an error.
+* ``extract_product`` accepts the seller-captions wire shape for seller captions: ONE
+  JSON string ``{"general": "...", "photos": [...]}`` (anything that does
+  not parse as that object is treated as opaque text). It serves the slot
+  of its ``clean_png`` bytes from ``photo{n}_entries.json`` — image bytes
+  only; ``concept`` and the captions text do not move the slot.
+  (``clean_png`` is Stage D output, bytes-different from the Stage A photo,
+  so Stage E's slot is deterministic but not the same photo's slot; the
+  pipeline, not the adapter, carries product identity across stages.)
+* ``verify_fidelity`` takes its pack from the slot of ``original_png`` and
+  selects ``fidelity_pass.json`` vs ``fidelity_fail.json`` by parity of
+  ``sha256(original + cleaned)`` (even → pass, odd → fail), so both gate
+  outcomes stay reachable. The parity bit is the verdict selector, not a
+  slot input.
+* ``clean_product_image`` has no image fixture (bytes, not JSON). It
+  generates a deterministic 640x640 studio PNG with Pillow at runtime,
+  seeded by ``sha256(crop_png + label)`` — same input → same bytes.
+* ``health_probe`` serves ``pack_a/health.json`` (identical in all packs).
+
+Price Law: the adapter returns ``price_hint_idr`` /
+``price_suggestion_idr`` exactly as the fixture carries them. It never
+computes, infers, or defaults a price.
+
+LIVE BRANCH (``META_MOCK=false``) is structure only, written from the
+``meta-model-api`` skill runbook and ``docs/prompts-final.md`` v1, both
+unverified hypotheses — no request has ever been sent. It lazy-imports the
+``openai`` client inside the live path and raises :class:`MetaLiveUnavailable`
+when the package (or the key) is absent; ``requirements.txt`` is locked at
+four packages, so live is unreachable until the Lead decides the client
+dependency with the key. The live branch is unreachable when
+``settings.meta_mock`` is true, and tests never execute it.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import base64
+import hashlib
+import io
+import json
+from collections.abc import Callable, Coroutine
+from pathlib import Path
+from typing import Any
+
+from PIL import Image, ImageDraw
+from pydantic import BaseModel, ValidationError
+
+from app.schemas import (
+    Concept,
+    ExtractContext,
+    FidelityVerdict,
+    HealthResponse,
+    MaskResult,
+    ProductEntry,
+)
+from app.settings import settings
+
+__all__ = [
+    "discover_concepts",
+    "segment_concept",
+    "clean_product_image",
+    "verify_fidelity",
+    "extract_product",
+    "health_probe",
+]
+
+# Model ids and endpoint from the runbook (UNVERIFIED — confirm at
+# https://dev.meta.ai before the first live call).
+MUSE_SPARK_MODEL = "muse-spark-1.3"
+SAM_MODEL = "sam-3.1"
+MUSE_IMAGE_MODEL = "muse-image-1.0"
+META_BASE_URL = "https://api.meta.ai/v1"
+
+_PACKS = ("a", "b", "c")
+_PHOTOS = (1, 2)
+
+# Transients worth the runbook's 2s/5s/12s backoff; anything else surfaces.
+_TRANSIENT_STATUS = frozenset({429, 500, 502, 503, 504})
+_RETRY_DELAYS = (2.0, 5.0, 12.0)
+
+# Pillow canvas for the mock studio image (P3's off-white #F7F7F5).
+_MOCK_CLEAN_SIZE = 640
+_MOCK_CLEAN_BG = (247, 247, 245)
+
+
+class MetaLiveUnavailable(RuntimeError):
+    """Live Meta calls are impossible in this environment.
+
+    Raised when the live branch is reached without the client dependency,
+    without ``MODEL_API_KEY``, or without the SAM streaming parser — the
+    three decisions that land with the key. Never raised in mock mode.
+    """
+
+
+class MetaModelNotFound(MetaLiveUnavailable):
+    """``404 model_not_found``: an access problem, never retried."""
+
+
+class MetaMockError(RuntimeError):
+    """The mock fixture tree is missing or unreadable.
+
+    This names a deployment defect, never an input problem: any *input*
+    maps to some fixture, but a missing tree has nothing to serve.
+    """
+
+
+# ---------------------------------------------------------------------------
+# Mock fixture loading
+# ---------------------------------------------------------------------------
+
+_fixtures_dir: Path | None = None
+_fixture_cache: dict[str, Any] = {}
+
+
+def _fixtures_root() -> Path:
+    """Locate ``tests/fixtures`` in both known layouts.
+
+    Checkout: ``apps/api/tests/fixtures`` (sibling of the ``app`` package).
+    Container: ``/srv/apps/api/tests/fixtures`` (the image bakes the tree at
+    a different relative path). The search walks upward so neither layout is
+    hardcoded.
+    """
+    global _fixtures_dir
+    if _fixtures_dir is not None:
+        return _fixtures_dir
+    here = Path(__file__).resolve()
+    for parent in (here.parent, *here.parents):
+        candidate = parent / "tests" / "fixtures"
+        if candidate.is_dir():
+            _fixtures_dir = candidate
+            return candidate
+        candidate = parent / "apps" / "api" / "tests" / "fixtures"
+        if candidate.is_dir():
+            _fixtures_dir = candidate
+            return candidate
+    raise MetaMockError(
+        f"fixture tree not found above {here}; mock mode has nothing to serve"
+    )
+
+
+def _read_payload(pack: str, filename: str) -> Any:
+    """Return the ``payload`` of one fixture envelope, cached by path."""
+    key = f"pack_{pack}/{filename}"
+    if key not in _fixture_cache:
+        path = _fixtures_root() / f"pack_{pack}" / filename
+        try:
+            raw = path.read_bytes()
+        except OSError as exc:
+            raise MetaMockError(f"cannot read fixture {key}: {exc}") from exc
+        try:
+            envelope = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise MetaMockError(f"fixture {key} is not valid JSON: {exc}") from exc
+        _fixture_cache[key] = envelope["payload"]
+    return _fixture_cache[key]
+
+
+def _validated(
+    model: type[BaseModel], payload: Any, pack: str, filename: str
+) -> BaseModel:
+    """Validate one payload element, naming the fixture file on failure."""
+    try:
+        return model.model_validate(payload)
+    except ValidationError as exc:
+        raise MetaMockError(
+            f"fixture pack_{pack}/{filename} does not validate as "
+            f"{model.__name__}: {exc}"
+        ) from exc
+
+
+def _locate(key: bytes) -> tuple[str, int]:
+    """Map arbitrary bytes to a deterministic ``(pack, photo)`` slot."""
+    digest = hashlib.sha256(key).digest()
+    return _PACKS[digest[0] % len(_PACKS)], _PHOTOS[digest[1] % len(_PHOTOS)]
+
+
+def _captions_text(seller_captions: str) -> str:
+    """Accept the seller-captions wire shape: one JSON string, or opaque text.
+
+    ``{"general": "...", "photos": [...]}`` is flattened to plain text for
+    the mock location key. Anything that does not parse as that object is
+    used verbatim — mock never rejects a captions shape.
+    """
+    try:
+        parsed = json.loads(seller_captions)
+    except json.JSONDecodeError:
+        return seller_captions
+    if not isinstance(parsed, dict):
+        return seller_captions
+    parts: list[str] = []
+    general = parsed.get("general", "")
+    if isinstance(general, str) and general.strip():
+        parts.append(general)
+    photos = parsed.get("photos", [])
+    if isinstance(photos, list):
+        parts.extend(str(item) for item in photos if isinstance(item, str))
+    elif isinstance(photos, str) and photos.strip():
+        parts.append(photos)
+    return "\n".join(parts) if parts else seller_captions
+
+
+def _mock_discover_concepts(image_bytes: bytes, captions: str) -> list[Concept]:
+    # Captions ride the live P1 prompt; the mock slot is image-bytes-only so
+    # Stage B routes to the same photo (one shared slot scheme, see docstring).
+    _ = captions
+    pack, photo = _locate(image_bytes)
+    filename = f"photo{photo}_concepts.json"
+    payload = _read_payload(pack, filename)
+    return [
+        _validated(Concept, item, pack, filename)  # type: ignore[misc]
+        for item in payload
+    ]
+
+
+def _mock_segment_concept(image_bytes: bytes, concept: str) -> list[MaskResult]:
+    wanted = concept.strip().lower()
+    if not wanted:
+        return []
+    # Location keys on the image bytes alone so Stage B agrees with Stage A
+    # for the same input photo; the phrase only filters records inside it.
+    pack, photo = _locate(image_bytes)
+    filename = f"photo{photo}_masks.json"
+    payload = _read_payload(pack, filename)
+    results: list[MaskResult] = []
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("concept", "")).strip().lower() != wanted:
+            continue
+        validated = _validated(MaskResult, item, pack, filename)
+        assert isinstance(validated, MaskResult)
+        results.append(validated)
+    return results
+
+
+def _mock_clean_product_image(crop_png: bytes, product_label: str) -> bytes:
+    """Deterministic studio PNG: same input → same bytes."""
+    seed = hashlib.sha256(
+        crop_png + b"\x00" + product_label.encode("utf-8")
+    ).digest()
+    img = Image.new("RGB", (_MOCK_CLEAN_SIZE, _MOCK_CLEAN_SIZE), _MOCK_CLEAN_BG)
+    draw = ImageDraw.Draw(img)
+    accent = (seed[0] // 2 + 100, seed[1] // 2 + 100, seed[2] // 2 + 100)
+    bar_h = _MOCK_CLEAN_SIZE // 12
+    draw.rectangle(
+        (0, _MOCK_CLEAN_SIZE - bar_h, _MOCK_CLEAN_SIZE, _MOCK_CLEAN_SIZE),
+        fill=accent,
+    )
+    draw.ellipse(
+        (
+            _MOCK_CLEAN_SIZE // 4,
+            _MOCK_CLEAN_SIZE // 4,
+            3 * _MOCK_CLEAN_SIZE // 4,
+            3 * _MOCK_CLEAN_SIZE // 4,
+        ),
+        outline=accent,
+        width=3,
+    )
+    draw.text((24, 24), product_label[:48], fill=(60, 60, 60))
+    buf = io.BytesIO()
+    img.save(buf, format="PNG", optimize=True, compress_level=9)
+    return buf.getvalue()
+
+
+def _mock_verify_fidelity(original_png: bytes, cleaned_png: bytes) -> FidelityVerdict:
+    # Pack from the original's slot; the verdict file from pair parity.
+    pack, _ = _locate(original_png)
+    even = hashlib.sha256(original_png + b"\x00" + cleaned_png).digest()[0] % 2 == 0
+    # Even digest → pass, odd → fail: both gate outcomes stay reachable.
+    filename = "fidelity_pass.json" if even else "fidelity_fail.json"
+    payload = _read_payload(pack, filename)
+    validated = _validated(FidelityVerdict, payload, pack, filename)
+    assert isinstance(validated, FidelityVerdict)
+    return validated
+
+
+def _mock_extract_product(
+    clean_png: bytes, context: ExtractContext
+) -> list[ProductEntry]:
+    # Slot from the image bytes only (one shared slot scheme, see docstring).
+    # Stage C bytes differ from the Stage A photo, so the slot is
+    # deterministic per clean image, not identical to Stage A's photo slot.
+    # The live branch needs the captions and concept for the P5 prompt; the
+    # mock slot ignores them, so they are discarded explicitly, not silently.
+    _ = context
+    pack, photo = _locate(clean_png)
+    filename = f"photo{photo}_entries.json"
+    payload = _read_payload(pack, filename)
+    # Prices pass through exactly as the fixture carries them (Price Law):
+    # the adapter never computes, infers, or defaults a price.
+    return [
+        _validated(ProductEntry, item, pack, filename)  # type: ignore[misc]
+        for item in payload
+    ]
+
+
+def _mock_health_probe() -> HealthResponse:
+    validated = _validated(HealthResponse, _read_payload("a", "health.json"), "a", "health.json")
+    assert isinstance(validated, HealthResponse)
+    return validated
+
+
+# ---------------------------------------------------------------------------
+# Live branch — UNVERIFIED HYPOTHESIS (see module docstring). Never runs
+# without the key, the client dependency, and a docs check at dev.meta.ai.
+# ---------------------------------------------------------------------------
+
+
+def _live_client() -> Any:
+    """Build the OpenAI-compatible client, or name what is missing."""
+    try:
+        from openai import AsyncOpenAI
+    except ImportError as exc:
+        raise MetaLiveUnavailable(
+            "live Meta calls need the 'openai' client package, which is not "
+            "installed: requirements.txt is locked at four packages and adding "
+            "one is a Lead decision (due with the API key)."
+        ) from exc
+    api_key = settings.model_api_key
+    if not api_key:
+        raise MetaLiveUnavailable(
+            "MODEL_API_KEY is not set; live Meta calls are impossible."
+        )
+    return AsyncOpenAI(base_url=META_BASE_URL, api_key=api_key)
+
+
+def _is_transient(exc: Exception) -> bool:
+    """True for 429/5xx/timeout — the only retried failures (runbook §2)."""
+    try:
+        from openai import APIConnectionError, APIStatusError, RateLimitError
+    except ImportError:
+        return isinstance(exc, (TimeoutError, asyncio.TimeoutError))
+    if isinstance(exc, (APIConnectionError, RateLimitError)):
+        return True
+    if isinstance(exc, APIStatusError) and exc.status_code in _TRANSIENT_STATUS:
+        return True
+    return False
+
+
+def _is_model_not_found(exc: Exception) -> bool:
+    """True for ``404 model_not_found``: access problem, never retried."""
+    if getattr(exc, "status_code", None) != 404:
+        return False
+    code = ""
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict):
+        error = body.get("error", {})
+        if isinstance(error, dict):
+            code = str(error.get("code", ""))
+    return "model_not_found" in (code + " " + str(exc)).lower()
+
+
+async def _live_request(
+    factory: Callable[[], Coroutine[Any, Any, Any]], *, what: str
+) -> Any:
+    """Run one live call with 2s/5s/12s backoff on transients only."""
+    last: Exception | None = None
+    for attempt_index, delay in enumerate((*_RETRY_DELAYS, 0.0)):
+        try:
+            return await factory()
+        except Exception as exc:
+            if _is_model_not_found(exc):
+                raise MetaModelNotFound(
+                    f"{what}: 404 model_not_found — key scope problem, not retried "
+                    f": key scope not retried: {exc}"
+                ) from exc
+            last = exc
+            if not _is_transient(exc) or attempt_index == len(_RETRY_DELAYS):
+                raise
+            await asyncio.sleep(delay)
+    assert last is not None
+    raise last
+
+
+def _data_url(image_bytes: bytes) -> str:
+    """Encode image bytes as a data URL, sniffing PNG vs JPEG magic."""
+    mime = "image/png" if image_bytes[:8] == b"\x89PNG\r\n\x1a\n" else "image/jpeg"
+    return f"data:{mime};base64," + base64.b64encode(image_bytes).decode("ascii")
+
+
+async def _live_discover_concepts(
+    image_bytes: bytes, captions: str
+) -> list[Concept]:
+    """HYPOTHESIS for P1 (prompts-final.md v1, UNVERIFIED).
+
+    Chat Completions, ``muse-spark-1.3``, temp 0.4, ``json_object`` response.
+    Mapping guess: the shared ``scene_note`` and the joined ``visible_text``
+    list attach to every concept — confirm against the live response.
+    """
+    client = _live_client()
+    data_url = _data_url(image_bytes)
+
+    async def _call() -> Any:
+        return await client.chat.completions.create(
+            model=MUSE_SPARK_MODEL,
+            temperature=0.4,
+            response_format={"type": "json_object"},
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You analyze photos taken by small online sellers. Your "
+                        "job is to prepare the photo for concept segmentation "
+                        "by listing the product types visible in it."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": (
+                                "List every distinct product TYPE sold in this "
+                                f"photo. Seller captions: {captions!r}. Return "
+                                "ONLY JSON: {\"concepts\": [...], "
+                                "\"scene_note\": \"...\", \"visible_text\": [...]}"
+                            ),
+                        },
+                        {"type": "image_url", "image_url": {"url": data_url}},
+                    ],
+                },
+            ],
+        )
+
+    response = await _live_request(_call, what="discover_concepts")
+    try:
+        document = json.loads(response.choices[0].message.content or "")
+        scene_note = str(document["scene_note"])
+        visible = document.get("visible_text", [])
+        visible_text = ", ".join(str(t) for t in visible) if visible else None
+        return [
+            Concept(phrase=str(phrase), scene_note=scene_note, visible_text=visible_text)
+            for phrase in document["concepts"]
+        ]
+    except (KeyError, TypeError, ValueError, ValidationError) as exc:
+        raise MetaLiveUnavailable(
+            f"discover_concepts: live P1 response did not match the hypothesis: {exc}"
+        ) from exc
+
+
+async def _live_segment_concept(
+    image_bytes: bytes, concept: str
+) -> list[MaskResult]:
+    """HYPOTHESIS for P2 (prompts-final.md v1, UNVERIFIED).
+
+    Responses API, ``sam-3.1``, streamed, prompt body is the phrase alone
+    with ``metadata={"mask_encoding": "one_bit"}``. How the target photo
+    reaches the request is an OPEN POINT: the runbook's text-prompts-only
+    note suggests the photo travels out-of-band (upload/session context),
+    but the exact threading is confirmed against the live spike, not assumed
+    here. The response side is a second OPEN POINT: ``meta-sam-parser`` is
+    not installed and its record API is unknown, so parsing waits for the
+    live spike — this names both blockers instead of inventing calls.
+    """
+    _ = image_bytes
+    client = _live_client()
+
+    async def _call() -> Any:
+        return await client.responses.create(  # type: ignore[attr-defined]
+            model=SAM_MODEL,
+            stream=True,
+            metadata={"mask_encoding": "one_bit"},
+            input=concept,
+        )
+
+    stream = await _live_request(_call, what="segment_concept")
+    try:
+        import meta_sam_parser  # noqa: F401
+    except ImportError as exc:
+        raise MetaLiveUnavailable(
+            "segment_concept: the live request was hypothetically shaped but "
+            "the stream was not consumed — 'meta-sam-parser' is not installed "
+            "and its record API is unverified. Parser decision lands with the "
+            "live spike (Gate check)."
+        ) from exc
+    raise MetaLiveUnavailable(
+        "segment_concept: parser present but its record API is unverified; "
+        f"adapt here against the captured stream ({stream!r})."
+    )
+
+
+async def _live_clean_product_image(
+    crop_png: bytes, product_label: str
+) -> bytes:
+    """HYPOTHESIS for P3 (prompts-final.md v1, UNVERIFIED).
+
+    Images **edits**, ``muse-image-1.0``, ``n=1``, ``response_format="b64_json"``,
+    ``output_format="png"``, ``size="1024x1024"`` (aspect ratio, not pixels).
+    OPEN QUESTION from the runbook: whether ``image`` takes a file object or
+    a data URL on this endpoint — the first 400 answers it; capture verbatim.
+    """
+    client = _live_client()
+    image_file = io.BytesIO(crop_png)
+    image_file.name = "crop.png"
+
+    async def _call() -> Any:
+        return await client.images.edit(
+            model=MUSE_IMAGE_MODEL,
+            image=image_file,
+            prompt=(
+                "Place this exact product on a clean off-white studio background "
+                "(#F7F7F5), soft even lighting, gentle natural shadow beneath it, "
+                "centered, front view, e-commerce product photography. Preserve "
+                "the product exactly: same shape, same colors, same logos, same "
+                "text, same details — do not redesign, restyle, or add or remove "
+                "any part of the product. Remove the original background, hands, "
+                "and any other objects completely."
+            ),
+            n=1,
+            size="1024x1024",
+            response_format="b64_json",
+            output_format="png",
+        )
+
+    response = await _live_request(_call, what="clean_product_image")
+    try:
+        return base64.b64decode(response.data[0].b64_json)
+    except (AttributeError, IndexError, KeyError, ValueError) as exc:
+        raise MetaLiveUnavailable(
+            f"clean_product_image: live P3 response did not match the hypothesis: {exc}"
+        ) from exc
+
+
+async def _live_verify_fidelity(
+    original_png: bytes, cleaned_png: bytes
+) -> FidelityVerdict:
+    """HYPOTHESIS for P4 (prompts-final.md v1, UNVERIFIED).
+
+    A real call, not a heuristic: two images in, strict JSON verdict out,
+    temperature 0. Pass = all three booleans true; anything else is a fail
+    verdict, not an error — the pipeline falls back to the composite.
+    """
+    client = _live_client()
+    first = _data_url(original_png)
+    second = _data_url(cleaned_png)
+
+    async def _call() -> Any:
+        return await client.chat.completions.create(
+            model=MUSE_SPARK_MODEL,
+            temperature=0.0,
+            response_format={"type": "json_object"},
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a strict quality inspector for product photography.",
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": (
+                                "Do image 1 and image 2 show the SAME product, "
+                                "unchanged? Check: (a) product shape and details "
+                                "identical, nothing added or removed; (b) colors "
+                                "match; (c) any logo or printed text is identical "
+                                "and legible. Be strict: if the edit redesigned, "
+                                "recolored, or altered any detail, fail it. Return "
+                                "ONLY JSON: {\"same_product\": bool, "
+                                "\"color_match\": bool, \"logo_text_match\": "
+                                "bool, \"reason\": \"one short sentence\"}"
+                            ),
+                        },
+                        {"type": "image_url", "image_url": {"url": first}},
+                        {"type": "image_url", "image_url": {"url": second}},
+                    ],
+                },
+            ],
+        )
+
+    response = await _live_request(_call, what="verify_fidelity")
+    try:
+        return FidelityVerdict.model_validate_json(
+            response.choices[0].message.content or ""
+        )
+    except (ValueError, ValidationError) as exc:
+        raise MetaLiveUnavailable(
+            f"verify_fidelity: live P4 response did not match the hypothesis: {exc}"
+        ) from exc
+
+
+async def _live_extract_product(
+    clean_png: bytes, context: ExtractContext
+) -> list[ProductEntry]:
+    """HYPOTHESIS for P5 + one P6 repair retry (prompts-final.md v1, UNVERIFIED).
+
+    One call per product, temp 0.2, ``json_object`` + pydantic validation; on
+    validation failure exactly one repair retry carries the error text (P6).
+    A second failure is a product-level error. The price rules bind the
+    prompt, not this code — the model returns hints, never decisions.
+    """
+    client = _live_client()
+    data_url = _data_url(clean_png)
+    captions_text = _captions_text(context.seller_captions)
+    # ExtractContext carries seller_captions (JSON, which bundles the
+    # Stage A scene note in its "general" text), concept, and visible_text —
+    # schemas.py is frozen, so there is no separate scene_note field. The
+    # exact live threading of Stage A's scene note is confirmed against the
+    # first live response, not assumed here.
+    user_text = (
+        f"Seller's own notes/captions: {captions_text!r}. "
+        f"Text seen in the original photo: {context.visible_text}. "
+        f"Product type: {context.concept!r}. Write the catalog entry for THIS "
+        "product as JSON only: name, description_id, description_en, category, "
+        "brand, condition, attributes {color, size, variant}, price_hint_idr, "
+        "price_suggestion_idr, confidence."
+    )
+
+    async def _call(messages: list[dict[str, Any]]) -> Any:
+        async def _inner() -> Any:
+            return await client.chat.completions.create(
+                model=MUSE_SPARK_MODEL,
+                temperature=0.2,
+                response_format={"type": "json_object"},
+                messages=messages,
+            )
+
+        return await _live_request(_inner, what="extract_product")
+
+    def _messages(extra: str = "") -> list[dict[str, Any]]:
+        return [
+            {
+                "role": "system",
+                "content": (
+                    "You write catalog entries for Indonesian social-commerce "
+                    "sellers. You never invent specifications, prices, or brands "
+                    "you cannot see."
+                ),
+            },
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": user_text + extra},
+                    {"type": "image_url", "image_url": {"url": data_url}},
+                ],
+            },
+        ]
+
+    response = await _call(_messages())
+    try:
+        return [ProductEntry.model_validate_json(response.choices[0].message.content or "")]
+    except (ValueError, ValidationError) as first_exc:
+        repair = await _call(
+            _messages(
+                f" Your previous answer failed validation: {first_exc}. Return "
+                "the same content as corrected JSON only, matching the schema "
+                "exactly. No explanation, no markdown fences."
+            )
+        )
+        try:
+            return [
+                ProductEntry.model_validate_json(repair.choices[0].message.content or "")
+            ]
+        except (ValueError, ValidationError) as exc:
+            raise MetaLiveUnavailable(
+                f"extract_product: P6 repair retry also failed validation: {exc}"
+            ) from exc
+
+
+async def _live_health_probe() -> HealthResponse:
+    """HYPOTHESIS: reachability + model-access check, no prompt, no content."""
+    client = _live_client()
+
+    async def _call() -> Any:
+        return await client.models.list()
+
+    await _live_request(_call, what="health_probe")
+    return HealthResponse(ok=True, mock=False)
+
+
+# ---------------------------------------------------------------------------
+# Public surface — exactly these six functions
+# ---------------------------------------------------------------------------
+
+
+async def discover_concepts(image_bytes: bytes, captions: str) -> list[Concept]:
+    """Stage A: name the product concepts visible in one photo (P1)."""
+    if settings.meta_mock:
+        return _mock_discover_concepts(image_bytes, captions)
+    return await _live_discover_concepts(image_bytes, captions)
+
+
+async def segment_concept(image_bytes: bytes, concept: str) -> list[MaskResult]:
+    """Stage B: segment every instance of ONE concept phrase (P2)."""
+    if settings.meta_mock:
+        return _mock_segment_concept(image_bytes, concept)
+    return await _live_segment_concept(image_bytes, concept)
+
+
+async def clean_product_image(crop_png: bytes, product_label: str) -> bytes:
+    """Stage D: cleanup edit into a studio PNG (P3)."""
+    if settings.meta_mock:
+        return _mock_clean_product_image(crop_png, product_label)
+    return await _live_clean_product_image(crop_png, product_label)
+
+
+async def verify_fidelity(original_png: bytes, cleaned_png: bytes) -> FidelityVerdict:
+    """Stage D gate: strict same-product verdict (P4). A fail is a verdict."""
+    if settings.meta_mock:
+        return _mock_verify_fidelity(original_png, cleaned_png)
+    return await _live_verify_fidelity(original_png, cleaned_png)
+
+
+async def extract_product(
+    clean_png: bytes, context: ExtractContext
+) -> list[ProductEntry]:
+    """Stage E: catalog entries from the cleaned image + captions (P5/P6)."""
+    if settings.meta_mock:
+        return _mock_extract_product(clean_png, context)
+    return await _live_extract_product(clean_png, context)
+
+
+async def health_probe() -> HealthResponse:
+    """Liveness + mock flag. Sends no prompt, produces no catalog content."""
+    if settings.meta_mock:
+        return _mock_health_probe()
+    return await _live_health_probe()
