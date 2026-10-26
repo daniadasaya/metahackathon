@@ -3,6 +3,23 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      // First-paint theme + locale (theme flash prevention). Synchronous on purpose: it must run
+      // before any stylesheet paints. lib/store.ts re-applies the same rules and then owns them.
+      (function () {
+        try {
+          var root = document.documentElement;
+          var theme = localStorage.getItem('kk:theme');
+          if (theme !== 'light' && theme !== 'dark') {
+            theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          root.dataset.theme = theme;
+          root.lang = localStorage.getItem('kk:locale') === 'en' ? 'en' : 'id';
+        } catch (e) {
+          document.documentElement.dataset.theme = 'light';
+        }
+      })();
+    </script>
     <title>Katalog Kilat</title>
   </head>
   <body>

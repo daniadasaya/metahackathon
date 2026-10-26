@@ -1,0 +1,339 @@
+/*
+ * Hand-rolled component recipes (brandkit §4). Colours come from tokens only.
+ * Layout lives in Tailwind classes in the TSX; this file owns the tactile surfaces.
+ */
+
+@layer base {
+  html {
+    background: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: var(--ff-body);
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 500;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--bg-canvas);
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3 {
+    margin: 0;
+    font-family: var(--ff-display);
+  }
+
+  p {
+    margin: 0;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--text-primary);
+    outline-offset: 2px;
+  }
+
+  ::placeholder {
+    color: var(--text-muted);
+    opacity: 1;
+  }
+}
+
+@layer components {
+  /* ---- Card ------------------------------------------------------------ */
+  .kk-card {
+    background: var(--bg-surface);
+    border: 1.5px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    box-shadow: 0 2px 0 var(--border-strong);
+  }
+
+  .kk-card-flat {
+    background: var(--bg-surface);
+    border: 1.5px solid var(--border-subtle);
+    border-radius: var(--r-md);
+  }
+
+  .kk-card-tap {
+    cursor: pointer;
+  }
+
+  .kk-card-tap:focus-within {
+    outline: 3px solid var(--text-primary);
+    outline-offset: 2px;
+  }
+
+  /* ---- Buttons --------------------------------------------------------- */
+  .kk-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 0;
+    border-radius: 16px;
+    font-family: var(--ff-display);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .kk-btn-primary {
+    --edge: var(--accent-secondary);
+    min-height: 56px;
+    padding: 0 24px;
+    font-size: 19px;
+    line-height: 26px;
+    background: var(--accent-primary);
+    color: var(--accent-primary-fg);
+  }
+
+  .kk-btn-secondary {
+    min-height: 48px;
+    padding: 0 16px;
+    font-size: 16px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1.5px solid var(--border-strong);
+  }
+
+  .kk-btn-ghost {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0 12px;
+    font-size: 14px;
+    background: transparent;
+    color: var(--text-primary);
+  }
+
+  .kk-btn:disabled,
+  .kk-btn[aria-disabled='true'] {
+    --edge: var(--border-subtle);
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
+
+  /* ---- Chip ------------------------------------------------------------ */
+  .kk-chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border-strong);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-family: var(--ff-body);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 44px tap area around a 40px pill */
+  .kk-chip::before {
+    content: '';
+    position: absolute;
+    inset: -2px 0;
+  }
+
+  .kk-chip[aria-pressed='true'] {
+    --edge: var(--accent-secondary);
+    background: var(--accent-primary);
+    color: var(--accent-primary-fg);
+    border-color: var(--accent-secondary);
+  }
+
+  /* ---- Input ----------------------------------------------------------- */
+  .kk-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 14px;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--r-sm);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-family: var(--ff-body);
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 500;
+  }
+
+  /* ---- Switch ---------------------------------------------------------- */
+  .kk-switch {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .kk-switch-track {
+    position: relative;
+    display: block;
+    width: 52px;
+    height: 32px;
+    border-radius: 999px;
+    border: 2px solid var(--border-strong);
+    background: var(--bg-subtle);
+    box-sizing: border-box;
+  }
+
+  .kk-switch-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: var(--text-secondary);
+    transition: transform 120ms ease-out;
+  }
+
+  .kk-switch[aria-checked='true'] .kk-switch-track {
+    background: var(--status-success);
+    border-color: var(--status-success);
+  }
+
+  .kk-switch[aria-checked='true'] .kk-switch-knob {
+    background: var(--bg-surface);
+    transform: translateX(20px);
+  }
+
+  /* ---- Segmented locale switch ---------------------------------------- */
+  .kk-seg {
+    display: inline-flex;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--bg-surface);
+  }
+
+  .kk-seg > button {
+    min-width: 44px;
+    min-height: 41px;
+    padding: 0 8px;
+    border: 0;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--ff-display);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .kk-seg > button[aria-pressed='true'] {
+    background: var(--accent-primary);
+    color: var(--accent-primary-fg);
+  }
+
+  /* ---- Stage tiles (brandkit §4 Stage A–E strip) ----------------------- */
+  .kk-tile {
+    position: relative;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    font-family: var(--ff-display);
+    font-weight: 800;
+    font-size: 24px;
+    line-height: 28px;
+    letter-spacing: -0.02em;
+  }
+
+  .kk-tile[data-state='pending'] {
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    border: 1.5px solid var(--border-subtle);
+  }
+
+  .kk-tile[data-state='done'] {
+    background: var(--status-success);
+    color: var(--bg-surface);
+  }
+
+  .kk-tile[data-state='active'] {
+    background: var(--accent-primary);
+    color: var(--accent-primary-fg);
+  }
+
+  .kk-tile[data-state='failed'] {
+    background: var(--bg-surface);
+    color: var(--status-danger);
+    border: 2px solid var(--status-danger);
+  }
+
+  /* The edge pulses via opacity on a pseudo-element: box-shadow itself is never animated. */
+  .kk-tile[data-state='active']::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 2px 0 var(--accent-secondary);
+    pointer-events: none;
+    animation: kk-edge-pulse 1.4s ease-in-out infinite alternate;
+  }
+
+  .kk-rule {
+    flex: none;
+    width: 6px;
+    height: 4px;
+    background: var(--border-subtle);
+  }
+
+  .kk-rule[data-state='done'] {
+    background: var(--status-success);
+  }
+
+  .kk-rule[data-state='active'] {
+    background: var(--accent-primary);
+  }
+
+  @keyframes kk-edge-pulse {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0.6;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kk-tile[data-state='active']::after {
+      animation: none;
+    }
+
+    .kk-switch-knob {
+      transition: none;
+    }
+  }
+
+  /* ---- Toast ----------------------------------------------------------- */
+  .kk-toast {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1.5px solid var(--status-danger);
+    border-radius: var(--r-md);
+    box-shadow: 0 2px 0 var(--border-strong);
+  }
+}

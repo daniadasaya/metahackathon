@@ -1,0 +1,103 @@
+/*
+ * Design tokens — brandkit.md §2, copied verbatim.
+ *
+ * `:root` is the Light theme (Warm Alabaster); `[data-theme="dark"]` is Obsidian Slate.
+ * There is deliberately no `prefers-color-scheme` rule here: the theme is resolved in JS
+ * (inline script in index.html + lib/store.ts), which sets `data-theme` on <html>.
+ * `system` mode follows the OS live through a matchMedia listener, not through CSS.
+ *
+ * This file and components.css are the only places a colour literal may appear.
+ */
+
+:root {
+  color-scheme: light;
+
+  --bg-canvas: #faf7f2;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-subtle: #f1ebe0;
+  --text-primary: #1b1a17;
+  --text-secondary: #4c4943;
+  --text-muted: #615d55;
+  --border-subtle: #e6dfd1;
+  --border-strong: #857d6d;
+  --accent-primary: #f5a524;
+  --accent-primary-fg: #1b1a17;
+  --accent-secondary: #b34300;
+  --status-success: #0b7a52;
+  --status-warning: #8f5b00;
+  --status-danger: #c0301f;
+  --price-verified: #0b7a52;
+  --price-ai-hint: #67635b;
+  --gate-pass: #0b7a52;
+  --gate-fallback: #a04a00;
+
+  /* Radii (brandkit §4) */
+  --r-sm: 12px;
+  --r-md: 20px;
+  --r-lg: 28px;
+
+  /* Font stacks (brandkit §3) */
+  --ff-display: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif;
+  --ff-body: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --ff-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg-canvas: #121316;
+  --bg-surface: #1b1d22;
+  --bg-elevated: #25282f;
+  --bg-subtle: #2c3038;
+  --text-primary: #faf7f2;
+  --text-secondary: #c7c8cc;
+  --text-muted: #9a9da5;
+  --border-subtle: #2a2d34;
+  --border-strong: #6d727d;
+  --accent-primary: #f5a524;
+  --accent-primary-fg: #121316;
+  --accent-secondary: #ff8533;
+  --status-success: #34d399;
+  --status-warning: #f5a524;
+  --status-danger: #ff7a66;
+  --price-verified: #34d399;
+  --price-ai-hint: #9a9da5;
+  --gate-pass: #34d399;
+  --gate-fallback: #ff8533;
+}
+
+/*
+ * Money and SKU (brandkit §3): JetBrains Mono, tabular figures, slashed zero.
+ * Body copy never sets slashed-zero.
+ */
+.kk-money {
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+}
+
+/*
+ * Tactile edge recipe (brandkit §4): a 2px solid edge at rest that collapses while the
+ * element is pressed. Motion is transform only, ≤160ms, removed under reduced motion.
+ * `--edge` lets a component recolour the edge (primary button uses --accent-secondary).
+ */
+.kk-tactile {
+  box-shadow: 0 2px 0 var(--edge, var(--border-strong));
+  transition: transform 120ms ease-out;
+}
+
+.kk-tactile:active:not(:disabled):not([aria-disabled='true']) {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 var(--edge, var(--border-strong));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kk-tactile {
+    transition: none;
+  }
+
+  .kk-tactile:active:not(:disabled):not([aria-disabled='true']) {
+    transform: none;
+  }
+}

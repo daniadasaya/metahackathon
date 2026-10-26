@@ -1,1 +1,64 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+@import './styles/tokens.css';
+@import './styles/components.css';
+
+/*
+ * Tailwind reads the semantic tokens; it ships no palette of its own. `--color-*: initial`
+ * removes the default colours so an off-token class (bg-red-500) simply does not exist.
+ */
+@theme inline {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  --color-subtle: var(--bg-subtle);
+  --color-fg: var(--text-primary);
+  --color-fg-2: var(--text-secondary);
+  --color-fg-muted: var(--text-muted);
+  --color-line: var(--border-subtle);
+  --color-line-strong: var(--border-strong);
+  --color-accent: var(--accent-primary);
+  --color-accent-fg: var(--accent-primary-fg);
+  --color-accent-2: var(--accent-secondary);
+  --color-success: var(--status-success);
+  --color-warning: var(--status-warning);
+  --color-danger: var(--status-danger);
+  --color-price-verified: var(--price-verified);
+  --color-price-ai: var(--price-ai-hint);
+  --color-gate-pass: var(--gate-pass);
+  --color-gate-fallback: var(--gate-fallback);
+
+  --font-display: var(--ff-display);
+  --font-sans: var(--ff-body);
+  --font-mono: var(--ff-mono);
+}
+
+/* 360px type scale (brandkit §3) */
+@theme {
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-xs--letter-spacing: 0.02em;
+  --text-xs--font-weight: 600;
+  --text-sm: 14px;
+  --text-sm--line-height: 20px;
+  --text-sm--font-weight: 500;
+  --text-base: 16px;
+  --text-base--line-height: 24px;
+  --text-base--font-weight: 500;
+  --text-lg: 19px;
+  --text-lg--line-height: 26px;
+  --text-lg--letter-spacing: -0.015em;
+  --text-lg--font-weight: 700;
+  --text-xl: 24px;
+  --text-xl--line-height: 28px;
+  --text-xl--letter-spacing: -0.02em;
+  --text-xl--font-weight: 800;
+  --text-2xl: 32px;
+  --text-2xl--line-height: 34px;
+  --text-2xl--letter-spacing: -0.03em;
+  --text-2xl--font-weight: 800;
+  --text-price: 22px;
+  --text-price--line-height: 28px;
+  --text-price--font-weight: 700;
+}
