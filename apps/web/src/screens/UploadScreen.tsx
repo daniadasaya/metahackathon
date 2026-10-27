@@ -167,6 +167,31 @@ export function UploadScreen() {
         />
       </label>
 
+      <section className="mt-5" aria-labelledby="samples-title">
+        <h2 id="samples-title" className="text-lg">
+          {t('samples.title')}
+        </h2>
+        <p className="mt-1 text-sm text-fg-2">{t('samples.hint')}</p>
+        <div className="mt-3 flex flex-col gap-2">
+          {PACKS.map((entry) => (
+            <button
+              key={entry.pack}
+              type="button"
+              data-sample={entry.pack}
+              className="kk-chip kk-tactile min-h-14 w-full justify-start gap-3 px-4 text-base"
+              aria-pressed={pack === entry.pack}
+              onClick={() => setPack(pack === entry.pack ? null : entry.pack)}
+            >
+              {pack === entry.pack ? <CheckIcon size={20} /> : <PhotoIcon size={20} />}
+              {t(entry.label)}
+            </button>
+          ))}
+        </div>
+        {pack !== null ? (
+          <p className="mt-2 text-sm text-fg-2">{t('samples.selected', { pack: pack.toUpperCase() })}</p>
+        ) : null}
+      </section>
+
       {photos.length > 0 ? (
         <section className="mt-5" aria-labelledby="photos-title">
           <div className="flex items-baseline justify-between gap-2">
@@ -220,30 +245,6 @@ export function UploadScreen() {
         />
         <p className="mt-2 text-sm text-fg-muted">{t('upload.captionHelp')}</p>
       </div>
-
-      <section className="mt-6" aria-labelledby="samples-title">
-        <h2 id="samples-title" className="text-lg">
-          {t('samples.title')}
-        </h2>
-        <p className="mt-1 text-sm text-fg-2">{t('samples.hint')}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {PACKS.map((entry) => (
-            <button
-              key={entry.pack}
-              type="button"
-              className="kk-chip kk-tactile"
-              aria-pressed={pack === entry.pack}
-              onClick={() => setPack(pack === entry.pack ? null : entry.pack)}
-            >
-              {pack === entry.pack ? <CheckIcon size={16} /> : null}
-              {t(entry.label)}
-            </button>
-          ))}
-        </div>
-        {pack !== null ? (
-          <p className="mt-2 text-sm text-fg-2">{t('samples.selected', { pack: pack.toUpperCase() })}</p>
-        ) : null}
-      </section>
 
       <section className="kk-card-flat mt-6 flex items-center gap-3 py-3 pr-2 pl-4">
         <div className="min-w-0 flex-1">
