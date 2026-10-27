@@ -21,7 +21,22 @@ def exports_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return target
 
 
-def _product(sku="KK-0001", price=150000, via_chat=False, included=True, brand=None):
+def _product(
+    sku="KK-0001",
+    price=150000,
+    via_chat=False,
+    included=True,
+    brand=None,
+    cleanup_method="muse-image",
+    fidelity=None,
+):
+    if cleanup_method == "muse-image" and fidelity is None:
+        fidelity = {  # A fully positive verdict is the only legal muse-image record.
+            "same_product": True,
+            "color_match": True,
+            "logo_text_match": True,
+            "reason": "unchanged",
+        }
     return schemas.ReviewedProduct(
         sku=sku,
         job_id="mock-1-2",
@@ -30,8 +45,8 @@ def _product(sku="KK-0001", price=150000, via_chat=False, included=True, brand=N
         bbox=(1, 2, 3, 4),
         crop_url=f"/p/mock-1-2/{sku}-crop.jpg",
         clean_url=f"/p/mock-1-2/{sku}.jpg",
-        cleanup_method="muse-image",
-        fidelity=None,
+        cleanup_method=cleanup_method,
+        fidelity=fidelity,
         name="Tas Batik",
         description_id="Tas batik motif parang.",
         description_en="Batik tote bag.",
@@ -96,6 +111,75 @@ def test_run_export_price_missing_returns_400_via_route(exports_dir: Path) -> No
     p = _product("KK-0009", None, False, True, None)
     p.price_idr = None
     with pytest.raises(exporter.PriceMissingError):
+        exporter.run_export("mock-1-2", [p], seller, "http://example.com")
+
+
+# --- the image gate: no ungated generative image reaches an export ----------
+
+
+def test_ungated_muse_image_without_verdict_raises() -> None:
+    # Hand-crafted illegal record: generative method, no fidelity verdict at all.
+    p = _product("KK-0001")
+    p.fidelity = None
+    with pytest.raises(exporter.UngatedImageError) as ei:
+        exporter.validate_image_gate([p])
+    assert ei.value.skus == ["KK-0001"]
+
+
+def test_ungated_muse_image_with_failing_verdict_raises() -> None:
+    p = _product(
+        "KK-0002",
+        cleanup_method="muse-image",
+        fidelity={"same_product": False, "color_match": True, "logo_text_match": True, "reason": "redesigned"},
+    )
+    with pytest.raises(exporter.UngatedImageError) as ei:
+        exporter.validate_image_gate([p])
+    assert ei.value.skus == ["KK-0002"]
+
+
+def test_ungated_muse_image_with_partial_verdict_raises() -> None:
+    p = _product(
+        "KK-0003",
+        cleanup_method="muse-image",
+        fidelity={"same_product": True, "color_match": False, "logo_text_match": True, "reason": "hue shifted"},
+    )
+    with pytest.raises(exporter.UngatedImageError):
+        exporter.validate_image_gate([p])
+
+
+def test_composite_products_export_legally(exports_dir: Path) -> None:
+    seller = schemas.SellerInfo(store_name="S", wa_number="1")
+    # Composite is unconditionally legal — with or without any verdict.
+    products = [
+        _product("KK-0001", cleanup_method="composite", fidelity=None),
+        _product(
+            "KK-0002",
+            cleanup_method="composite",
+            fidelity={"same_product": False, "color_match": False, "logo_text_match": False, "reason": "gate rejected"},
+        ),
+    ]
+    files = exporter.run_export("mock-1-2", products, seller, "http://example.com")
+    assert len(files) == 4
+
+
+def test_gate_passed_muse_image_exports_legally(exports_dir: Path) -> None:
+    seller = schemas.SellerInfo(store_name="S", wa_number="1")
+    products = [_product("KK-0001")]
+    files = exporter.run_export("mock-1-2", products, seller, "http://example.com")
+    assert len(files) == 4
+
+
+def test_ungated_check_skips_excluded_products() -> None:
+    p = _product("KK-0004", included=False)
+    p.fidelity = None
+    exporter.validate_image_gate([p])  # must not raise
+
+
+def test_run_export_blocks_ungated_record(exports_dir: Path) -> None:
+    seller = schemas.SellerInfo(store_name="S", wa_number="1")
+    p = _product("KK-0001")
+    p.fidelity = None
+    with pytest.raises(exporter.UngatedImageError):
         exporter.run_export("mock-1-2", [p], seller, "http://example.com")
 
 

@@ -81,6 +81,21 @@ class PriceMissingError(Exception):
         self.skus = skus
 
 
+class UngatedImageError(Exception):
+    """Raised when an included product claims a generative cleanup without a gate pass.
+
+    Every exported image is a gate-passed Muse Image
+    output or the deterministic composite. A record with ``muse-image`` and
+    no fully positive fidelity verdict cannot exist if the pipeline is
+    correct, so it blocks the export with the offending SKUs named — never
+    silently downgraded to composite, which would hide the upstream defect.
+    """
+
+    def __init__(self, skus: list[str]) -> None:
+        super().__init__("ungated_generative_image: " + ", ".join(skus))
+        self.skus = skus
+
+
 # ---------------------------------------------------------------------------
 # Job-id helpers
 # ---------------------------------------------------------------------------
@@ -248,6 +263,28 @@ def validate_price_law(products: list[schemas.ReviewedProduct]) -> None:
     skus = _blocking_skus(products)
     if skus:
         raise PriceMissingError(skus)
+
+
+def _gate_passed(p: schemas.ReviewedProduct) -> bool:
+    """A generative cleanup is export-legal only with a fully positive verdict.
+
+    Mirrors the pipeline's own write condition (stage D) and the review
+    screen's gate display: ``same_product``, ``color_match`` and
+    ``logo_text_match`` must all be true.
+    """
+    v = p.fidelity
+    return v is not None and v.same_product and v.color_match and v.logo_text_match
+
+
+def validate_image_gate(products: list[schemas.ReviewedProduct]) -> None:
+    """Raise :class:`UngatedImageError` if an included item claims an ungated image.
+
+    Composite is always export-legal. ``muse-image`` is legal only when the
+    record carries a fully positive fidelity verdict.
+    """
+    skus = [p.sku for p in products if p.included and p.cleanup_method == schemas.CleanupMethod.MUSE_IMAGE and not _gate_passed(p)]
+    if skus:
+        raise UngatedImageError(skus)
 
 
 # ---------------------------------------------------------------------------
@@ -450,6 +487,7 @@ def run_export(
 ) -> list[schemas.ExportFile]:
     """Validate, generate, persist, and return the four export files."""
     validate_price_law(products)
+    validate_image_gate(products)
 
     csv_text = build_csv(job_id, products, seller, base_url)
     captions_text = build_captions(job_id, products, seller, base_url)

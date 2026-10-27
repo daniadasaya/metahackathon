@@ -464,6 +464,15 @@ async def export_job(job_id: str, body: ExportRequest) -> ExportResponse | JSONR
             ErrorCode.PRICE_MISSING,
             f"Missing price for included items: {', '.join(exc.skus)}.",
         )
+    except exporter.UngatedImageError as exc:
+        # A record claims a generative cleanup without a
+        # gate pass — an upstream pipeline defect, surfaced, not papered over.
+        logger.error(
+            "Export blocked for %r: ungated generative image for %s",
+            job_id,
+            ", ".join(exc.skus),
+        )
+        return _error(500, ErrorCode.EXPORT_FAILED, "Export blocked: ungated generative image.")
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Export failed for %r: %s", job_id, exc)
         return _error(500, ErrorCode.EXPORT_FAILED, "Export failed.")
