@@ -74,9 +74,11 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import copy
 import hashlib
 import io
 import json
+import re
 from collections.abc import Callable, Coroutine
 from pathlib import Path
 from typing import Any
@@ -111,6 +113,26 @@ MUSE_SPARK_MODEL = "muse-spark-1.3-contributor"
 SAM_MODEL = "sam-3.1"
 MUSE_IMAGE_MODEL = "muse-image-1.0"
 META_BASE_URL = "https://api.meta.ai/v1"
+
+# Canonical category taxonomy: the single source for the Stage E
+# wire-schema enum, the P5 v4 binding sentence, and the normalizer below.
+# Nothing else in this module hardcodes a category string.
+PRODUCT_CATEGORIES: tuple[str, ...] = (
+    "Handphone & Tablet",
+    "Aksesoris HP",
+    "Komputer & Laptop",
+    "Audio",
+    "Elektronik Lainnya",
+    "Pakaian",
+    "Fashion Pria",
+    "Fashion Wanita",
+    "Sepatu",
+    "Tas",
+    "Makanan & Minuman",
+    "Kecantikan",
+    "Rumah Tangga",
+    "Lainnya",
+)
 
 _PACKS = ("a", "b", "c")
 _PHOTOS = (1, 2)
@@ -329,18 +351,24 @@ def _mock_extract_product(
     # Slot from the image bytes only (one shared slot scheme, see docstring).
     # Stage C bytes differ from the Stage A photo, so the slot is
     # deterministic per clean image, not identical to Stage A's photo slot.
-    # The live branch needs the captions and concept for the P5 prompt; the
-    # mock slot ignores them, so they are discarded explicitly, not silently.
-    _ = context
+    # The live branch needs the captions for the P5 prompt; the mock slot
+    # ignores them, so they are discarded explicitly, not silently. The
+    # concept is used below for taxonomy normalization.
+    _ = context.seller_captions
     pack, photo = _locate(clean_png)
     filename = f"photo{photo}_entries.json"
     payload = _read_payload(pack, filename)
     # Prices pass through exactly as the fixture carries them (Price Law):
     # the adapter never computes, infers, or defaults a price.
-    return [
-        _validated(ProductEntry, item, pack, filename)  # type: ignore[misc]
-        for item in payload
-    ]
+    entries: list[ProductEntry] = []
+    for item in payload:
+        validated = _validated(ProductEntry, item, pack, filename)
+        assert isinstance(validated, ProductEntry)
+        # Fixtures already carry canonical Indonesian categories, so this is
+        # a verified no-op on mock paths — mock and live never disagree about
+        # the taxonomy.
+        entries.append(_with_canonical_category(validated, context.concept))
+    return entries
 
 
 def _mock_health_probe() -> HealthResponse:
@@ -956,6 +984,100 @@ def _strip_code_fences(text: str) -> str:
     return stripped
 
 
+# ---------------------------------------------------------------------------
+# Stage E category taxonomy
+# ---------------------------------------------------------------------------
+
+# Ordered (patterns, category) pairs: most specific first. Each pattern is
+# matched with word boundaries (``\b``) so short tokens like ``hp`` or ``tv``
+# never fire inside another word. Row order is load-bearing: the
+# charging-case row stays above the generic case/charging rows, the
+# phone-case row stays above the phone row, and the accessories row stays
+# above the phone row (so "Aksesori Ponsel" maps to accessories, not to
+# phones).
+_CATEGORY_KEYWORDS: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("charging case", "earbud case", "earbuds case", "earphone case", "tws case", "headphone case"), "Audio"),
+    (("phone case", "casing", "softcase", "hardcase", "case", "tempered glass", "screen protector"), "Aksesoris HP"),
+    (("charging cable", "charging", "charger", "kabel", "power bank", "powerbank", "adapter", "adaptor"), "Aksesoris HP"),
+    (("accessories", "accessory", "aksesori", "aksesoris"), "Aksesoris HP"),
+    (("earbud", "earbuds", "earphone", "earphones", "headphone", "headphones", "headset", "tws", "speaker", "audio", "airpods"), "Audio"),
+    (("laptop", "macbook", "notebook", "komputer", "computer", "keyboard", "mouse", "monitor"), "Komputer & Laptop"),
+    (("smartphone box", "smartphone", "tablet", "ipad", "iphone", "ponsel", "handphone", "phone", "hp"), "Handphone & Tablet"),
+    (("t-shirt", "tshirt", "kaos", "kaus", "kemeja", "jaket", "jacket", "dress", "daster", "hijab", "baju", "celana"), "Pakaian"),
+    (("sepatu", "sneaker", "sneakers", "shoe", "shoes"), "Sepatu"),
+    (("tas", "dompet", "bag", "wallet", "ransel", "backpack", "koper"), "Tas"),
+    (("pria", "men"), "Fashion Pria"),
+    (("wanita", "women"), "Fashion Wanita"),
+    (("mie", "noodle", "noodles", "cokelat", "coklat", "makanan", "minuman", "snack", "kopi", "teh"), "Makanan & Minuman"),
+    (("skincare", "skin care", "kosmetik", "serum", "sabun", "makeup", "make up", "lipstik"), "Kecantikan"),
+    (("rumah", "dapur", "panci", "ember", "perabot"), "Rumah Tangga"),
+    (("tv", "televisi", "kamera", "camera", "konsol", "console", "game console", "elektronik"), "Elektronik Lainnya"),
+)
+
+_CATEGORY_BY_LOWER: dict[str, str] = {c.lower(): c for c in PRODUCT_CATEGORIES}
+
+_CATEGORY_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
+    (
+        re.compile(r"\b(?:" + "|".join(map(re.escape, patterns)) + r")\b"),
+        category,
+    )
+    for patterns, category in _CATEGORY_KEYWORDS
+)
+
+_WS_RUN_RE = re.compile(r"\s+")
+
+
+def _normalize_category(raw_category: str, concept: str) -> str:
+    """Map any category string onto the canonical Indonesian taxonomy.
+
+    Deterministic and idempotent: a canonical value passes through unchanged
+    (so this is a no-op on good model output), a known English concept or
+    synonym maps to its taxonomy entry, and an unmapped value falls back to
+    the Stage A concept, then to ``"Lainnya"``. Never invents a category
+    outside :data:`PRODUCT_CATEGORIES`.
+
+    This is a normalizer, never a classifier: it may only pick an existing
+    taxonomy entry, and it never rewrites ``name``, ``description_id``, or
+    ``description_en``.
+    """
+    text = _WS_RUN_RE.sub(" ", raw_category.strip()).lower()
+    canonical = _CATEGORY_BY_LOWER.get(text)
+    if canonical is not None:
+        return canonical
+    for pattern, category in _CATEGORY_PATTERNS:
+        if pattern.search(text):
+            return category
+    concept_text = _WS_RUN_RE.sub(" ", concept.strip()).lower()
+    for pattern, category in _CATEGORY_PATTERNS:
+        if pattern.search(concept_text):
+            return category
+    return "Lainnya"
+
+
+def _with_canonical_category(entry: ProductEntry, concept: str) -> ProductEntry:
+    """Return ``entry`` with its category mapped onto the taxonomy."""
+    canonical = _normalize_category(entry.category, concept)
+    if canonical == entry.category:
+        return entry
+    return entry.model_copy(update={"category": canonical})
+
+
+def _stage_e_schema() -> dict[str, Any]:
+    """ProductEntry's JSON schema with the category taxonomy as an enum.
+
+    ``schemas.py`` is a frozen contract (``category: str``), so the constraint
+    lives in the outbound wire schema only: a deep copy of pydantic's schema
+    with ``properties.category.enum`` set to :data:`PRODUCT_CATEGORIES`. The
+    pydantic model itself is never mutated.
+    """
+    schema = copy.deepcopy(ProductEntry.model_json_schema())
+    properties = schema.get("properties", {})
+    category = properties.get("category", {}) if isinstance(properties, dict) else {}
+    if isinstance(category, dict):
+        category["enum"] = list(PRODUCT_CATEGORIES)
+    return schema
+
+
 async def _live_extract_product(
     clean_png: bytes, context: ExtractContext
 ) -> list[ProductEntry]:
@@ -970,7 +1092,7 @@ async def _live_extract_product(
     (docs: https://dev.meta.ai/docs/search-grounding — search grounding is
     only available on ``/v1/responses``, never on ``/v1/chat/completions``),
     ``text={"format": {"type": "json_schema", "name": "ProductEntry",
-    "schema": ProductEntry.model_json_schema()}}`` (docs:
+    "schema": _stage_e_schema()}}`` (docs:
     https://dev.meta.ai/docs/structured-output — Responses uses
     ``text.format``, not ``response_format``). Verified live 2026-10-28 on
     KK-0011 (Samsung phone, no seller price): ``json_schema`` + ``web_search``
@@ -993,6 +1115,12 @@ async def _live_extract_product(
     ``web_search``. Copy rules: zero meta-commentary/camera-talk; sealed
     retail box = the product inside (BNIB); accessories stay accessories;
     hands/background/props unnamed.
+
+    Category taxonomy (P5 v4): the wire schema carries the
+    fourteen-value ``category`` enum via :func:`_stage_e_schema()`, and
+    :func:`_normalize_category` is the deterministic safety net for any
+    model that still emits a raw English concept string — both parse paths
+    (first response and P6 repair retry) go through it.
     """
     client = _live_client()
     data_url = _data_url(clean_png)
@@ -1009,6 +1137,11 @@ async def _live_extract_product(
     # ("For 14 Pro" = a case FOR that phone); hands/background/props never
     # named; strict Price Law with Indonesian slang parsing, per-product
     # disambiguation, and no phone/spec numbers as prices.
+    #
+    # P5 Version 4 (2026-10-28): binding category taxonomy — the
+    # fourteen-entry list below is built from PRODUCT_CATEGORIES, plus the
+    # explicit invalid-value sentence. Every v3 rule above is untouched.
+    category_sentence = ", ".join(f'"{c}"' for c in PRODUCT_CATEGORIES)
     user_text = (
         f"Seller's own notes/captions: {captions_text!r}. "
         f"Text seen in the original photo: {context.visible_text}. "
@@ -1086,11 +1219,16 @@ async def _live_extract_product(
         "with visible wear or captions stating 'second', 'bekas', 'seken', "
         "'preloved', 'batangan', 'minus' are 'used' (mention any stated "
         "defect honestly, without photo meta-commentary). "
+        "category (binding): choose exactly one taxonomy entry from the "
+        "list below; never return an English concept word, a product type, "
+        "or a category you invent ('smartphone', 'phone case', "
+        "'accessories' are all invalid values). A phone case, charger, "
+        "cable, power bank, or screen protector is 'Aksesoris HP'; a "
+        "TWS/earbud charging case is 'Audio'; a sealed phone retail box is "
+        "'Handphone & Tablet'. "
         "Return ONLY valid JSON matching the schema: name, description_id, "
-        "description_en, category (one of: 'Handphone & Tablet', 'Komputer & "
-        "Laptop', 'Audio', 'Fashion Pria', 'Fashion Wanita', 'Sepatu', 'Tas', "
-        "'Makanan & Minuman', 'Kecantikan', 'Rumah Tangga', 'Elektronik "
-        "Lainnya', 'Lainnya'), brand (string or null), condition ('new' | "
+        "description_en, category (one of: " + category_sentence + "), brand "
+        "(string or null), condition ('new' | "
         "'used'), attributes {color, size, variant}, price_hint_idr "
         "(int|null), price_suggestion_idr (int|null), confidence ('high' | "
         "'medium' | 'low')."
@@ -1137,18 +1275,21 @@ async def _live_extract_product(
                     "format": {
                         "type": "json_schema",
                         "name": "ProductEntry",
-                        "schema": ProductEntry.model_json_schema(),
+                        "schema": _stage_e_schema(),
                     }
                 },
             )
 
         return await _live_request(_inner, what="extract_product")
 
+    def _parse(text: str) -> ProductEntry:
+        """Validate one model answer, then map onto the taxonomy."""
+        entry = ProductEntry.model_validate_json(_strip_code_fences(text))
+        return _with_canonical_category(entry, context.concept)
+
     response = await _call()
     try:
-        return [
-            ProductEntry.model_validate_json(_strip_code_fences(_output_text_of(response)))
-        ]
+        return [_parse(_output_text_of(response))]
     except (ValueError, ValidationError) as first_exc:
         repair = await _call(
             f" Your previous answer failed validation: {first_exc}. Return "
@@ -1156,11 +1297,7 @@ async def _live_extract_product(
             "exactly. No explanation, no markdown fences."
         )
         try:
-            return [
-                ProductEntry.model_validate_json(
-                    _strip_code_fences(_output_text_of(repair))
-                )
-            ]
+            return [_parse(_output_text_of(repair))]
         except (ValueError, ValidationError) as exc:
             raise MetaLiveUnavailable(
                 f"extract_product: P6 repair retry also failed validation: {exc}"

@@ -30,7 +30,7 @@
       "name": "HP Second - Smartphone",
       "description_id": "HP second kondisi normal, fungsi lancar. Dijual oleh toko HP second dan aksesori. Bisa COD.",
       "description_en": "Second-hand smartphone in normal condition, functions smoothly. Sold by second-hand phone and accessories store. COD available.",
-      "category": "smartphone",
+      "category": "Handphone & Tablet",
       "brand": null,
       "condition": "used",
       "attributes": {
@@ -69,7 +69,7 @@
       "name": "HP Second Warna Gelap",
       "description_id": "HP second warna gelap tampak belakang dengan kamera ganda dan fingerprint. Kondisi normal, fungsi lancar sesuai catatan toko, bisa COD. Merek dan model spesifik tidak terlihat jelas dan tidak dapat dipastikan dari foto ini.",
       "description_en": "Second-hand dark-colored smartphone seen from the back with dual camera and fingerprint sensor. Normal condition, smooth function as per store notes, COD available. Specific brand and model are not clearly visible and cannot be confirmed from this photo.",
-      "category": "smartphone",
+      "category": "Handphone & Tablet",
       "brand": null,
       "condition": "used",
       "attributes": {
@@ -108,7 +108,7 @@
       "name": "Smartphone Second Warna Gold",
       "description_id": "HP second warna gold, tampak depan dengan layar mati. Kondisi normal, fungsi lancar, bisa COD sesuai catatan toko. Merek, model dan spesifikasi tidak terlihat pada foto, harga pasti tidak teridentifikasi.",
       "description_en": "Second-hand smartphone in gold, front view with screen off. Normal condition, functions work smoothly, COD available as per store notes. Brand, model and specifications are not visible in the photo, exact price is not identifiable.",
-      "category": "smartphone",
+      "category": "Handphone & Tablet",
       "brand": null,
       "condition": "used",
       "attributes": {
@@ -147,7 +147,7 @@
       "name": "Samsung Smartphone H6 Biru Second",
       "description_id": "HP second Samsung H6 warna biru. Kondisi normal, fungsi lancar. Bisa COD. Harga Rp 1.500.000.",
       "description_en": "Second-hand Samsung H6 smartphone in blue. Normal condition, functions work smoothly. COD available. Price Rp 1,500,000.",
-      "category": "smartphone",
+      "category": "Handphone & Tablet",
       "brand": "Samsung",
       "condition": "used",
       "attributes": {
@@ -186,7 +186,7 @@
       "name": "Samsung Smartphone Second Hitam",
       "description_id": "HP second Samsung warna hitam, kondisi normal, fungsi lancar, bisa COD. Harga tertera Rp 1.500.000, terlihat tulisan SAMSUNG dan H6.",
       "description_en": "Second-hand Samsung smartphone in black, normal condition, functions work smoothly, available for COD. Listed price Rp 1,500,000, with SAMSUNG and H6 text seen.",
-      "category": "smartphone",
+      "category": "Handphone & Tablet",
       "brand": "Samsung",
       "condition": "used",
       "attributes": {
@@ -225,7 +225,7 @@
       "name": "Samsung Smartphone Second",
       "description_id": "HP second Samsung warna abu-abu, kondisi normal, fungsi lancar, bisa COD. Harga Rp 1.500.000.",
       "description_en": "Second-hand Samsung smartphone in grey, normal condition, functions work smoothly, COD available. Price Rp 1,500,000.",
-      "category": "smartphone",
+      "category": "Handphone & Tablet",
       "brand": "SAMSUNG",
       "condition": "used",
       "attributes": {
@@ -264,7 +264,7 @@
       "name": "Kotak iPhones Hitam Segel Plastik",
       "description_id": "Kotak smartphone bertuliskan iPhones warna hitam, masih terbungkus plastik. Toko HP second, kondisi normal, fungsi lancar, bisa COD. Model dan isi tidak terlihat jelas.",
       "description_en": "Black smartphone box labeled iPhones, still in plastic wrap. From second-hand phone store, normal condition, functions work, COD available. Model and contents not clearly visible.",
-      "category": "smartphone box",
+      "category": "Handphone & Tablet",
       "brand": null,
       "condition": "used",
       "attributes": {
@@ -303,7 +303,7 @@
       "name": "HP Second Apple Biru Dual Kamera",
       "description_id": "HP second Apple warna biru dengan dual kamera belakang dan logo Apple terlihat di foto. Kondisi normal, fungsi lancar sesuai catatan seller, bisa COD. Model, kapasitas, dan kelengkapan tidak terlihat dan tidak diasumsikan.",
       "description_en": "Second-hand Apple smartphone in blue with dual rear camera and visible Apple logo in the photo. Normal condition, functions well as per seller notes, COD available. Model, capacity, and accessories are not visible and are not assumed.",
-      "category": "smartphone",
+      "category": "Handphone & Tablet",
       "brand": "Apple",
       "condition": "used",
       "attributes": {
@@ -342,7 +342,7 @@
       "name": "Smartphone Apple Bekas Warna Putih",
       "description_id": "HP second merek Apple warna putih dengan kamera ganda di belakang. Kondisi normal, fungsi lancar menurut penjual, bisa COD. Toko HP second dan aksesori.",
       "description_en": "Second-hand Apple smartphone in white with dual rear camera. Normal condition, smooth function according to seller, COD available. Second-hand phone and accessories store.",
-      "category": "smartphone",
+      "category": "Handphone & Tablet",
       "brand": "Apple",
       "condition": "used",
       "attributes": {
@@ -381,7 +381,7 @@
       "name": "Kotak Smartphone Hitam",
       "description_id": "Kotak smartphone warna hitam terbungkus plastik. Kondisi normal sesuai catatan toko HP second dan aksesori, bisa COD.",
       "description_en": "Black smartphone box wrapped in plastic. Normal condition as per second-hand phone and accessories store notes, can COD.",
-      "category": "smartphone box",
+      "category": "Handphone & Tablet",
       "brand": null,
       "condition": "used",
       "attributes": {
@@ -420,7 +420,7 @@
       "name": "Samsung Smartphone Hitam Second",
       "description_id": "HP second Samsung warna hitam. Kondisi normal, fungsi lancar. Bisa COD. Harga tertera Rp 1.500.000.",
       "description_en": "Second-hand Samsung smartphone in black. Normal condition, functions run smoothly. COD available. Listed price Rp 1,500,000.",
-      "category": "smartphone",
+      "category": "Handphone & Tablet",
       "brand": "Samsung",
       "condition": "used",
       "attributes": {
@@ -459,7 +459,7 @@
       "name": "Casing Transparan For 14 Pro",
       "description_id": "Casing HP transparan untuk 14 Pro. Kondisi normal, bisa COD.",
       "description_en": "Transparent phone case for 14 Pro. Normal condition, COD available.",
-      "category": "phone case",
+      "category": "Aksesoris HP",
       "brand": null,
       "condition": "used",
       "attributes": {
@@ -498,7 +498,7 @@
       "name": "Charging Case Hitam",
       "description_id": "Charging case warna hitam. Kondisi normal, fungsi lancar. Barang second dari toko HP second dan aksesori, bisa COD.",
       "description_en": "Black charging case. Normal condition, functions smoothly. Used item from second-hand phone and accessories store, COD available.",
-      "category": "charging case",
+      "category": "Audio",
       "brand": null,
       "condition": "used",
       "attributes": {
@@ -537,7 +537,7 @@
       "name": "Power Bank Putih",
       "description_id": "Power bank warna putih, kondisi normal, fungsi lancar. Dijual di toko HP second dan aksesori, bisa COD.",
       "description_en": "White power bank, normal condition, functions well. Sold by second-hand phone and accessories store, COD available.",
-      "category": "accessories",
+      "category": "Aksesoris HP",
       "brand": null,
       "condition": "used",
       "attributes": {
@@ -576,7 +576,7 @@
       "name": "Kabel Charging Putih",
       "description_id": "Kabel charging warna putih. Kondisi normal, fungsi lancar. Bisa COD.",
       "description_en": "White charging cable. Normal condition, functions work well. COD available.",
-      "category": "accessories",
+      "category": "Aksesoris HP",
       "brand": null,
       "condition": "used",
       "attributes": {
@@ -615,7 +615,7 @@
       "name": "Kabel Charging Second Putih dan Hitam",
       "description_id": "Kabel charging second warna putih dan hitam, 2 pcs. Kondisi normal, fungsi lancar sesuai catatan toko. Toko HP second dan aksesori, bisa COD.",
       "description_en": "Second-hand charging cables in white and black, 2 pcs. Normal condition, functions work smoothly as per store notes. Second-hand phone and accessories store, COD available.",
-      "category": "accessories",
+      "category": "Aksesoris HP",
       "brand": null,
       "condition": "used",
       "attributes": {

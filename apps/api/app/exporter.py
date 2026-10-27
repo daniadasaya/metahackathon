@@ -46,6 +46,7 @@ import io
 import json
 import re
 import zipfile
+from collections.abc import Mapping
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -533,6 +534,8 @@ def build_zip(
     seller: schemas.SellerInfo,
     base_url: str,
     csv_text: str,
+    *,
+    images: Mapping[str, bytes] | None = None,
 ) -> bytes:
     """Assemble the photo ZIP with JPGs, crops, and the CSV at root.
 
@@ -541,8 +544,41 @@ def build_zip(
     under its own SKU. A promoted angle photo is written under the SKU its
     ``clean_url`` names (:func:`photo_sku`), so the ZIP always matches the
     CSV's links. An entry is written once, never twice.
+
+    ``images`` (keyword-only) supplies the JPG bytes from a mapping keyed
+    ``"{sku}.jpg"`` / ``"{sku}-crop.jpg"`` instead of reading the job folder.
+    It exists for golden-bundle regeneration: the Demo Safe Mode bundle keeps
+    its images as static JPEGs under ``apps/web/public/samples/{pack}/golden/
+    images/`` and the job folder that produced them is long wiped, so
+    :func:`resolve_image_bytes` cannot serve them. When ``images`` is given,
+    :func:`resolve_image_bytes` and :func:`crop_available` are not consulted at
+    all; a missing primary entry raises ``KeyError`` naming the SKU instead of
+    skipping the photo or substituting a placeholder. ``None`` (the default)
+    keeps the job-folder behaviour byte-identical.
     """
     children_by_parent = merged_children_map(products)
+
+    def image_bytes(sku: str) -> bytes:
+        """Primary JPG bytes for ``sku``: the supplied map, else the job folder."""
+        if images is None:
+            return resolve_image_bytes(job_id, sku)
+        key = f"{sku}.jpg"
+        try:
+            return images[key]
+        except KeyError:
+            raise KeyError(
+                f"build_zip: the supplied image map is incomplete — no {key!r} "
+                f"for SKU {sku}"
+            ) from None
+
+    def crop_bytes(sku: str) -> bytes | None:
+        """Crop JPG bytes for ``sku``, or ``None`` when this source has no crop."""
+        if images is None:
+            if not crop_available(job_id, sku):
+                return None
+            return resolve_image_bytes(job_id, f"{sku}-crop")
+        return images.get(f"{sku}-crop.jpg")
+
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(f"katalog-{job_id}.csv", csv_text)
@@ -552,9 +588,10 @@ def build_zip(
             if sku in written:
                 return
             written.add(sku)
-            zf.writestr(f"{sku}.jpg", resolve_image_bytes(job_id, sku))
-            if crop_available(job_id, sku):
-                zf.writestr(f"{sku}-crop.jpg", resolve_image_bytes(job_id, f"{sku}-crop"))
+            zf.writestr(f"{sku}.jpg", image_bytes(sku))
+            crop = crop_bytes(sku)
+            if crop is not None:
+                zf.writestr(f"{sku}-crop.jpg", crop)
 
         for p in included_products(products):
             write_entry(photo_sku(p))

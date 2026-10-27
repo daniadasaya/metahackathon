@@ -525,3 +525,83 @@ def test_run_export_with_merged_children_writes_four_files(exports_dir: Path) ->
     with zipfile.ZipFile(out / "katalog-kilat-images.zip") as zf:
         assert "KK-0002.jpg" in zf.namelist()
 
+
+# ---------------------------------------------------------------------------
+# build_zip image-source seam: golden regeneration supplies its own JPGs
+# ---------------------------------------------------------------------------
+
+
+def test_build_zip_reads_images_from_the_supplied_map() -> None:
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    products = [
+        _product("KK-0001", 150000, False, True, "Acme", concept="smartphone"),
+        _product("KK-0002", 75000, False, True, None, concept="smartphone box"),
+    ]
+    # A non-mock job id on purpose: a mock id would let resolve_image_bytes
+    # invent a placeholder and the test would pass without touching the map.
+    csv_text = exporter.build_csv("job-golden-1", products, seller, "http://example.com")
+    images = {
+        "KK-0001.jpg": b"\xff\xd8primary-one",
+        "KK-0001-crop.jpg": b"\xff\xd8crop-one",
+        "KK-0002.jpg": b"\xff\xd8primary-two",
+        "KK-0002-crop.jpg": b"\xff\xd8crop-two",
+    }
+
+    data = exporter.build_zip(
+        "job-golden-1", products, seller, "http://example.com", csv_text, images=images
+    )
+
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
+        assert zf.namelist() == [
+            "katalog-job-golden-1.csv",
+            "KK-0001.jpg",
+            "KK-0001-crop.jpg",
+            "KK-0002.jpg",
+            "KK-0002-crop.jpg",
+        ]
+        assert zf.read("katalog-job-golden-1.csv") == csv_text.encode("utf-8")
+        for name, payload in images.items():
+            assert zf.read(name) == payload  # verbatim bytes, never re-encoded
+
+
+def test_build_zip_incomplete_image_map_raises_naming_the_sku() -> None:
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    products = [_product("KK-0007", 75000, False, True, None)]
+    csv_text = exporter.build_csv("job-golden-2", products, seller, "http://example.com")
+
+    with pytest.raises(KeyError) as ei:
+        exporter.build_zip(
+            "job-golden-2",
+            products,
+            seller,
+            "http://example.com",
+            csv_text,
+            images={"KK-0007-crop.jpg": b"\xff\xd8crop"},
+        )
+
+    message = str(ei.value)
+    assert "KK-0007" in message
+    assert "incomplete" in message
+
+
+# ---------------------------------------------------------------------------
+# The regeneration script's own path derivation: scripts/ is one level below
+# the service root in both layouts
+# ---------------------------------------------------------------------------
+
+
+def test_regen_script_derives_web_dir_from_the_service_root() -> None:
+    """``WEB_DIR`` must not assume a checkout's depth.
+
+    The image runs the module from ``/srv/scripts/``, whose ``.parents`` chain is
+    ``[/srv, /]`` — a ``parents[3]`` lookup raises ``IndexError`` at import time,
+    before argparse. ``scripts/`` sits exactly one level below the service root
+    in both layouts, so the constant is derived from ``parents[1]``.
+    """
+    import scripts
+    import scripts.regen_golden_exports as regen
+
+    service_root = Path(scripts.__file__).resolve().parents[1]
+    assert regen.WEB_DIR == service_root.parent / "web"
+    assert regen.WEB_DIR.name == "web"
+

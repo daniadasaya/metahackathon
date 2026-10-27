@@ -9,8 +9,11 @@ from __future__ import annotations
 
 import asyncio
 import builtins
+import copy
+import json
 import socket
 import sys
+import types
 from collections.abc import Iterator
 from typing import Any
 
@@ -300,3 +303,241 @@ def test_aclose_close_failure_propagates(
     assert client.close_calls == 1
     # dropped even though close failed — the error is not retried or swallowed
     assert meta_client._shared_live_client is None
+
+
+# ---------------------------------------------------------------------------
+# Stage E category taxonomy: the wire enum, the normalizer, and
+# the live parse path. Everything here is offline: the live client is faked and
+# a real socket fails the test.
+# ---------------------------------------------------------------------------
+
+
+def test_stage_e_schema_carries_the_taxonomy_enum() -> None:
+    schema = meta_client._stage_e_schema()
+    enum = schema["properties"]["category"]["enum"]
+
+    assert enum == list(meta_client.PRODUCT_CATEGORIES)
+    assert len(enum) == 14
+    # Spot-check the canonical spelling, independent of the constant itself:
+    # an English or slugified taxonomy would still satisfy the equality above.
+    assert "Handphone & Tablet" in enum
+    assert "Aksesoris HP" in enum
+
+
+def test_stage_e_schema_never_mutates_the_pydantic_model() -> None:
+    schema = meta_client._stage_e_schema()
+
+    # The regression pin: the enum lives in the outbound wire copy only. A
+    # future ``ProductEntry.model_json_schema()["properties"]["category"]
+    # ["enum"] = ...`` would push the enum into apps/api/openapi.json and break
+    # the openapi drift test.
+    model_schema = schemas.ProductEntry.model_json_schema()
+    assert "enum" not in model_schema["properties"]["category"]
+
+    # And the copy differs from the frozen model in exactly that one place.
+    expected = copy.deepcopy(model_schema)
+    expected["properties"]["category"]["enum"] = list(meta_client.PRODUCT_CATEGORIES)
+    assert schema == expected
+
+    # Two calls hand out independent dicts: mutating one cannot poison the other.
+    other = meta_client._stage_e_schema()
+    assert other["properties"]["category"] is not schema["properties"]["category"]
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        # Live-observed Stage E answers before the taxonomy landed.
+        ("smartphone", "Handphone & Tablet"),
+        ("smartphone box", "Handphone & Tablet"),
+        ("phone case", "Aksesoris HP"),
+        ("charging case", "Audio"),
+        ("accessories", "Aksesoris HP"),
+        # Indonesian and English synonyms.
+        ("casing", "Aksesoris HP"),
+        ("tempered glass", "Aksesoris HP"),
+        ("charging cable", "Aksesoris HP"),
+        ("power bank", "Aksesoris HP"),
+        ("Aksesori Ponsel", "Aksesoris HP"),
+        ("", "Lainnya"),
+        ("t-shirt", "Pakaian"),
+        ("sepatu", "Sepatu"),
+        ("tas", "Tas"),
+        ("mie instan", "Makanan & Minuman"),
+        ("skincare", "Kecantikan"),
+        ("tv", "Elektronik Lainnya"),
+    ],
+)
+def test_normalize_category_maps_known_values(raw: str, expected: str) -> None:
+    assert meta_client._normalize_category(raw, "") == expected
+
+
+def test_normalize_category_ordering_traps() -> None:
+    # The accessory rows sit above the phone row: "case" must win over "phone",
+    # or every phone case in the catalog would be sold as a smartphone.
+    assert meta_client._normalize_category("phone case", "") == "Aksesoris HP"
+    # "aksesori" must win over "ponsel" for the same reason.
+    assert meta_client._normalize_category("Aksesori Ponsel", "") == "Aksesoris HP"
+    # And the charging-case row sits above both: a TWS case is audio, not a
+    # phone accessory and not a phone.
+    assert meta_client._normalize_category("charging case", "") == "Audio"
+
+
+@pytest.mark.parametrize("canonical", meta_client.PRODUCT_CATEGORIES)
+def test_normalize_category_is_idempotent_on_every_taxonomy_entry(
+    canonical: str,
+) -> None:
+    assert meta_client._normalize_category(canonical, "") == canonical
+    # A canonical value must not be re-read as a concept either.
+    assert meta_client._normalize_category(canonical, "gizmo") == canonical
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "",
+        "gizmo",
+        "   ",
+        "???",
+        "handphone & tablet",
+        "AKSESORIS HP",
+        "smartphone box",
+        "an unmapped english concept",
+        "HP",
+        "tv",
+    ],
+)
+def test_normalize_category_is_closed_over_the_taxonomy(raw: str) -> None:
+    assert meta_client._normalize_category(raw, "") in meta_client.PRODUCT_CATEGORIES
+    assert meta_client._normalize_category(raw, "gizmo") in meta_client.PRODUCT_CATEGORIES
+
+
+def test_normalize_category_falls_back_to_the_stage_a_concept() -> None:
+    assert meta_client._normalize_category("gizmo", "smartphone") == "Handphone & Tablet"
+    assert meta_client._normalize_category("", "sepatu") == "Sepatu"
+    # An unmapped pair has nowhere left to go.
+    assert meta_client._normalize_category("gizmo", "gizmo") == "Lainnya"
+
+
+class _RecordingResponses:
+    """Stands in for ``client.responses``: records kwargs, replays canned text."""
+
+    def __init__(self, answers: list[str]) -> None:
+        self.answers = answers
+        self.calls: list[dict[str, Any]] = []
+
+    async def create(self, **kwargs: Any) -> Any:
+        self.calls.append(kwargs)
+        index = min(len(self.calls), len(self.answers)) - 1
+        return _fake_response(self.answers[index])
+
+
+class _RecordingClient:
+    """Minimal stand-in for the shared ``AsyncOpenAI`` client."""
+
+    def __init__(self, answers: list[str]) -> None:
+        self.responses = _RecordingResponses(answers)
+
+
+def _fake_response(json_text: str) -> Any:
+    """A non-streaming Responses payload shaped for ``_output_text_of``."""
+    return types.SimpleNamespace(
+        status="completed",
+        output=[
+            types.SimpleNamespace(
+                type="message",
+                phase=None,
+                content=[types.SimpleNamespace(type="output_text", text=json_text)],
+            )
+        ],
+    )
+
+
+def _entry_payload(**overrides: Any) -> dict[str, Any]:
+    """One valid ``ProductEntry`` payload, overridable field by field."""
+    payload: dict[str, Any] = {
+        "name": "Casing Pelindung iPhone 14 Pro",
+        "description_id": "Casing pelindung transparan untuk iPhone 14 Pro.",
+        "description_en": "Transparent protective case for iPhone 14 Pro.",
+        "category": "phone case",
+        "brand": None,
+        "condition": "new",
+        "attributes": {"color": "clear", "size": None, "variant": None},
+        "price_hint_idr": 45000,
+        "price_suggestion_idr": None,
+        "confidence": "high",
+    }
+    payload.update(overrides)
+    return payload
+
+
+@pytest.fixture
+def _live_extract(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Force the live Stage E branch with a fake key and no real client."""
+    from app.settings import Settings
+
+    monkeypatch.setattr(
+        meta_client,
+        "settings",
+        Settings(
+            model_api_key="test-key-offline",
+            base_url="http://127.0.0.1:8180",
+            meta_mock=False,
+        ),
+    )
+
+
+def test_live_extract_product_sends_the_enum_and_normalises_the_answer(
+    _live_extract: None, _block_network: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    client = _RecordingClient([json.dumps(_entry_payload(category="smartphone"))])
+    monkeypatch.setattr(meta_client, "_live_client", lambda: client)
+    ctx = schemas.ExtractContext(
+        seller_captions='{"general":"HP second, casing 45rb","photos":[]}',
+        concept="smartphone",
+        visible_text="Rp 1.500.000",
+    )
+
+    entries = asyncio.run(
+        meta_client.extract_product(b"\x89PNG\r\n\x1a\n" + b"x" * 64, ctx)
+    )
+
+    assert len(client.responses.calls) == 1
+    wire_format = client.responses.calls[0]["text"]["format"]
+    assert wire_format["type"] == "json_schema"
+    assert wire_format["name"] == "ProductEntry"
+    assert wire_format["schema"]["properties"]["category"]["enum"] == list(
+        meta_client.PRODUCT_CATEGORIES
+    )
+
+    assert len(entries) == 1
+    assert entries[0].category == "Handphone & Tablet"
+    # The normalizer rewrites the category and nothing else.
+    assert entries[0].name == "Casing Pelindung iPhone 14 Pro"
+    assert entries[0].price_hint_idr == 45000
+
+
+def test_live_extract_product_repair_path_also_normalises(
+    _live_extract: None, _block_network: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    invalid = _entry_payload()
+    del invalid["category"]  # required field missing -> repair retry
+    client = _RecordingClient(
+        [
+            json.dumps(invalid),
+            # Unmapped raw value: only the Stage A concept can place it.
+            json.dumps(_entry_payload(category="gizmo")),
+        ]
+    )
+    monkeypatch.setattr(meta_client, "_live_client", lambda: client)
+    ctx = schemas.ExtractContext(
+        seller_captions="casing 45rb", concept="phone case", visible_text=None
+    )
+
+    entries = asyncio.run(
+        meta_client.extract_product(b"\x89PNG\r\n\x1a\n" + b"x" * 64, ctx)
+    )
+
+    assert len(client.responses.calls) == 2, "exactly one repair retry"
+    assert len(entries) == 1
+    assert entries[0].category == "Aksesoris HP"
