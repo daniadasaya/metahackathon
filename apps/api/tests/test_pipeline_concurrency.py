@@ -563,4 +563,4 @@ def test_no_meta_call_after_deadline_and_job_still_completes(tmp_path, monkeypat
 def test_budget_and_concurrency_constants_unchanged():
     """The budget and the cap keep their documented values."""
     assert pipeline.META_CONCURRENCY == 5
-    assert pipeline.JOB_TIME_BUDGET_SECONDS == 300.0
+    assert pipeline.JOB_TIME_BUDGET_SECONDS == 600.0

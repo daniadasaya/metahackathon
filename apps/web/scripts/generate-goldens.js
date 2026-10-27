@@ -42,11 +42,16 @@ const POLL_LIMIT = 120;
  */
 const CONFIRMED_PRICES = {
   a: {
-    'KK-0001': { name: 'Kaos Polos Katun Hitam', price: 85000 },
-    'KK-0002': { name: 'Kaos Polos Katun Hitam', price: 85000 },
-    'KK-0004': { name: 'Mie Instan Cup Ayam Bawang', price: 12000 },
-    'KK-0005': { name: 'iPhone 11 64GB', price: 5200000 },
-    'KK-0006': { name: 'Cokelat Susu Batang 60g', price: 22000 },
+    'KK-0001': { name: 'HP Second - Smartphone', price: 1350000 },
+    'KK-0002': { name: 'HP Second Warna Gelap', price: 1400000 },
+    'KK-0003': { name: 'Smartphone Second Warna Gold', price: 1450000 },
+    'KK-0007': { name: 'Kotak iPhones Hitam Segel Plastik', price: 75000 },
+    'KK-0010': { name: 'Kotak Smartphone Hitam', price: 50000 },
+    'KK-0012': { name: 'Casing Transparan For 14 Pro', price: 45000 },
+    'KK-0013': { name: 'Charging Case Hitam', price: 150000 },
+    'KK-0014': { name: 'Power Bank Putih', price: 185000 },
+    'KK-0015': { name: 'Kabel Charging Putih', price: 35000 },
+    'KK-0016': { name: 'Kabel Charging Second Putih dan Hitam', price: 50000 },
   },
   b: {
     'KK-0001': { name: 'Kaos Polos Katun Hitam', price: 85000 },
@@ -77,6 +82,9 @@ function option(name, fallback) {
 
 const API = option('api', process.env.KK_API ?? 'http://127.0.0.1:8180').replace(/\/$/, '');
 const PACKS = option('pack', 'a,b,c').split(',').map((pack) => pack.trim());
+/** `--job <id>`: freeze an existing finished job instead of starting a new one. Single pack only. */
+const JOB_OVERRIDE = option('job', '');
+if (JOB_OVERRIDE !== '' && PACKS.length !== 1) throw new Error('--job needs exactly one --pack');
 
 async function request(pathname, init) {
   const response = await fetch(`${API}${pathname}`, init);
@@ -129,7 +137,7 @@ async function buildPack(pack) {
   await mkdir(path.join(golden, 'images'), { recursive: true });
   await mkdir(path.join(golden, 'exports'), { recursive: true });
 
-  const jobId = await startJob(pack);
+  const jobId = JOB_OVERRIDE !== '' ? JOB_OVERRIDE : await startJob(pack);
   const state = await waitForJob(jobId);
   if (state.errors.length > 0) throw new Error(`pack ${pack}: job finished with ${state.errors.length} error(s)`);
   if (state.products.length === 0) throw new Error(`pack ${pack}: job produced no products`);
@@ -162,8 +170,12 @@ async function buildPack(pack) {
     generated_at: new Date().toISOString(),
     photos: state.progress.photos_total,
     seller: SELLER,
-    products: confirmed.map((product) => ({
+    // Unreviewed pipeline state: the seller confirms prices in Review. Only
+    // `price_hint_idr` is kept, and the client pre-fills from it alone.
+    products: state.products.map((product) => ({
       ...product,
+      price_idr: null,
+      price_via_chat: false,
       job_id: `golden-${pack}`,
       clean_url: `${base}/${product.sku}.jpg`,
       crop_url: `${base}/${product.sku}-crop.jpg`,

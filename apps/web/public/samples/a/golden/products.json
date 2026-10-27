@@ -1,6 +1,6 @@
 {
-  "source": "mock",
-  "generated_at": "2026-10-26T04:01:48.363Z",
+  "source": "live",
+  "generated_at": "2026-10-26T21:20:46.258Z",
   "photos": 2,
   "seller": {
     "store_name": "Toko Contoh",
@@ -10,38 +10,38 @@
     {
       "sku": "KK-0001",
       "job_id": "golden-a",
-      "source_photo_index": 0,
-      "concept": "t-shirt",
+      "source_photo_index": 1,
+      "concept": "smartphone",
       "bbox": [
-        20,
-        30,
-        260,
-        340
+        808,
+        605,
+        1070,
+        1051
       ],
       "crop_url": "/samples/a/golden/images/KK-0001-crop.jpg",
       "clean_url": "/samples/a/golden/images/KK-0001.jpg",
       "cleanup_method": "composite",
       "fidelity": {
-        "same_product": true,
-        "color_match": false,
+        "same_product": false,
+        "color_match": true,
         "logo_text_match": true,
-        "reason": "print text intact but fabric colour shifted from black toward navy"
+        "reason": "Image 2 retains the missing bottom stand-notch cutout so the phone is not complete."
       },
-      "name": "Kaos Polos Katun Hitam",
-      "description_id": "Kaos polos bahan katun adem, jahitan rapi dan tidak terawang. Kondisi baru dengan label masih menempel.",
-      "description_en": "Plain cotton t-shirt in breathable fabric with neat stitching and no transparency. New with tags attached.",
-      "category": "Pakaian",
+      "name": "HP Second - Smartphone",
+      "description_id": "HP second kondisi normal, fungsi lancar. Dijual oleh toko HP second dan aksesori. Bisa COD.",
+      "description_en": "Second-hand smartphone in normal condition, functions smoothly. Sold by second-hand phone and accessories store. COD available.",
+      "category": "smartphone",
       "brand": null,
-      "condition": "new",
+      "condition": "used",
       "attributes": {
-        "color": "hitam",
-        "size": "L",
+        "color": "black",
+        "size": null,
         "variant": null
       },
       "price_hint_idr": null,
-      "price_suggestion_idr": 85000,
-      "confidence": "high",
-      "price_idr": 85000,
+      "price_suggestion_idr": null,
+      "confidence": "low",
+      "price_idr": null,
       "price_via_chat": false,
       "availability": "in stock",
       "included": true
@@ -52,35 +52,35 @@
       "source_photo_index": 1,
       "concept": "smartphone",
       "bbox": [
-        60,
-        40,
-        280,
-        500
+        586,
+        606,
+        855,
+        1034
       ],
       "crop_url": "/samples/a/golden/images/KK-0002-crop.jpg",
       "clean_url": "/samples/a/golden/images/KK-0002.jpg",
       "cleanup_method": "composite",
       "fidelity": {
-        "same_product": true,
-        "color_match": false,
+        "same_product": false,
+        "color_match": true,
         "logo_text_match": true,
-        "reason": "print text intact but fabric colour shifted from black toward navy"
+        "reason": "Image 2 retains a missing bottom stand-notch chunk so the phone is not complete and intact."
       },
-      "name": "Kaos Polos Katun Hitam",
-      "description_id": "Kaos polos bahan katun adem, jahitan rapi dan tidak terawang. Kondisi baru dengan label masih menempel.",
-      "description_en": "Plain cotton t-shirt in breathable fabric with neat stitching and no transparency. New with tags attached.",
-      "category": "Pakaian",
+      "name": "HP Second Warna Gelap",
+      "description_id": "HP second warna gelap tampak belakang dengan kamera ganda dan fingerprint. Kondisi normal, fungsi lancar sesuai catatan toko, bisa COD. Merek dan model spesifik tidak terlihat jelas dan tidak dapat dipastikan dari foto ini.",
+      "description_en": "Second-hand dark-colored smartphone seen from the back with dual camera and fingerprint sensor. Normal condition, smooth function as per store notes, COD available. Specific brand and model are not clearly visible and cannot be confirmed from this photo.",
+      "category": "smartphone",
       "brand": null,
-      "condition": "new",
+      "condition": "used",
       "attributes": {
-        "color": "hitam",
-        "size": "L",
+        "color": "biru gelap",
+        "size": null,
         "variant": null
       },
       "price_hint_idr": null,
-      "price_suggestion_idr": 85000,
-      "confidence": "high",
-      "price_idr": 85000,
+      "price_suggestion_idr": null,
+      "confidence": "low",
+      "price_idr": null,
       "price_via_chat": false,
       "availability": "in stock",
       "included": true
@@ -89,12 +89,12 @@
       "sku": "KK-0003",
       "job_id": "golden-a",
       "source_photo_index": 1,
-      "concept": "phone case",
+      "concept": "smartphone",
       "bbox": [
-        30,
-        50,
-        210,
-        330
+        1027,
+        606,
+        1294,
+        1075
       ],
       "crop_url": "/samples/a/golden/images/KK-0003-crop.jpg",
       "clean_url": "/samples/a/golden/images/KK-0003.jpg",
@@ -103,23 +103,23 @@
         "same_product": true,
         "color_match": true,
         "logo_text_match": true,
-        "reason": "Both images are identical with no alterations."
+        "reason": "Studio phone matches gold body, black screen and dual front cameras with no extra objects."
       },
-      "name": "Samsung Galaxy A54 8/128",
-      "description_id": "Ponsel bekas kondisi mulus, layar jernih tanpa gores dan baterai masih awet. Dijual lengkap dengan kardus dan kabel bawaan.",
-      "description_en": "Used phone in smooth condition with a clear scratch-free screen and a battery that still lasts. Sold with the original box and cable.",
-      "category": "Handphone & Tablet",
-      "brand": "Samsung",
+      "name": "Smartphone Second Warna Gold",
+      "description_id": "HP second warna gold, tampak depan dengan layar mati. Kondisi normal, fungsi lancar, bisa COD sesuai catatan toko. Merek, model dan spesifikasi tidak terlihat pada foto, harga pasti tidak teridentifikasi.",
+      "description_en": "Second-hand smartphone in gold, front view with screen off. Normal condition, functions work smoothly, COD available as per store notes. Brand, model and specifications are not visible in the photo, exact price is not identifiable.",
+      "category": "smartphone",
+      "brand": null,
       "condition": "used",
       "attributes": {
-        "color": "hitam",
+        "color": "gold",
         "size": null,
-        "variant": "8/128"
+        "variant": null
       },
-      "price_hint_idr": 4500000,
+      "price_hint_idr": null,
       "price_suggestion_idr": null,
-      "confidence": "high",
-      "price_idr": 4500000,
+      "confidence": "low",
+      "price_idr": null,
       "price_via_chat": false,
       "availability": "in stock",
       "included": true
@@ -128,12 +128,12 @@
       "sku": "KK-0004",
       "job_id": "golden-a",
       "source_photo_index": 0,
-      "concept": "t-shirt",
+      "concept": "smartphone",
       "bbox": [
-        45,
-        55,
-        300,
-        360
+        1535,
+        761,
+        2000,
+        1005
       ],
       "crop_url": "/samples/a/golden/images/KK-0004-crop.jpg",
       "clean_url": "/samples/a/golden/images/KK-0004.jpg",
@@ -142,23 +142,23 @@
         "same_product": true,
         "color_match": true,
         "logo_text_match": true,
-        "reason": "Both images are identical with no alterations."
+        "reason": "Single light blue Samsung phone with matching camera, fingerprint and ports preserved."
       },
-      "name": "Mie Instan Cup Ayam Bawang",
-      "description_id": "Mie instan cup rasa ayam bawang, siap seduh dengan air panas. Kemasan utuh tersegel, cocok untuk stok.",
-      "description_en": "Chicken onion instant noodle cup, just add hot water. Sealed intact packaging, good for stocking up.",
-      "category": "Makanan & Minuman",
-      "brand": "Indomie",
-      "condition": "new",
+      "name": "Samsung Smartphone H6 Biru Second",
+      "description_id": "HP second Samsung H6 warna biru. Kondisi normal, fungsi lancar. Bisa COD. Harga Rp 1.500.000.",
+      "description_en": "Second-hand Samsung H6 smartphone in blue. Normal condition, functions work smoothly. COD available. Price Rp 1,500,000.",
+      "category": "smartphone",
+      "brand": "Samsung",
+      "condition": "used",
       "attributes": {
-        "color": null,
+        "color": "blue",
         "size": null,
-        "variant": "Ayam Bawang"
+        "variant": "H6"
       },
-      "price_hint_idr": null,
-      "price_suggestion_idr": 12000,
-      "confidence": "high",
-      "price_idr": 12000,
+      "price_hint_idr": 1500000,
+      "price_suggestion_idr": 1500000,
+      "confidence": "medium",
+      "price_idr": null,
       "price_via_chat": false,
       "availability": "in stock",
       "included": true
@@ -166,38 +166,38 @@
     {
       "sku": "KK-0005",
       "job_id": "golden-a",
-      "source_photo_index": 1,
+      "source_photo_index": 0,
       "concept": "smartphone",
       "bbox": [
-        40,
-        60,
-        300,
-        440
+        1841,
+        762,
+        2311,
+        999
       ],
       "crop_url": "/samples/a/golden/images/KK-0005-crop.jpg",
       "clean_url": "/samples/a/golden/images/KK-0005.jpg",
-      "cleanup_method": "composite",
+      "cleanup_method": "muse-image",
       "fidelity": {
-        "same_product": false,
-        "color_match": false,
-        "logo_text_match": false,
-        "reason": "logo text redrawn; colour shifted toward blue"
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Single black phone with matching ports and smudged screen preserved."
       },
-      "name": "iPhone 11 64GB",
-      "description_id": "Ponsel bekas kondisi baik, tombol dan kamera berfungsi normal. Baterai 82 persen, cocok untuk pemakaian sehari-hari.",
-      "description_en": "Used phone in good condition with working buttons and camera. Battery at 82 percent, suitable for daily use.",
-      "category": "Handphone & Tablet",
-      "brand": "Apple",
+      "name": "Samsung Smartphone Second Hitam",
+      "description_id": "HP second Samsung warna hitam, kondisi normal, fungsi lancar, bisa COD. Harga tertera Rp 1.500.000, terlihat tulisan SAMSUNG dan H6.",
+      "description_en": "Second-hand Samsung smartphone in black, normal condition, functions work smoothly, available for COD. Listed price Rp 1,500,000, with SAMSUNG and H6 text seen.",
+      "category": "smartphone",
+      "brand": "Samsung",
       "condition": "used",
       "attributes": {
-        "color": "putih",
+        "color": "black",
         "size": null,
-        "variant": "64GB"
+        "variant": null
       },
-      "price_hint_idr": null,
-      "price_suggestion_idr": 5200000,
+      "price_hint_idr": 1500000,
+      "price_suggestion_idr": 1500000,
       "confidence": "medium",
-      "price_idr": 5200000,
+      "price_idr": null,
       "price_via_chat": false,
       "availability": "in stock",
       "included": true
@@ -206,12 +206,12 @@
       "sku": "KK-0006",
       "job_id": "golden-a",
       "source_photo_index": 0,
-      "concept": "denim jacket",
+      "concept": "smartphone",
       "bbox": [
-        60,
-        80,
-        420,
-        440
+        1239,
+        772,
+        1773,
+        1050
       ],
       "crop_url": "/samples/a/golden/images/KK-0006-crop.jpg",
       "clean_url": "/samples/a/golden/images/KK-0006.jpg",
@@ -220,23 +220,413 @@
         "same_product": false,
         "color_match": false,
         "logo_text_match": false,
-        "reason": "logo text redrawn; colour shifted toward blue"
+        "reason": "Price card cuts a large angular wedge from the phone body."
       },
-      "name": "Cokelat Susu Batang 60g",
-      "description_id": "Cokelat susu batang 60 gram, manis lembut meleleh di mulut. Kemasan foil utuh belum dibuka.",
-      "description_en": "60-gram milk chocolate bar, sweet and smooth. Unopened intact foil wrapping.",
-      "category": "Makanan & Minuman",
-      "brand": "SilverQueen",
-      "condition": "new",
+      "name": "Samsung Smartphone Second",
+      "description_id": "HP second Samsung warna abu-abu, kondisi normal, fungsi lancar, bisa COD. Harga Rp 1.500.000.",
+      "description_en": "Second-hand Samsung smartphone in grey, normal condition, functions work smoothly, COD available. Price Rp 1,500,000.",
+      "category": "smartphone",
+      "brand": "SAMSUNG",
+      "condition": "used",
       "attributes": {
-        "color": null,
-        "size": "60g",
-        "variant": "Susu"
+        "color": "grey",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": 1500000,
+      "price_suggestion_idr": 1500000,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0007",
+      "job_id": "golden-a",
+      "source_photo_index": 1,
+      "concept": "smartphone box",
+      "bbox": [
+        1272,
+        804,
+        1892,
+        1000
+      ],
+      "crop_url": "/samples/a/golden/images/KK-0007-crop.jpg",
+      "clean_url": "/samples/a/golden/images/KK-0007.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Single plastic-wrapped iPhones box preserves shape, color, and text."
+      },
+      "name": "Kotak iPhones Hitam Segel Plastik",
+      "description_id": "Kotak smartphone bertuliskan iPhones warna hitam, masih terbungkus plastik. Toko HP second, kondisi normal, fungsi lancar, bisa COD. Model dan isi tidak terlihat jelas.",
+      "description_en": "Black smartphone box labeled iPhones, still in plastic wrap. From second-hand phone store, normal condition, functions work, COD available. Model and contents not clearly visible.",
+      "category": "smartphone box",
+      "brand": null,
+      "condition": "used",
+      "attributes": {
+        "color": "black",
+        "size": null,
+        "variant": null
       },
       "price_hint_idr": null,
-      "price_suggestion_idr": 22000,
-      "confidence": "high",
-      "price_idr": 22000,
+      "price_suggestion_idr": null,
+      "confidence": "low",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0008",
+      "job_id": "golden-a",
+      "source_photo_index": 0,
+      "concept": "smartphone",
+      "bbox": [
+        949,
+        817,
+        1409,
+        1130
+      ],
+      "crop_url": "/samples/a/golden/images/KK-0008-crop.jpg",
+      "clean_url": "/samples/a/golden/images/KK-0008.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": false,
+        "color_match": false,
+        "logo_text_match": false,
+        "reason": "Price card cuts a large angular wedge out of the phone body."
+      },
+      "name": "HP Second Apple Biru Dual Kamera",
+      "description_id": "HP second Apple warna biru dengan dual kamera belakang dan logo Apple terlihat di foto. Kondisi normal, fungsi lancar sesuai catatan seller, bisa COD. Model, kapasitas, dan kelengkapan tidak terlihat dan tidak diasumsikan.",
+      "description_en": "Second-hand Apple smartphone in blue with dual rear camera and visible Apple logo in the photo. Normal condition, functions well as per seller notes, COD available. Model, capacity, and accessories are not visible and are not assumed.",
+      "category": "smartphone",
+      "brand": "Apple",
+      "condition": "used",
+      "attributes": {
+        "color": "biru",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": 1500000,
+      "price_suggestion_idr": 1500000,
+      "confidence": "low",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0009",
+      "job_id": "golden-a",
+      "source_photo_index": 0,
+      "concept": "smartphone",
+      "bbox": [
+        588,
+        871,
+        1195,
+        1262
+      ],
+      "crop_url": "/samples/a/golden/images/KK-0009-crop.jpg",
+      "clean_url": "/samples/a/golden/images/KK-0009.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": false,
+        "color_match": false,
+        "logo_text_match": false,
+        "reason": "Cable coil cuts large bite from bottom side leaving phone incomplete."
+      },
+      "name": "Smartphone Apple Bekas Warna Putih",
+      "description_id": "HP second merek Apple warna putih dengan kamera ganda di belakang. Kondisi normal, fungsi lancar menurut penjual, bisa COD. Toko HP second dan aksesori.",
+      "description_en": "Second-hand Apple smartphone in white with dual rear camera. Normal condition, smooth function according to seller, COD available. Second-hand phone and accessories store.",
+      "category": "smartphone",
+      "brand": "Apple",
+      "condition": "used",
+      "attributes": {
+        "color": "white",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": 1500000,
+      "price_suggestion_idr": 1500000,
+      "confidence": "low",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0010",
+      "job_id": "golden-a",
+      "source_photo_index": 1,
+      "concept": "smartphone box",
+      "bbox": [
+        1273,
+        935,
+        1883,
+        1124
+      ],
+      "crop_url": "/samples/a/golden/images/KK-0010-crop.jpg",
+      "clean_url": "/samples/a/golden/images/KK-0010.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": false,
+        "color_match": false,
+        "logo_text_match": false,
+        "reason": "Sandwiched middle box shows only side walls with top face blocked by upper box."
+      },
+      "name": "Kotak Smartphone Hitam",
+      "description_id": "Kotak smartphone warna hitam terbungkus plastik. Kondisi normal sesuai catatan toko HP second dan aksesori, bisa COD.",
+      "description_en": "Black smartphone box wrapped in plastic. Normal condition as per second-hand phone and accessories store notes, can COD.",
+      "category": "smartphone box",
+      "brand": null,
+      "condition": "used",
+      "attributes": {
+        "color": "black",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "low",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0011",
+      "job_id": "golden-a",
+      "source_photo_index": 0,
+      "concept": "smartphone",
+      "bbox": [
+        80,
+        1000,
+        941,
+        1546
+      ],
+      "crop_url": "/samples/a/golden/images/KK-0011-crop.jpg",
+      "clean_url": "/samples/a/golden/images/KK-0011.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Studio image preserves the single black Samsung phone with same camera layout, color and logo."
+      },
+      "name": "Samsung Smartphone Hitam Second",
+      "description_id": "HP second Samsung warna hitam. Kondisi normal, fungsi lancar. Bisa COD. Harga tertera Rp 1.500.000.",
+      "description_en": "Second-hand Samsung smartphone in black. Normal condition, functions run smoothly. COD available. Listed price Rp 1,500,000.",
+      "category": "smartphone",
+      "brand": "Samsung",
+      "condition": "used",
+      "attributes": {
+        "color": "black",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": 1500000,
+      "price_suggestion_idr": 1500000,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0012",
+      "job_id": "golden-a",
+      "source_photo_index": 0,
+      "concept": "phone case",
+      "bbox": [
+        1714,
+        1003,
+        2316,
+        1283
+      ],
+      "crop_url": "/samples/a/golden/images/KK-0012-crop.jpg",
+      "clean_url": "/samples/a/golden/images/KK-0012.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Single clear case preserved with matching shape, camera cutout and transparency."
+      },
+      "name": "Casing Transparan For 14 Pro",
+      "description_id": "Casing HP transparan untuk 14 Pro. Kondisi normal, bisa COD.",
+      "description_en": "Transparent phone case for 14 Pro. Normal condition, COD available.",
+      "category": "phone case",
+      "brand": null,
+      "condition": "used",
+      "attributes": {
+        "color": "transparent",
+        "size": null,
+        "variant": "For 14 Pro"
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0013",
+      "job_id": "golden-a",
+      "source_photo_index": 0,
+      "concept": "charging case",
+      "bbox": [
+        1444,
+        1064,
+        1777,
+        1293
+      ],
+      "crop_url": "/samples/a/golden/images/KK-0013-crop.jpg",
+      "clean_url": "/samples/a/golden/images/KK-0013.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Single black earbud case matches shape, port and color with no logos to compare."
+      },
+      "name": "Charging Case Hitam",
+      "description_id": "Charging case warna hitam. Kondisi normal, fungsi lancar. Barang second dari toko HP second dan aksesori, bisa COD.",
+      "description_en": "Black charging case. Normal condition, functions smoothly. Used item from second-hand phone and accessories store, COD available.",
+      "category": "charging case",
+      "brand": null,
+      "condition": "used",
+      "attributes": {
+        "color": "black",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0014",
+      "job_id": "golden-a",
+      "source_photo_index": 1,
+      "concept": "power bank",
+      "bbox": [
+        1555,
+        1076,
+        2096,
+        1306
+      ],
+      "crop_url": "/samples/a/golden/images/KK-0014-crop.jpg",
+      "clean_url": "/samples/a/golden/images/KK-0014.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Studio image shows the same white power bank with matching ports, color, and faint marking."
+      },
+      "name": "Power Bank Putih",
+      "description_id": "Power bank warna putih, kondisi normal, fungsi lancar. Dijual di toko HP second dan aksesori, bisa COD.",
+      "description_en": "White power bank, normal condition, functions well. Sold by second-hand phone and accessories store, COD available.",
+      "category": "accessories",
+      "brand": null,
+      "condition": "used",
+      "attributes": {
+        "color": "white",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0015",
+      "job_id": "golden-a",
+      "source_photo_index": 1,
+      "concept": "charging cable",
+      "bbox": [
+        1884,
+        1131,
+        2223,
+        1335
+      ],
+      "crop_url": "/samples/a/golden/images/KK-0015-crop.jpg",
+      "clean_url": "/samples/a/golden/images/KK-0015.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Studio image shows the same single white coiled USB cable with matching color and no visible logos."
+      },
+      "name": "Kabel Charging Putih",
+      "description_id": "Kabel charging warna putih. Kondisi normal, fungsi lancar. Bisa COD.",
+      "description_en": "White charging cable. Normal condition, functions work well. COD available.",
+      "category": "accessories",
+      "brand": null,
+      "condition": "used",
+      "attributes": {
+        "color": "white",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0016",
+      "job_id": "golden-a",
+      "source_photo_index": 0,
+      "concept": "foreground charging cable",
+      "bbox": [
+        768,
+        1133,
+        1681,
+        1660
+      ],
+      "crop_url": "/samples/a/golden/images/KK-0016-crop.jpg",
+      "clean_url": "/samples/a/golden/images/KK-0016.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Same coiled white and black cable bundle with matching connectors and colors preserved."
+      },
+      "name": "Kabel Charging Second Putih dan Hitam",
+      "description_id": "Kabel charging second warna putih dan hitam, 2 pcs. Kondisi normal, fungsi lancar sesuai catatan toko. Toko HP second dan aksesori, bisa COD.",
+      "description_en": "Second-hand charging cables in white and black, 2 pcs. Normal condition, functions work smoothly as per store notes. Second-hand phone and accessories store, COD available.",
+      "category": "accessories",
+      "brand": null,
+      "condition": "used",
+      "attributes": {
+        "color": "putih, hitam",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
       "price_via_chat": false,
       "availability": "in stock",
       "included": true
