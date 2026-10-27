@@ -47,19 +47,21 @@ developer running bare ``uvicorn`` still gets a working ``/api/health``.
 from __future__ import annotations
 
 import json
+import uuid
 import logging
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ValidationError
 from pydantic.json_schema import models_json_schema
 
-from app import schemas
 from app import exporter
+from app import pipeline
+from app import schemas
 from app.exporter import PriceMissingError
 from app.schemas import (
     ErrorCode,
@@ -68,7 +70,10 @@ from app.schemas import (
     ExportRequest,
     ExportResponse,
     HealthResponse,
+    JobProgress,
+    JobStage,
     JobState,
+    JobStatus,
     SellerInfo,
 )
 from app.settings import settings
@@ -212,6 +217,110 @@ def _job_record_path(job_id: str) -> Path | None:
 async def health() -> HealthResponse:
     """Report process liveness and whether the service runs in mock mode."""
     return HealthResponse(ok=True, mock=settings.meta_mock)
+
+
+@app.post(
+    "/api/jobs",
+    response_model=JobState,
+    responses={400: {"model": ErrorResponse}},
+)
+async def create_job(
+    request: Request,
+    background_tasks: BackgroundTasks,
+) -> JobState | JSONResponse:
+    """Create a job and run the pipeline in the background."""
+    content_type = request.headers.get("content-type", "")
+    if "multipart/form-data" not in content_type:
+        return _error(400, ErrorCode.INVALID_REQUEST, "Expected multipart/form-data.")
+
+    # Parse the multipart body with the standard library, no extra dependency.
+    from email import policy
+    from email.parser import BytesParser
+
+    body = await request.body()
+    header_block = ("Content-Type: " + content_type + "\r\nMIME-Version: 1.0\r\n\r\n").encode()
+    try:
+        msg = BytesParser(policy=policy.default).parsebytes(header_block + body)
+    except Exception:
+        return _error(400, ErrorCode.INVALID_REQUEST, "Malformed multipart body.")
+
+    photo_bytes: list[bytes] = []
+    captions_raw: str | None = None
+    for part in (msg.get_payload() if msg.is_multipart() else []):
+        if not hasattr(part, "get_param"):
+            continue
+        disp = part.get("Content-Disposition", "")
+        # parse name
+        name = None
+        filename = None
+        for token in disp.split(";"):
+            token = token.strip()
+            if token.startswith("name="):
+                name = token[5:].strip().strip('"')
+            elif token.startswith("filename="):
+                filename = token[9:].strip().strip('"')
+        payload = part.get_payload(decode=True)
+        if payload is None:
+            payload = b""
+        if name == "photos":
+            photo_bytes.append(payload)
+        elif name == "captions":
+            try:
+                captions_raw = payload.decode("utf-8")
+            except UnicodeDecodeError:
+                return _error(400, ErrorCode.INVALID_REQUEST, "captions must be UTF-8.")
+
+    if not photo_bytes:
+        return _error(400, ErrorCode.INVALID_REQUEST, "At least one photo is required.")
+    if len(photo_bytes) > 30:
+        return _error(400, ErrorCode.INVALID_REQUEST, "Too many photos (max 30).")
+    for data in photo_bytes:
+        if not data:
+            return _error(400, ErrorCode.INVALID_REQUEST, "Empty photo upload.")
+        if len(data) > 10 * 1024 * 1024:
+            return _error(400, ErrorCode.FILE_TOO_LARGE, "Photo exceeds 10 MB.")
+
+    if captions_raw is None:
+        return _error(400, ErrorCode.INVALID_REQUEST, "Missing captions field.")
+    try:
+        parsed = json.loads(captions_raw)
+    except (json.JSONDecodeError, TypeError):
+        return _error(400, ErrorCode.INVALID_REQUEST, "captions must be a JSON string.")
+    if not isinstance(parsed, dict):
+        return _error(400, ErrorCode.INVALID_REQUEST, "captions must be a JSON object.")
+    general = parsed.get("general", "")
+    photos_caps = parsed.get("photos", [])
+    if not isinstance(general, str):
+        general = str(general)
+    if not isinstance(photos_caps, list):
+        return _error(400, ErrorCode.INVALID_REQUEST, "captions.photos must be a list.")
+    photos_caps = [str(x) for x in photos_caps]
+    captions_payload = {"general": general, "photos": photos_caps}
+
+    job_id = f"job-{uuid.uuid4().hex[:12]}"
+    from datetime import datetime as _dt, timezone as _tz
+
+    now = _dt.now(_tz.utc)
+    initial = JobState(
+        job_id=job_id,
+        status=JobStatus.QUEUED,
+        stage=JobStage.CONCEPTS,
+        progress=JobProgress(
+            photos_total=len(photo_bytes),
+            photos_done=0,
+            products_total=0,
+            products_cleaned=0,
+        ),
+        products=[],
+        errors=[],
+        created_at=now,
+        updated_at=now,
+    )
+    pipeline.write_job_record(job_id, initial)
+
+    background_tasks.add_task(pipeline.run_pipeline, job_id, photo_bytes, captions_payload)
+
+    return initial
 
 
 @app.get(

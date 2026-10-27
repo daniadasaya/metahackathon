@@ -1114,6 +1114,35 @@
         "summary": "Health"
       }
     },
+    "/api/jobs": {
+      "post": {
+        "description": "Create a job and run the pipeline in the background.",
+        "operationId": "create_job_api_jobs_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          }
+        },
+        "summary": "Create Job"
+      }
+    },
     "/api/jobs/{job_id}": {
       "get": {
         "description": "Return the job record for ``job_id`` as a validated :class:`JobState`.\n\nA missing directory, a missing record, or a job id that resolves outside\nthe job tree is a 404 with the standard envelope. A record that is not\nvalid JSON, or does not satisfy the schema, is a 500: the pipeline wrote\nsomething this contract cannot describe, which is a server-side defect and\nmust not escape as an unhandled traceback.",

@@ -1,6 +1,8 @@
-# Runtime dependencies of the Katalog Kilat API. Exactly four, pinned exactly.
-# Adding a fifth package requires a Lead decision recorded in architecture notes.
+# Runtime dependencies of the Katalog Kilat API. Pinned exactly. ``openai`` and
+# ``meta-sam-parser`` are required by the Meta adapter's live branch.
 fastapi==0.159.1
 uvicorn==0.54.0
 pydantic==2.14.1
 Pillow==13.0.0
+openai==3.37.0
+meta-sam-parser==0.1.0
