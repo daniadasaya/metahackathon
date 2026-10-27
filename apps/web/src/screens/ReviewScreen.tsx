@@ -1,6 +1,7 @@
 import { useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useMemo } from 'react';
 
+import { AlertIcon, ArrowRightIcon, CheckIcon, LayersIcon, PhotoIcon, StoreIcon } from '../components/Icons';
 import { EmptyState } from '../components/EmptyState';
 import { ReviewCard } from '../components/ReviewCard';
 import { Skeleton } from '../components/Skeleton';
@@ -20,7 +21,7 @@ import { replaceCatalog, setStoredJobId, useCatalog, useStoredJobId } from '../l
 const NAMED_BLOCKERS = 3;
 
 function Column({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-6">{children}</div>;
+  return <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-8">{children}</div>;
 }
 
 /** Scrolls to the first product that blocks export and puts the cursor in its price field. */
@@ -75,20 +76,23 @@ export function ReviewScreen() {
     return (
       <Column>
         <h1 className="text-2xl">{t('review.title')}</h1>
-        <div className="mt-5">
+        <div className="mt-6">
           {jobId !== null && job === undefined && !query.isError ? (
             <div className="flex flex-col gap-4" role="status" aria-label={t('common.loading')}>
               <Skeleton className="h-40 w-full" />
               <Skeleton className="h-40 w-full" />
             </div>
           ) : running ? (
-            <EmptyState text={t('review.stillRunning')}>
+            <EmptyState text={t('review.stillRunning')} icon={<LayersIcon size={28} />}>
               <Link to="/jobs/$jobId" params={{ jobId: jobId ?? '' }} className="kk-btn kk-btn-secondary kk-tactile">
                 {t('review.seeProgress')}
               </Link>
             </EmptyState>
           ) : (
-            <EmptyState text={query.isError ? t('review.loadFailed') : t('review.empty')}>
+            <EmptyState
+              text={query.isError ? t('review.loadFailed') : t('review.empty')}
+              icon={query.isError ? <AlertIcon size={28} /> : <PhotoIcon size={28} />}
+            >
               <button type="button" className="kk-btn kk-btn-secondary kk-tactile" onClick={uploadNew}>
                 {t('review.uploadNew')}
               </button>
@@ -112,20 +116,24 @@ export function ReviewScreen() {
       <Column>
         <h1 className="text-2xl">{t('review.title')}</h1>
         <p className="mt-2 text-base text-fg-2">{t('review.lead')}</p>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+          <span className="kk-count whitespace-nowrap">{t('review.count', { n: catalog.length })}</span>
+          <div className="flex items-center">
+            <Link to="/review/preview" className="kk-btn kk-btn-ghost px-2 whitespace-nowrap text-accent-2">
+              <StoreIcon size={18} />
+              {t('review.previewCta')}
+            </Link>
+            <button type="button" className="kk-btn kk-btn-ghost px-2 whitespace-nowrap text-fg-2" onClick={uploadNew}>
+              {t('review.uploadNew')}
+            </button>
+          </div>
+        </div>
         {state.excluded > 0 ? (
           <p className="mt-2 text-sm text-fg-muted">{t('review.excluded', { n: state.excluded })}</p>
         ) : null}
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <Link to="/review/preview" className="kk-btn kk-btn-secondary kk-tactile">
-            {t('review.previewCta')}
-          </Link>
-          <button type="button" className="kk-btn kk-btn-secondary kk-tactile" onClick={uploadNew}>
-            {t('review.uploadNew')}
-          </button>
-        </div>
-
-        <ul className="m-0 mt-5 flex list-none flex-col gap-4 p-0">
+        <ul className="m-0 mt-4 flex list-none flex-col gap-4 p-0">
           {catalog.map((product) => (
             <ReviewCard key={product.sku} product={product} suggestion={suggestions.get(product.sku) ?? null} />
           ))}
@@ -133,13 +141,19 @@ export function ReviewScreen() {
       </Column>
 
       <StickyBar>
-        <p id="review-summary" className="text-center text-sm font-bold" aria-live="polite">
+        <p
+          id="review-summary"
+          className="kk-count mx-auto"
+          data-tone={exportable ? 'ready' : 'warning'}
+          aria-live="polite"
+        >
+          {exportable ? <CheckIcon size={16} /> : <AlertIcon size={16} />}
           {t('review.summary', { n: state.ready, m: state.blockers.length })}
         </p>
         {state.included === 0 ? (
           <p className="text-center text-sm text-fg-2">{t('review.noneIncluded')}</p>
         ) : state.blockers.length > 0 ? (
-          <p className="text-center text-sm text-warning" aria-live="polite">
+          <p className="text-center text-sm font-bold text-warning" aria-live="polite">
             {blockerText}
           </p>
         ) : null}
@@ -154,6 +168,7 @@ export function ReviewScreen() {
           }}
         >
           {t('review.exportCta')}
+          {exportable ? <ArrowRightIcon size={22} /> : null}
         </button>
       </StickyBar>
     </>

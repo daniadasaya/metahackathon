@@ -30,7 +30,7 @@ function RootLayout() {
         {t('app.skip')}
       </a>
       <AppHeader />
-      <main id="main">
+      <main id="main" key={pathname} className="kk-screen">
         <Outlet />
       </main>
     </>

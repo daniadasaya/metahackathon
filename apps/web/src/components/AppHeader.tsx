@@ -1,9 +1,20 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useRouterState } from '@tanstack/react-router';
 
 import { useT } from '../lib/locale';
 import { nextTheme, setLocale, setTheme, useLocale, useTheme, type Theme } from '../lib/store';
 import { MoonIcon, SunIcon, SystemIcon } from './Icons';
 import { Wordmark } from './Logo';
+
+const TOTAL_STEPS = 5;
+
+/** Upload → Progress → Review → Preview → Export, by path. Purely visual: no router state is changed. */
+function stepOf(pathname: string): number {
+  if (pathname.startsWith('/jobs/')) return 2;
+  if (pathname === '/review/preview') return 4;
+  if (pathname.startsWith('/review')) return 3;
+  if (pathname.startsWith('/export')) return 5;
+  return 1;
+}
 
 function ThemeIcon({ theme }: { theme: Theme }) {
   if (theme === 'light') return <SunIcon />;
@@ -11,11 +22,13 @@ function ThemeIcon({ theme }: { theme: Theme }) {
   return <SystemIcon />;
 }
 
-/** Sticky app header, shared by every screen: lockup, locale switch, theme cycle. */
+/** Sticky app header, shared by every screen: lockup, locale switch, theme cycle, step indicator. */
 export function AppHeader() {
   const { t } = useT();
   const locale = useLocale();
   const theme = useTheme();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const step = stepOf(pathname);
 
   const themeLabel =
     theme === 'light' ? t('header.themeLight') : theme === 'dark' ? t('header.themeDark') : t('header.themeSystem');
@@ -47,14 +60,24 @@ export function AppHeader() {
           </div>
           <button
             type="button"
-            className="kk-btn kk-btn-secondary kk-tactile"
-            style={{ minHeight: 44, minWidth: 44, padding: 0, borderRadius: 14 }}
+            className="kk-btn kk-btn-secondary kk-btn-icon kk-tactile"
             aria-label={t('header.themeSwitch', { current: themeLabel })}
             title={themeLabel}
             onClick={() => setTheme(nextTheme(theme))}
           >
             <ThemeIcon theme={theme} />
           </button>
+        </div>
+      </div>
+      <div className="mx-auto flex w-full max-w-[420px] items-center gap-3 px-4 pb-2">
+        <p className="shrink-0 text-xs text-fg-muted">{t('header.step', { n: step, total: TOTAL_STEPS })}</p>
+        <div className="kk-steps min-w-0 flex-1" aria-hidden="true">
+          {Array.from({ length: TOTAL_STEPS }, (_, index) => (
+            <span
+              key={index}
+              data-state={index + 1 < step ? 'done' : index + 1 === step ? 'current' : 'todo'}
+            />
+          ))}
         </div>
       </div>
     </header>

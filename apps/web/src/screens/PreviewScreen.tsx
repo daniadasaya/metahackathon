@@ -2,14 +2,14 @@ import { Link } from '@tanstack/react-router';
 
 import { EmptyState } from '../components/EmptyState';
 import { ProductPhoto } from '../components/ProductPhoto';
-import { ChatIcon } from '../components/Icons';
+import { ArrowLeftIcon, ChatIcon, StoreIcon } from '../components/Icons';
 import { formatRupiah } from '../lib/format';
 import { isWaNumber, type ReviewedProduct } from '../lib/catalog';
 import { useT } from '../lib/locale';
 import { setStoreName, useCatalog, useSeller } from '../lib/store';
 
 function Column({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-16">{children}</div>;
+  return <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-10">{children}</div>;
 }
 
 function PriceLine({ product }: { product: ReviewedProduct }) {
@@ -25,7 +25,11 @@ function PriceLine({ product }: { product: ReviewedProduct }) {
   if (product.price_idr === null) {
     return <span className="text-sm font-bold text-warning">{t('review.noPrice')}</span>;
   }
-  return <span className="kk-money text-price text-fg">{formatRupiah(product.price_idr)}</span>;
+  return (
+    <span className="kk-money text-[19px] leading-6 font-bold tracking-[-0.02em] break-words text-fg">
+      {formatRupiah(product.price_idr)}
+    </span>
+  );
 }
 
 /**
@@ -36,7 +40,7 @@ function ChatCta({ product, waNumber }: { product: ReviewedProduct; waNumber: st
   const { t } = useT();
   if (waNumber === '') {
     return (
-      <p className="m-0 flex items-center gap-1 text-sm text-fg-muted">
+      <p className="m-0 flex min-h-11 items-center gap-1.5 text-sm text-fg-muted">
         <ChatIcon size={14} />
         {t('preview.contactStore')}
       </p>
@@ -45,7 +49,7 @@ function ChatCta({ product, waNumber }: { product: ReviewedProduct; waNumber: st
   const text = t('preview.chatMessage', { name: product.name, sku: product.sku });
   return (
     <a
-      className="kk-btn kk-btn-secondary kk-tactile min-h-11 w-full px-2 text-sm"
+      className="kk-btn kk-btn-secondary kk-btn-compact kk-tactile w-full px-2"
       href={`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`}
       target="_blank"
       rel="noopener noreferrer"
@@ -72,69 +76,85 @@ export function PreviewScreen() {
 
   return (
     <Column>
-      {storeNamed ? (
-        <h1 className="text-2xl break-words">{storeName}</h1>
-      ) : (
-        <h1 className="text-2xl break-words text-fg-muted">
-          <span className="italic">{t('preview.defaultStoreName')}</span>{' '}
-          <span className="text-base font-normal">{t('preview.defaultStoreHint')}</span>
-        </h1>
-      )}
-      <p className="mt-2 text-base text-fg-2">{t('preview.lead')}</p>
-
-      <div className="mt-4">
-        <label htmlFor="store-name" className="text-sm font-bold">
-          {t('preview.storeNameLabel')}
-        </label>
-        <input
-          id="store-name"
-          type="text"
-          className="kk-input mt-2"
-          maxLength={60}
-          value={storeName}
-          placeholder={t('preview.storeNamePlaceholder')}
-          onChange={(event) => setStoreName(event.target.value)}
-        />
-      </div>
-
-      <Link to="/review" className="kk-btn kk-btn-secondary kk-tactile mt-4 w-full">
-        {t('preview.backToReview')}
-      </Link>
-
-      {hidden > 0 ? <p className="mt-4 text-sm text-fg-muted">{t('preview.hidden', { n: hidden })}</p> : null}
-      {waNumber === '' && shown.length > 0 ? (
-        <p className="mt-4 text-sm text-fg-muted">{t('preview.waHint')}</p>
-      ) : null}
+      <header className="flex items-center gap-4">
+        <span className="kk-icon-tile" aria-hidden="true">
+          <StoreIcon size={30} />
+        </span>
+        <div className="min-w-0 flex-1">
+          {storeNamed ? (
+            <h1 className="text-2xl break-words">{storeName}</h1>
+          ) : (
+            <h1 className="text-2xl break-words text-fg-muted">{t('preview.defaultStoreName')}</h1>
+          )}
+          <p className="mt-1 text-sm text-fg-2">
+            {storeNamed ? t('review.count', { n: shown.length }) : t('preview.defaultStoreHint')}
+          </p>
+        </div>
+      </header>
+      <p className="mt-4 text-base text-fg-2">{t('preview.lead')}</p>
 
       {shown.length === 0 ? (
-        <div className="mt-5">
-          <EmptyState text={t('preview.empty')} />
+        <div className="mt-6">
+          <EmptyState text={t('preview.empty')} icon={<StoreIcon size={28} />} />
         </div>
       ) : (
-        <ul className="m-0 mt-5 grid list-none grid-cols-2 gap-3 p-0">
+        <ul className="m-0 mt-6 grid list-none grid-cols-2 gap-3 p-0">
           {shown.map((product) => {
             const soldOut = product.availability === 'out of stock';
             return (
-              <li key={product.sku} className="kk-card m-0 flex min-w-0 flex-col gap-2 p-2">
+              <li
+                key={product.sku}
+                className={`kk-card m-0 flex min-w-0 flex-col gap-2 p-2 ${soldOut ? 'opacity-60' : ''}`}
+              >
                 <ProductPhoto src={product.clean_url} className="aspect-square w-full" />
                 <h2 className="kk-clamp-2 px-1 text-base leading-5 break-words">{product.name}</h2>
-                <p className="kk-clamp-2 px-1 text-sm text-fg-2" lang={locale}>
+                <div className="px-1">
+                  <PriceLine product={product} />
+                </div>
+                <p className="kk-clamp-2 px-1 text-xs font-medium text-fg-muted" lang={locale}>
                   {locale === 'id' ? product.description_id : product.description_en}
                 </p>
-                <div className="mt-auto flex flex-col items-start gap-2 px-1 pb-1">
-                  <PriceLine product={product} />
+                <div className="mt-auto flex flex-col items-start gap-2 px-1">
                   <span className="kk-pill" data-tone={soldOut ? 'fallback' : 'pass'}>
                     {soldOut ? t('preview.soldOut') : t('preview.available')}
                   </span>
                 </div>
-                <div className="px-1 pb-1">
-                  <ChatCta product={product} waNumber={waNumber} />
-                </div>
+                <ChatCta product={product} waNumber={waNumber} />
               </li>
             );
           })}
         </ul>
       )}
+
+      {hidden > 0 ? <p className="mt-4 text-sm text-fg-muted">{t('preview.hidden', { n: hidden })}</p> : null}
+
+      <details className="kk-details kk-card-flat mt-8 px-4 py-1" open={!storeNamed}>
+        <summary>{t('preview.sellerTools')}</summary>
+        <div className="flex flex-col gap-3 pt-1 pb-3">
+          <div>
+            <label htmlFor="store-name" className="text-sm font-bold">
+              {t('preview.storeNameLabel')}
+            </label>
+            <input
+              id="store-name"
+              type="text"
+              className="kk-input mt-2"
+              maxLength={60}
+              value={storeName}
+              placeholder={t('preview.storeNamePlaceholder')}
+              onChange={(event) => setStoreName(event.target.value)}
+            />
+          </div>
+          {waNumber === '' && shown.length > 0 ? (
+            <p className="text-sm text-fg-muted">{t('preview.waHint')}</p>
+          ) : null}
+        </div>
+      </details>
+
+      <Link to="/review" className="kk-btn kk-btn-secondary kk-tactile mt-6 w-full">
+        <ArrowLeftIcon size={20} />
+        {t('preview.backToReview')}
+      </Link>
     </Column>
   );
 }

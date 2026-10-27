@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Switch } from '../components/Switch';
 import { StickyBar } from '../components/StickyBar';
 import { Toast } from '../components/Toast';
-import { CheckIcon, CloseIcon, PhotoIcon, PlusIcon } from '../components/Icons';
+import { CheckIcon, CloseIcon, PhotoIcon, PlusIcon, UploadIcon } from '../components/Icons';
 import { ApiError, BackendUnavailableError, createJob, fetchSamplePack, type SamplePack } from '../lib/api';
 import { isGoldenJobId } from '../lib/golden';
 import { useT, type MessageKey } from '../lib/locale';
@@ -120,168 +120,183 @@ export function UploadScreen() {
 
   return (
     <>
-    <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-6">
-      <h1 className="text-2xl">{t('upload.title')}</h1>
-      <p className="mt-2 text-base text-fg-2">{t('upload.lead')}</p>
+      <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-8">
+        <h1 className="text-2xl">{t('upload.title')}</h1>
+        <p className="mt-2 text-base text-fg-2">{t('upload.lead')}</p>
 
-      {storedJobId !== null ? (
-        <section className="kk-card-flat mt-5 p-4" aria-labelledby="resume-title">
-          <h2 id="resume-title" className="text-lg">
-            {t('upload.resumeTitle')}
-          </h2>
-          <p className="mt-1 text-sm text-fg-2">{t('upload.resumeHint')}</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="kk-btn kk-btn-secondary kk-tactile"
-              onClick={() => void navigate({ to: '/jobs/$jobId', params: { jobId: storedJobId } })}
-            >
-              {t('upload.resumeOpen')}
-            </button>
-            <button type="button" className="kk-btn kk-btn-ghost" onClick={() => setStoredJobId(null)}>
-              {t('upload.resumeDismiss')}
-            </button>
-          </div>
-        </section>
-      ) : null}
-
-      <label className="kk-card kk-card-tap kk-tactile mt-5 flex items-center gap-4 p-4">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] bg-accent text-accent-fg">
-          {photos.length > 0 ? <PlusIcon size={26} /> : <PhotoIcon size={26} />}
-        </span>
-        <span className="min-w-0">
-          <span className="block font-display text-lg font-bold text-fg">
-            {photos.length > 0 ? t('upload.addMore') : t('upload.dropTitle')}
-          </span>
-          <span className="block text-sm text-fg-2">{t('upload.dropHint')}</span>
-        </span>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          className="sr-only"
-          onChange={(event) => {
-            addFiles(event.target.files);
-            event.target.value = '';
-          }}
-        />
-      </label>
-
-      <section className="mt-5" aria-labelledby="samples-title">
-        <h2 id="samples-title" className="text-lg">
-          {t('samples.title')}
-        </h2>
-        <p className="mt-1 text-sm text-fg-2">{t('samples.hint')}</p>
-        <div className="mt-3 flex flex-col gap-2">
-          {PACKS.map((entry) => (
-            <button
-              key={entry.pack}
-              type="button"
-              data-sample={entry.pack}
-              className="kk-chip kk-tactile min-h-14 w-full justify-start gap-3 px-4 text-base"
-              aria-pressed={pack === entry.pack}
-              onClick={() => setPack(pack === entry.pack ? null : entry.pack)}
-            >
-              {pack === entry.pack ? <CheckIcon size={20} /> : <PhotoIcon size={20} />}
-              {t(entry.label)}
-            </button>
-          ))}
-        </div>
-        {pack !== null ? (
-          <p className="mt-2 text-sm text-fg-2">{t('samples.selected', { pack: pack.toUpperCase() })}</p>
-        ) : null}
-      </section>
-
-      {photos.length > 0 ? (
-        <section className="mt-5" aria-labelledby="photos-title">
-          <div className="flex items-baseline justify-between gap-2">
-            <h2 id="photos-title" className="text-lg">
-              {t('upload.photosHeading')}
+        {storedJobId !== null ? (
+          <section className="kk-card-flat mt-6 p-4" aria-labelledby="resume-title">
+            <h2 id="resume-title" className="text-lg">
+              {t('upload.resumeTitle')}
             </h2>
-          </div>
-          <ul className="m-0 mt-3 flex list-none flex-col gap-3 p-0">
-            {photos.map((photo, index) => (
-              <li key={photo.id} className="kk-card-flat m-0 p-3">
-                <div className="flex items-center gap-3">
-                  <Thumb file={photo.file} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold">{t('upload.photoLabel', { n: index + 1 })}</p>
-                    <p className="truncate text-xs text-fg-muted">{photo.file.name}</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="kk-btn kk-btn-ghost"
-                    aria-label={t('upload.removePhoto', { n: index + 1 })}
-                    onClick={() => removePhoto(photo.id)}
-                  >
-                    <CloseIcon size={18} />
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  className="kk-input mt-3"
-                  value={photo.caption}
-                  aria-label={t('upload.captionPhoto', { n: index + 1 })}
-                  placeholder={t('upload.captionPhotoPlaceholder')}
-                  onChange={(event) => setCaption(photo.id, event.target.value)}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+            <p className="mt-1 text-sm text-fg-2">{t('upload.resumeHint')}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="kk-btn kk-btn-secondary kk-tactile"
+                onClick={() => void navigate({ to: '/jobs/$jobId', params: { jobId: storedJobId } })}
+              >
+                {t('upload.resumeOpen')}
+              </button>
+              <button type="button" className="kk-btn kk-btn-ghost" onClick={() => setStoredJobId(null)}>
+                {t('upload.resumeDismiss')}
+              </button>
+            </div>
+          </section>
+        ) : null}
 
-      <div className="mt-5">
-        <label htmlFor="general-caption" className="text-sm font-bold">
-          {t('upload.captionGeneral')}
+        <label className="kk-hero kk-card-tap kk-tactile mt-6" data-filled={photos.length > 0}>
+          <span className="kk-icon-tile">
+            {photos.length > 0 ? <PlusIcon size={28} /> : <UploadIcon size={30} />}
+          </span>
+          <span className="min-w-0">
+            <span className="block font-display text-xl font-extrabold tracking-[-0.02em] text-fg">
+              {photos.length > 0 ? t('upload.addMore') : t('upload.dropTitle')}
+            </span>
+            <span className="mt-1 block text-sm text-fg-2">{t('upload.dropHint')}</span>
+          </span>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            className="sr-only"
+            onChange={(event) => {
+              addFiles(event.target.files);
+              event.target.value = '';
+            }}
+          />
         </label>
-        <input
-          id="general-caption"
-          type="text"
-          className="kk-input mt-2"
-          value={general}
-          placeholder={t('upload.captionGeneralPlaceholder')}
-          onChange={(event) => setGeneral(event.target.value)}
-        />
-        <p className="mt-2 text-sm text-fg-muted">{t('upload.captionHelp')}</p>
+
+        {photos.length > 0 ? (
+          <section className="mt-6" aria-labelledby="photos-title">
+            <div className="flex items-center justify-between gap-2">
+              <h2 id="photos-title" className="text-xl">
+                {t('upload.photosHeading')}
+              </h2>
+              <span className="kk-count" aria-live="polite" data-testid="photo-count">
+                <PhotoIcon size={16} />
+                {t('upload.photosCount', { n: photos.length })}
+              </span>
+            </div>
+            <ul className="m-0 mt-3 flex list-none flex-col gap-3 p-0">
+              {photos.map((photo, index) => (
+                <li key={photo.id} className="kk-card-flat m-0 p-3">
+                  <div className="flex items-center gap-3">
+                    <Thumb file={photo.file} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold">{t('upload.photoLabel', { n: index + 1 })}</p>
+                      <p className="truncate text-xs text-fg-muted">{photo.file.name}</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="kk-btn kk-btn-quiet"
+                      aria-label={t('upload.removePhoto', { n: index + 1 })}
+                      onClick={() => removePhoto(photo.id)}
+                    >
+                      <CloseIcon size={18} />
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    className="kk-input mt-3"
+                    value={photo.caption}
+                    aria-label={t('upload.captionPhoto', { n: index + 1 })}
+                    placeholder={t('upload.captionPhotoPlaceholder')}
+                    onChange={(event) => setCaption(photo.id, event.target.value)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        <section className="mt-8" aria-labelledby="samples-title">
+          <h2 id="samples-title" className="text-xl">
+            {t('samples.title')}
+          </h2>
+          <p className="mt-1 text-sm text-fg-2">{t('samples.hint')}</p>
+          <div className="mt-3 flex flex-col gap-3">
+            {PACKS.map((entry) => {
+              const selected = pack === entry.pack;
+              return (
+                <button
+                  key={entry.pack}
+                  type="button"
+                  data-sample={entry.pack}
+                  className="kk-pack kk-tactile"
+                  aria-pressed={selected}
+                  onClick={() => setPack(selected ? null : entry.pack)}
+                >
+                  <span className="kk-pack-tile" aria-hidden="true">
+                    {entry.pack.toUpperCase()}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-display text-lg font-bold text-fg">{t(entry.label)}</span>
+                    {selected ? (
+                      <span className="block text-xs font-bold text-accent-2">{t('samples.chosen')}</span>
+                    ) : null}
+                  </span>
+                  <span className="kk-pack-check" aria-hidden="true">
+                    <CheckIcon size={16} />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {pack !== null ? (
+            <p className="mt-3 text-sm text-fg-2">{t('samples.selected', { pack: pack.toUpperCase() })}</p>
+          ) : null}
+        </section>
+
+        <div className="mt-8">
+          <label htmlFor="general-caption" className="text-sm font-bold">
+            {t('upload.captionGeneral')}
+          </label>
+          <input
+            id="general-caption"
+            type="text"
+            className="kk-input mt-2"
+            value={general}
+            placeholder={t('upload.captionGeneralPlaceholder')}
+            onChange={(event) => setGeneral(event.target.value)}
+          />
+          <p className="mt-2 text-sm text-fg-muted">{t('upload.captionHelp')}</p>
+        </div>
+
+        <section className="kk-card-flat mt-8 flex items-center gap-3 py-3 pr-2 pl-4">
+          <div className="min-w-0 flex-1">
+            <h2 id="demo-title" className="text-base font-bold">
+              {t('demo.title')}
+            </h2>
+            <p id="demo-help" className="mt-1 text-sm text-fg-2">
+              {t('demo.help')}
+            </p>
+          </div>
+          <Switch checked={demoSafe} onChange={setDemoSafe} labelledBy="demo-title" describedBy="demo-help" />
+        </section>
+
+        {toast !== null ? <Toast text={toast} onDismiss={dismissToast} /> : null}
       </div>
 
-      <section className="kk-card-flat mt-6 flex items-center gap-3 py-3 pr-2 pl-4">
-        <div className="min-w-0 flex-1">
-          <h2 id="demo-title" className="text-base font-bold">
-            {t('demo.title')}
-          </h2>
-          <p id="demo-help" className="mt-1 text-sm text-fg-2">
-            {t('demo.help')}
+      <StickyBar>
+        {backendMissing ? (
+          <p className="kk-card-flat px-3 py-2 text-sm text-fg-2" role="alert">
+            {t('upload.backendUnavailable')}
           </p>
-        </div>
-        <Switch checked={demoSafe} onChange={setDemoSafe} labelledBy="demo-title" describedBy="demo-help" />
-      </section>
-
-      {toast !== null ? <Toast text={toast} onDismiss={dismissToast} /> : null}
-    </div>
-
-    <StickyBar>
-      {backendMissing ? (
-        <p className="kk-card-flat px-3 py-2 text-sm text-fg-2" role="alert">
-          {t('upload.backendUnavailable')}
-        </p>
-      ) : null}
-      {photos.length > 0 ? (
-        <p className="text-center text-sm font-bold" aria-live="polite">
-          {t('upload.photosCount', { n: photos.length })}
-        </p>
-      ) : null}
-      <button
-        type="button"
-        className="kk-btn kk-btn-primary kk-tactile w-full"
-        disabled={!canStart}
-        onClick={() => void start()}
-      >
-        {busy ? t('upload.ctaBusy') : t('upload.cta')}
-      </button>
-      {!canStart && !busy ? <p className="text-center text-sm text-fg-muted">{t('upload.ctaNeed')}</p> : null}
-    </StickyBar>
+        ) : null}
+        <button
+          type="button"
+          className="kk-btn kk-btn-primary kk-tactile w-full"
+          disabled={!canStart}
+          onClick={() => void start()}
+        >
+          {busy ? t('upload.ctaBusy') : t('upload.cta')}
+        </button>
+        {!canStart && !busy ? <p className="text-center text-sm text-fg-muted">{t('upload.ctaNeed')}</p> : null}
+        {photos.length > 0 && canStart ? (
+          <p className="text-center text-sm font-bold">{t('upload.photosCount', { n: photos.length })}</p>
+        ) : null}
+      </StickyBar>
     </>
   );
 }

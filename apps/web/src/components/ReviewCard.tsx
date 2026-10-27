@@ -4,7 +4,7 @@ import { gateState, hasPrice, type ReviewedProduct } from '../lib/catalog';
 import { formatRupiah, parseRupiahInput } from '../lib/format';
 import { useT } from '../lib/locale';
 import { editProduct } from '../lib/store';
-import { ChatIcon, CheckIcon, LayersIcon } from './Icons';
+import { AlertIcon, ChatIcon, CheckIcon, LayersIcon } from './Icons';
 import { ProductPhoto } from './ProductPhoto';
 import { Switch } from './Switch';
 
@@ -43,13 +43,13 @@ export const ReviewCard = memo(function ReviewCard({ product, suggestion }: Revi
   return (
     <li
       id={`card-${sku}`}
-      className="kk-card kk-review m-0 flex scroll-mt-20 list-none flex-col gap-3 p-3"
+      className="kk-card kk-review m-0 flex scroll-mt-24 list-none flex-col gap-3 p-3"
       data-included={product.included}
       data-price-state={priceState}
     >
       <div className="flex gap-3">
         <ProductPhoto src={product.clean_url} className="h-[104px] w-[104px]" />
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
           <textarea
             rows={2}
             className="kk-input resize-none px-2.5 py-1.5 font-display text-lg"
@@ -109,8 +109,13 @@ export const ReviewCard = memo(function ReviewCard({ product, suggestion }: Revi
               </span>
             ) : null}
           </div>
-          <div id={helperId} className="mt-1 flex flex-col gap-0.5 px-0.5">
-            {missing ? <p className="text-sm font-bold text-warning">{t('review.noPrice')}</p> : null}
+          <div id={helperId} className="mt-1.5 flex flex-col gap-0.5 px-0.5">
+            {missing ? (
+              <p className="flex items-center gap-1.5 text-sm font-bold text-warning">
+                <AlertIcon size={16} />
+                {t('review.noPrice')}
+              </p>
+            ) : null}
             {suggestion !== null ? (
               <p className="text-sm text-price-ai">
                 {t('review.aiSuggestion', { price: formatRupiah(suggestion) })}
@@ -130,7 +135,7 @@ export const ReviewCard = memo(function ReviewCard({ product, suggestion }: Revi
         {t('review.viaChat')}
       </button>
 
-      <div className="flex flex-col">
+      <div className="flex flex-col border-t border-line pt-1">
         <div className="flex items-center justify-between gap-3">
           <span id={`${uid}-stock`} className="text-sm font-bold">
             {t('review.inStock')}

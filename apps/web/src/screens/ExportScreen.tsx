@@ -1,7 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 
-import { AlertIcon, DownloadIcon, PhotoIcon, SheetIcon, TextIcon, ChatIcon } from '../components/Icons';
+import { AlertIcon, ArrowLeftIcon, CheckIcon, DownloadIcon, PhotoIcon, SheetIcon, TextIcon, ChatIcon, UploadIcon } from '../components/Icons';
 import { EmptyState } from '../components/EmptyState';
 import { StickyBar } from '../components/StickyBar';
 import { ApiError, exportJob, type ExportKind, type ExportResponse } from '../lib/api';
@@ -54,7 +54,7 @@ interface ExportDone {
 }
 
 function Column({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-6">{children}</div>;
+  return <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-8">{children}</div>;
 }
 
 /** Screen 5: seller details, one export request, four downloads, and how to use the CSV. */
@@ -76,8 +76,8 @@ export function ExportScreen() {
     return (
       <Column>
         <h1 className="text-2xl">{t('export.title')}</h1>
-        <div className="mt-5">
-          <EmptyState text={t('export.empty')}>
+        <div className="mt-6">
+          <EmptyState text={t('export.empty')} icon={<UploadIcon size={28} />}>
             <button
               type="button"
               className="kk-btn kk-btn-secondary kk-tactile"
@@ -157,8 +157,8 @@ export function ExportScreen() {
           </p>
         ) : null}
 
-        <section className="mt-5 flex flex-col gap-4" aria-labelledby="export-seller">
-          <h2 id="export-seller" className="text-lg">
+        <section className="mt-8 flex flex-col gap-4" aria-labelledby="export-seller">
+          <h2 id="export-seller" className="text-xl">
             {t('export.sellerTitle')}
           </h2>
           <div>
@@ -217,7 +217,7 @@ export function ExportScreen() {
         </section>
 
         {showBlockers ? (
-          <div className="kk-card-flat mt-5 flex flex-col gap-2 p-4" role="alert">
+          <div className="kk-card-flat mt-6 flex flex-col gap-2 border-warning! p-4" role="alert">
             <p className="text-sm font-bold text-warning">{t('export.blockedIntro')}</p>
             {namedBlockers.length > 0 ? (
               <p className="kk-money text-sm break-words text-fg-2">{namedBlockers.join(', ')}</p>
@@ -228,7 +228,7 @@ export function ExportScreen() {
           </div>
         ) : null}
 
-        {state.included === 0 ? <p className="mt-5 text-sm text-fg-2">{t('review.noneIncluded')}</p> : null}
+        {state.included === 0 ? <p className="mt-6 text-sm text-fg-2">{t('review.noneIncluded')}</p> : null}
 
         {failureText !== null && failure?.kind !== undefined && !(failure.kind === 'code' && failure.code === 'price_missing') ? (
           <div className="kk-card-flat mt-5 flex flex-col gap-3 p-4" role="alert">
@@ -242,11 +242,16 @@ export function ExportScreen() {
           </div>
         ) : null}
 
-        <section className="mt-6 flex flex-col gap-3" aria-labelledby="export-files">
-          <h2 id="export-files" className="text-lg">
+        <section className="mt-8 flex flex-col gap-3" aria-labelledby="export-files">
+          <h2 id="export-files" className="text-xl">
             {t('export.downloadsTitle')}
           </h2>
-          <p className="text-sm text-fg-2" role="status" aria-live="polite">
+          <p
+            className={`flex items-center gap-2 text-sm ${done === null ? 'text-fg-2' : 'font-bold text-success'}`}
+            role="status"
+            aria-live="polite"
+          >
+            {done !== null ? <CheckIcon size={18} /> : null}
             {done === null ? t('export.downloadsHint') : t('export.done')}
           </p>
           {done !== null ? (
@@ -261,10 +266,17 @@ export function ExportScreen() {
             {KINDS.map(({ kind, label, desc, Icon }) => {
               const file = filesByKind.get(kind);
               return (
-                <li key={kind} className="kk-card m-0 flex flex-col gap-3 p-3">
+                <li
+                  key={kind}
+                  className={`kk-card m-0 flex flex-col gap-3 p-3 ${file === undefined ? 'opacity-70' : ''}`}
+                >
                   <div className="flex items-start gap-3">
-                    <span className="mt-0.5 text-fg-2">
-                      <Icon size={24} />
+                    <span
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] ${
+                        file !== undefined ? 'bg-success text-surface' : 'bg-subtle text-fg-2'
+                      }`}
+                    >
+                      {file !== undefined ? <CheckIcon size={22} /> : <Icon size={22} />}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="font-display text-lg break-words">{t(label)}</p>
@@ -278,7 +290,7 @@ export function ExportScreen() {
                     <a
                       href={file.url}
                       download={file.filename}
-                      className="kk-btn kk-btn-secondary kk-tactile w-full"
+                      className="kk-btn kk-btn-success kk-tactile w-full"
                       aria-label={`${t('export.download')}: ${t(label)}`}
                     >
                       <DownloadIcon size={18} />
@@ -296,9 +308,9 @@ export function ExportScreen() {
           </ul>
         </section>
 
-        <details className="kk-details kk-card-flat mt-6 px-4 py-1">
+        <details className="kk-details kk-card-flat mt-8 px-4 py-1">
           <summary>{t('export.guide.title')}</summary>
-          <div className="flex flex-col gap-3 pt-1 pb-3 text-sm text-fg-2">
+          <div className="flex flex-col gap-3 border-t border-line pt-3 pb-3 text-sm text-fg-2">
             <ol className="m-0 flex list-decimal flex-col gap-1.5 pl-5">
               <li>{t('export.guide.step1')}</li>
               <li>{t('export.guide.step2')}</li>
@@ -310,7 +322,8 @@ export function ExportScreen() {
           </div>
         </details>
 
-        <Link to="/review" className="kk-btn kk-btn-secondary kk-tactile mt-6 w-full">
+        <Link to="/review" className="kk-btn kk-btn-ghost mt-4 w-full text-fg-2">
+          <ArrowLeftIcon size={18} />
           {t('export.backToReview')}
         </Link>
       </Column>

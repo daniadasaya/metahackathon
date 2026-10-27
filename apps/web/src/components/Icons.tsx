@@ -143,3 +143,38 @@ export function TextIcon(props: IconProps) {
     </Svg>
   );
 }
+
+export function StoreIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 9l1.5-5h13L20 9" />
+      <path d="M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0A2.7 2.7 0 0 0 20 9" />
+      <path d="M5.5 12.5V20h13v-7.5" />
+    </Svg>
+  );
+}
+
+export function ArrowLeftIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M19 12H5M11 6l-6 6 6 6" />
+    </Svg>
+  );
+}
+
+export function ArrowRightIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </Svg>
+  );
+}
+
+export function UploadIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 16V5M7 9l5-5 5 5" />
+      <path d="M5 20h14" />
+    </Svg>
+  );
+}
