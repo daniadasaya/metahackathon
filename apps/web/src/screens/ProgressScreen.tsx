@@ -166,7 +166,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
           ) : null}
 
           {clean ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 border-t border-line pt-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success text-surface">
                 <CheckIcon size={20} />
               </span>

@@ -12,15 +12,15 @@ interface StageStripProps {
   states: readonly TileState[];
 }
 
-/** Five 48×48 tiles with 6px rules between them: 5×48 + 4×6 = 264px, inside the 328px column. */
+/** Full-width stepper: five 40×40 tiles; the rules between them flex to fill the row (min 6px). */
 export function StageStrip({ stageNames, stateNames, label, states }: StageStripProps) {
   return (
-    <ol className="m-0 flex list-none items-center p-0" aria-label={label}>
+    <ol className="m-0 flex w-full list-none items-center p-0" aria-label={label}>
       {STAGE_LETTERS.map((letter, index) => {
         const state = states[index] ?? 'pending';
         const ruleState = states[index - 1] === 'done' ? 'done' : 'pending';
         return (
-          <li key={letter} className="m-0 flex items-center p-0">
+          <li key={letter} className={`m-0 flex items-center p-0 ${index > 0 ? 'flex-1' : 'flex-none'}`}>
             {index > 0 ? <span className="kk-rule" data-state={ruleState} aria-hidden="true" /> : null}
             <span
               className="kk-tile"
