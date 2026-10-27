@@ -13,7 +13,7 @@ function PhotoFrame({ src, className }: ProductPhotoProps) {
   return (
     <span className={`kk-photo ${className}`}>
       {failed ? (
-        <PhotoIcon size={28} />
+        <PhotoIcon size={24} />
       ) : (
         <img src={src} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} />
       )}

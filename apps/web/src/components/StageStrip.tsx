@@ -12,7 +12,7 @@ interface StageStripProps {
   states: readonly TileState[];
 }
 
-/** Five 56×56 tiles with 6px rules between them: 5×56 + 4×6 = 304px, inside the 328px column. */
+/** Five 48×48 tiles with 6px rules between them: 5×48 + 4×6 = 264px, inside the 328px column. */
 export function StageStrip({ stageNames, stateNames, label, states }: StageStripProps) {
   return (
     <ol className="m-0 flex list-none items-center p-0" aria-label={label}>
@@ -28,8 +28,8 @@ export function StageStrip({ stageNames, stateNames, label, states }: StageStrip
               role="img"
               aria-label={`${letter}: ${stageNames[index] ?? ''}, ${stateNames[state]}`}
             >
-              {state === 'done' ? <CheckIcon size={28} /> : null}
-              {state === 'failed' ? <RetryIcon size={26} /> : null}
+              {state === 'done' ? <CheckIcon size={24} /> : null}
+              {state === 'failed' ? <RetryIcon size={20} /> : null}
               {state === 'active' || state === 'pending' ? letter : null}
             </span>
           </li>

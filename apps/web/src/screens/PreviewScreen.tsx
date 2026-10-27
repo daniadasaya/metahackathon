@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 
+import { Column } from '../components/Column';
 import { EmptyState } from '../components/EmptyState';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { ArrowLeftIcon, ChatIcon, StoreIcon } from '../components/Icons';
@@ -8,16 +9,12 @@ import { isWaNumber, type ReviewedProduct } from '../lib/catalog';
 import { useT } from '../lib/locale';
 import { setStoreName, useCatalog, useSeller } from '../lib/store';
 
-function Column({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-[420px] md:max-w-none px-4 pt-6 pb-10">{children}</div>;
-}
-
 function PriceLine({ product }: { product: ReviewedProduct }) {
   const { t } = useT();
   if (product.price_via_chat) {
     return (
       <span className="kk-pill" data-tone="neutral">
-        <ChatIcon size={14} />
+        <ChatIcon size={16} />
         {t('review.viaChat')}
       </span>
     );
@@ -26,7 +23,7 @@ function PriceLine({ product }: { product: ReviewedProduct }) {
     return <span className="text-sm font-bold text-warning">{t('review.noPrice')}</span>;
   }
   return (
-    <span className="kk-money text-price-sm tracking-[-0.03em] break-words text-fg">
+    <span className="kk-money text-price-sm break-words text-fg">
       {formatRupiah(product.price_idr)}
     </span>
   );
@@ -41,7 +38,7 @@ function ChatCta({ product, waNumber }: { product: ReviewedProduct; waNumber: st
   if (waNumber === '') {
     return (
       <p className="m-0 flex min-h-11 items-center gap-1.5 text-sm text-fg-muted">
-        <ChatIcon size={14} />
+        <ChatIcon size={16} />
         {t('preview.contactStore')}
       </p>
     );
@@ -76,9 +73,9 @@ export function PreviewScreen() {
 
   return (
     <Column>
-      <header className="flex items-center gap-4">
+      <header className="flex items-center gap-3">
         <span className="kk-icon-tile" aria-hidden="true">
-          <StoreIcon size={30} />
+          <StoreIcon size={24} />
         </span>
         <div className="min-w-0 flex-1">
           {storeNamed ? (
@@ -91,14 +88,14 @@ export function PreviewScreen() {
           </p>
         </div>
       </header>
-      <p className="mt-4 text-base text-fg-2">{t('preview.lead')}</p>
+      <p className="mt-2 text-base text-fg-2">{t('preview.lead')}</p>
 
       {shown.length === 0 ? (
-        <div className="mt-6">
-          <EmptyState text={t('preview.empty')} icon={<StoreIcon size={28} />} />
+        <div className="mt-4">
+          <EmptyState text={t('preview.empty')} icon={<StoreIcon size={24} />} />
         </div>
       ) : (
-        <ul className="m-0 mt-6 grid list-none grid-cols-2 gap-3 p-0">
+        <ul className="m-0 mt-4 grid list-none grid-cols-2 gap-3 p-0">
           {shown.map((product) => {
             const soldOut = product.availability === 'out of stock';
             return (
@@ -107,7 +104,7 @@ export function PreviewScreen() {
                 className={`kk-card m-0 flex min-w-0 flex-col gap-2 p-2 ${soldOut ? 'opacity-60' : ''}`}
               >
                 <ProductPhoto src={product.clean_url} className="aspect-square w-full" />
-                <h2 className="kk-clamp-2 px-1 text-base break-words">{product.name}</h2>
+                <h2 className="kk-clamp-2 px-1 text-lg break-words">{product.name}</h2>
                 <div className="px-1">
                   <PriceLine product={product} />
                 </div>
@@ -128,9 +125,9 @@ export function PreviewScreen() {
 
       {hidden > 0 ? <p className="mt-4 text-sm text-fg-muted">{t('preview.hidden', { n: hidden })}</p> : null}
 
-      <details className="kk-details kk-card-flat mt-8 px-4 py-1" open={!storeNamed}>
+      <details className="kk-details kk-card-flat mt-6 px-4" open={!storeNamed}>
         <summary>{t('preview.sellerTools')}</summary>
-        <div className="flex flex-col gap-3 pt-1 pb-3">
+        <div className="flex flex-col gap-3 pb-3">
           <div>
             <label htmlFor="store-name" className="text-sm font-bold">
               {t('preview.storeNameLabel')}
@@ -151,7 +148,7 @@ export function PreviewScreen() {
         </div>
       </details>
 
-      <Link to="/review" className="kk-btn kk-btn-secondary kk-tactile mt-6 w-full">
+      <Link to="/review" className="kk-btn kk-btn-secondary kk-tactile mt-4 w-full">
         <ArrowLeftIcon size={20} />
         {t('preview.backToReview')}
       </Link>

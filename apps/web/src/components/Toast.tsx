@@ -21,22 +21,22 @@ export function Toast({ text, onDismiss }: ToastProps) {
   }, [text, onDismiss]);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-28 z-20 flex justify-center px-4">
+    <div className="pointer-events-none fixed inset-x-0 bottom-24 z-20 flex justify-center px-4">
       <div
         role="alert"
-        className="kk-toast pointer-events-auto flex w-full max-w-[392px] items-start gap-3 py-3 pr-1 pl-4"
+        className="kk-toast pointer-events-auto flex w-full max-w-[392px] items-start gap-3 py-1 pr-1 pl-4"
       >
-        <span className="mt-0.5 text-danger">
+        <span className="mt-2.5 text-danger">
           <AlertIcon />
         </span>
-        <p className="min-w-0 flex-1 py-0.5 text-sm break-words">{text}</p>
+        <p className="min-w-0 flex-1 py-2 text-sm break-words">{text}</p>
         <button
           type="button"
           className="kk-btn kk-btn-ghost"
           aria-label={t('common.close')}
           onClick={onDismiss}
         >
-          <CloseIcon size={18} />
+          <CloseIcon size={16} />
         </button>
       </div>
     </div>

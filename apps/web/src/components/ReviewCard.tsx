@@ -52,7 +52,7 @@ export const ReviewCard = memo(function ReviewCard({ product, suggestion }: Revi
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
           <textarea
             rows={3}
-            className="kk-input resize-none px-2.5 py-1.5 font-display text-lg"
+            className="kk-input resize-none px-2.5 py-1 font-display text-lg"
             value={product.name}
             aria-label={t('review.nameFor', { sku })}
             onChange={(event) =>
@@ -67,7 +67,7 @@ export const ReviewCard = memo(function ReviewCard({ product, suggestion }: Revi
           />
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="kk-pill" data-tone={gate === 'pass' ? 'pass' : 'fallback'}>
-              {gate === 'pass' ? <CheckIcon size={14} /> : <LayersIcon size={14} />}
+              {gate === 'pass' ? <CheckIcon size={16} /> : <LayersIcon size={16} />}
               {gate === 'pass' ? t('review.gatePass') : t('review.gateFallback')}
             </span>
             <span className="kk-money text-xs font-bold text-fg-2">{sku}</span>
@@ -82,7 +82,7 @@ export const ReviewCard = memo(function ReviewCard({ product, suggestion }: Revi
 
       {viaChat ? (
         <div className="kk-chatrow">
-          <ChatIcon size={22} />
+          <ChatIcon size={20} />
           {t('review.viaChat')}
         </div>
       ) : (
@@ -109,7 +109,7 @@ export const ReviewCard = memo(function ReviewCard({ product, suggestion }: Revi
               </span>
             ) : null}
           </div>
-          <div id={helperId} className="mt-1.5 flex flex-col gap-0.5 px-0.5">
+          <div id={helperId} className="mt-1 flex flex-col px-0.5">
             {missing ? (
               <p className="flex items-center gap-1.5 text-sm font-bold text-warning">
                 <AlertIcon size={16} />
@@ -135,7 +135,7 @@ export const ReviewCard = memo(function ReviewCard({ product, suggestion }: Revi
         {t('review.viaChat')}
       </button>
 
-      <div className="flex flex-col border-t border-line pt-1">
+      <div className="flex flex-col gap-1 border-t border-line py-2">
         <div className="flex items-center justify-between gap-3">
           <span id={`${uid}-stock`} className="text-sm font-bold">
             {t('review.inStock')}

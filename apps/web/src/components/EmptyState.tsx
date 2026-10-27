@@ -11,7 +11,7 @@ interface EmptyStateProps {
 /** Empty state: one small component. Copy is passed in already translated. */
 export function EmptyState({ text, icon, children }: EmptyStateProps) {
   return (
-    <div className="kk-card-flat flex flex-col items-center gap-4 px-5 py-8 text-center">
+    <div className="kk-card-flat flex flex-col items-center gap-3 px-5 py-6 text-center">
       {icon !== undefined ? (
         <span className="kk-empty-icon" aria-hidden="true">
           {icon}

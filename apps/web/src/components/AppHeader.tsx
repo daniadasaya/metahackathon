@@ -69,16 +69,12 @@ export function AppHeader() {
           </button>
         </div>
       </div>
-      <div className="mx-auto flex w-full max-w-[420px] md:max-w-none items-center gap-3 px-4 pb-2">
-        <p className="shrink-0 text-xs text-fg-muted">{t('header.step', { n: step, total: TOTAL_STEPS })}</p>
-        <div className="kk-steps min-w-0 flex-1" aria-hidden="true">
-          {Array.from({ length: TOTAL_STEPS }, (_, index) => (
-            <span
-              key={index}
-              data-state={index + 1 < step ? 'done' : index + 1 === step ? 'current' : 'todo'}
-            />
-          ))}
-        </div>
+      {/* The step rail sits on the header's bottom edge: progress without a second row. */}
+      <p className="sr-only">{t('header.step', { n: step, total: TOTAL_STEPS })}</p>
+      <div className="kk-steps" aria-hidden="true">
+        {Array.from({ length: TOTAL_STEPS }, (_, index) => (
+          <span key={index} data-state={index + 1 < step ? 'done' : index + 1 === step ? 'current' : 'todo'} />
+        ))}
       </div>
     </header>
   );

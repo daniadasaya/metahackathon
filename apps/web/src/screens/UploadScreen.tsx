@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { Column } from '../components/Column';
 import { Switch } from '../components/Switch';
 import { StickyBar } from '../components/StickyBar';
 import { Toast } from '../components/Toast';
@@ -39,7 +40,7 @@ function Thumb({ file }: { file: File }) {
   }, [file]);
 
   return (
-    <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-subtle text-fg-muted">
+    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-subtle text-fg-muted">
       {url === null ? (
         <PhotoIcon />
       ) : (
@@ -120,40 +121,43 @@ export function UploadScreen() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[420px] md:max-w-none px-4 pt-6 pb-8">
-        <h1 className="text-2xl">{t('upload.title')}</h1>
+      <Column>
+        <h1 className="max-w-[18ch] text-2xl">{t('upload.title')}</h1>
         <p className="mt-2 text-base text-fg-2">{t('upload.lead')}</p>
 
         {storedJobId !== null ? (
-          <section className="kk-card-flat mt-6 p-4" aria-labelledby="resume-title">
-            <h2 id="resume-title" className="text-lg">
-              {t('upload.resumeTitle')}
-            </h2>
-            <p className="mt-1 text-sm text-fg-2">{t('upload.resumeHint')}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                className="kk-btn kk-btn-secondary kk-tactile"
-                onClick={() => void navigate({ to: '/jobs/$jobId', params: { jobId: storedJobId } })}
-              >
-                {t('upload.resumeOpen')}
-              </button>
-              <button type="button" className="kk-btn kk-btn-ghost" onClick={() => setStoredJobId(null)}>
-                {t('upload.resumeDismiss')}
-              </button>
+          <section
+            className="kk-card-flat mt-4 flex items-center gap-2 py-2 pr-2 pl-4"
+            aria-labelledby="resume-title"
+          >
+            <div className="min-w-0 flex-1">
+              <h2 id="resume-title" className="text-sm font-bold">
+                {t('upload.resumeTitle')}
+              </h2>
+              <p className="sr-only">{t('upload.resumeHint')}</p>
             </div>
+            <button
+              type="button"
+              className="kk-btn kk-btn-secondary kk-btn-compact kk-tactile"
+              onClick={() => void navigate({ to: '/jobs/$jobId', params: { jobId: storedJobId } })}
+            >
+              {t('upload.resumeOpen')}
+            </button>
+            <button type="button" className="kk-btn kk-btn-ghost px-2" onClick={() => setStoredJobId(null)}>
+              {t('upload.resumeDismiss')}
+            </button>
           </section>
         ) : null}
 
-        <label className="kk-hero kk-card-tap kk-tactile mt-6" data-filled={photos.length > 0}>
+        <label className="kk-hero kk-card-tap kk-tactile mt-4" data-filled={photos.length > 0}>
           <span className="kk-icon-tile">
-            {photos.length > 0 ? <PlusIcon size={28} /> : <UploadIcon size={30} />}
+            {photos.length > 0 ? <PlusIcon size={24} /> : <UploadIcon size={24} />}
           </span>
           <span className="min-w-0">
-            <span className="block font-display text-xl font-extrabold tracking-[-0.02em] text-fg">
+            <span className="block font-display text-lg font-bold text-fg">
               {photos.length > 0 ? t('upload.addMore') : t('upload.dropTitle')}
             </span>
-            <span className="mt-1 block text-sm text-fg-2">{t('upload.dropHint')}</span>
+            <span className="block text-sm text-fg-2">{t('upload.dropHint')}</span>
           </span>
           <input
             type="file"
@@ -193,7 +197,7 @@ export function UploadScreen() {
                       aria-label={t('upload.removePhoto', { n: index + 1 })}
                       onClick={() => removePhoto(photo.id)}
                     >
-                      <CloseIcon size={18} />
+                      <CloseIcon size={16} />
                     </button>
                   </div>
                   <input
@@ -210,12 +214,14 @@ export function UploadScreen() {
           </section>
         ) : null}
 
-        <section className="mt-8" aria-labelledby="samples-title">
+        <section className="mt-6" aria-labelledby="samples-title" aria-describedby="samples-hint">
           <h2 id="samples-title" className="text-xl">
             {t('samples.title')}
           </h2>
-          <p className="mt-1 text-sm text-fg-2">{t('samples.hint')}</p>
-          <div className="mt-3 flex flex-col gap-3">
+          <p id="samples-hint" className="sr-only">
+            {t('samples.hint')}
+          </p>
+          <div className="mt-3 grid grid-cols-3 gap-2">
             {PACKS.map((entry) => {
               const selected = pack === entry.pack;
               return (
@@ -230,12 +236,8 @@ export function UploadScreen() {
                   <span className="kk-pack-tile" aria-hidden="true">
                     {entry.pack.toUpperCase()}
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-display text-lg font-bold text-fg">{t(entry.label)}</span>
-                    {selected ? (
-                      <span className="block text-xs font-bold text-accent-2">{t('samples.chosen')}</span>
-                    ) : null}
-                  </span>
+                  <span className="text-sm font-bold text-fg">{t(entry.label)}</span>
+                  {selected ? <span className="sr-only">{t('samples.chosen')}</span> : null}
                   <span className="kk-pack-check" aria-hidden="true">
                     <CheckIcon size={16} />
                   </span>
@@ -244,39 +246,43 @@ export function UploadScreen() {
             })}
           </div>
           {pack !== null ? (
-            <p className="mt-3 text-sm text-fg-2">{t('samples.selected', { pack: pack.toUpperCase() })}</p>
+            <p className="mt-2 text-sm text-fg-2">{t('samples.selected', { pack: pack.toUpperCase() })}</p>
           ) : null}
         </section>
 
-        <div className="mt-8">
-          <label htmlFor="general-caption" className="text-sm font-bold">
-            {t('upload.captionGeneral')}
-          </label>
-          <input
-            id="general-caption"
-            type="text"
-            className="kk-input mt-2"
-            value={general}
-            placeholder={t('upload.captionGeneralPlaceholder')}
-            onChange={(event) => setGeneral(event.target.value)}
-          />
-          <p className="mt-2 text-sm text-fg-muted">{t('upload.captionHelp')}</p>
-        </div>
+        <details className="kk-details kk-card-flat mt-4 px-4">
+          <summary>{t('upload.captionGeneral')}</summary>
+          <div className="pb-3">
+            <input
+              id="general-caption"
+              type="text"
+              className="kk-input"
+              value={general}
+              aria-label={t('upload.captionGeneral')}
+              placeholder={t('upload.captionGeneralPlaceholder')}
+              onChange={(event) => setGeneral(event.target.value)}
+            />
+            <p className="mt-2 text-sm text-fg-muted">{t('upload.captionHelp')}</p>
+          </div>
+        </details>
 
-        <section className="kk-card-flat mt-8 flex items-center gap-3 py-3 pr-2 pl-4">
-          <div className="min-w-0 flex-1">
-            <h2 id="demo-title" className="text-base font-bold">
+        <section className="kk-card-flat mt-4 py-1 pr-2 pl-4">
+          <div className="flex min-h-[52px] items-center gap-3">
+            <h2 id="demo-title" className="min-w-0 flex-1 text-base font-bold">
               {t('demo.title')}
             </h2>
-            <p id="demo-help" className="mt-1 text-sm text-fg-2">
-              {t('demo.help')}
-            </p>
+            <Switch checked={demoSafe} onChange={setDemoSafe} labelledBy="demo-title" describedBy="demo-help" />
           </div>
-          <Switch checked={demoSafe} onChange={setDemoSafe} labelledBy="demo-title" describedBy="demo-help" />
+          <p
+            id="demo-help"
+            className="pr-2 pb-3 text-xs font-medium text-fg-2 [@media(max-height:830px)]:sr-only"
+          >
+            {t('demo.help')}
+          </p>
         </section>
 
         {toast !== null ? <Toast text={toast} onDismiss={dismissToast} /> : null}
-      </div>
+      </Column>
 
       <StickyBar>
         {backendMissing ? (

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 
+import { Column } from '../components/Column';
 import { AlertIcon, ArrowLeftIcon, CheckIcon, DownloadIcon, PhotoIcon, SheetIcon, TextIcon, ChatIcon, UploadIcon } from '../components/Icons';
 import { EmptyState } from '../components/EmptyState';
 import { StickyBar } from '../components/StickyBar';
@@ -53,10 +54,6 @@ interface ExportDone {
   signature: string;
 }
 
-function Column({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-[420px] md:max-w-none px-4 pt-6 pb-8">{children}</div>;
-}
-
 /** Screen 5: seller details, one export request, four downloads, and how to use the CSV. */
 export function ExportScreen() {
   const { t, errorText } = useT();
@@ -77,7 +74,7 @@ export function ExportScreen() {
       <Column>
         <h1 className="text-2xl">{t('export.title')}</h1>
         <div className="mt-6">
-          <EmptyState text={t('export.empty')} icon={<UploadIcon size={28} />}>
+          <EmptyState text={t('export.empty')} icon={<UploadIcon size={24} />}>
             <button
               type="button"
               className="kk-btn kk-btn-secondary kk-tactile"
@@ -148,17 +145,27 @@ export function ExportScreen() {
   return (
     <>
       <Column>
-        <h1 className="text-2xl">{t('export.title')}</h1>
-        <p className="mt-2 text-base text-fg-2">{t('export.lead')}</p>
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-2xl">{t('export.title')}</h1>
+          <Link
+            to="/review"
+            className="kk-btn kk-btn-ghost shrink-0 px-2 text-fg-2"
+            aria-label={t('export.backToReview')}
+          >
+            <ArrowLeftIcon size={16} />
+            {t('common.back')}
+          </Link>
+        </div>
+        <p className="mt-2 text-base text-fg-2 [@media(max-height:830px)]:sr-only">{t('export.lead')}</p>
         {scope.mixed ? <p className="mt-2 text-sm text-warning">{t('export.mixedJobs')}</p> : null}
         {golden ? (
-          <p className="kk-card-flat mt-3 px-3 py-2 text-sm text-fg-2" role="note">
+          <p className="mt-2 text-xs font-medium text-fg-2" role="note">
             {t('export.demoNote')}
           </p>
         ) : null}
 
-        <section className="mt-8 flex flex-col gap-4" aria-labelledby="export-seller">
-          <h2 id="export-seller" className="text-xl">
+        <section className="mt-3 flex flex-col gap-3" aria-labelledby="export-seller">
+          <h2 id="export-seller" className="sr-only">
             {t('export.sellerTitle')}
           </h2>
           <div>
@@ -168,7 +175,7 @@ export function ExportScreen() {
             <input
               id="export-store"
               type="text"
-              className="kk-input mt-2"
+              className="kk-input mt-1"
               maxLength={STORE_NAME_MAX}
               autoComplete="organization"
               value={storeName}
@@ -193,7 +200,7 @@ export function ExportScreen() {
               type="text"
               inputMode="numeric"
               autoComplete="tel-national"
-              className="kk-input kk-money mt-2"
+              className="kk-input kk-money mt-1"
               maxLength={20}
               value={waNumber}
               placeholder={t('export.waPlaceholder')}
@@ -204,7 +211,7 @@ export function ExportScreen() {
             />
             <p
               id="export-wa-hint"
-              className={`mt-1 px-0.5 text-sm ${touched.wa && waError === 'format' ? 'font-bold text-danger' : 'text-fg-muted'}`}
+              className={`mt-1 px-0.5 text-xs ${touched.wa && waError === 'format' ? 'font-bold text-danger' : 'text-fg-muted'}`}
             >
               {t('export.waHint')}
             </p>
@@ -217,7 +224,7 @@ export function ExportScreen() {
         </section>
 
         {showBlockers ? (
-          <div className="kk-card-flat mt-6 flex flex-col gap-2 border-warning! p-4" role="alert">
+          <div className="kk-card-flat mt-4 flex flex-col gap-2 border-warning! p-4" role="alert">
             <p className="text-sm font-bold text-warning">{t('export.blockedIntro')}</p>
             {namedBlockers.length > 0 ? (
               <p className="kk-money text-sm break-words text-fg-2">{namedBlockers.join(', ')}</p>
@@ -228,12 +235,12 @@ export function ExportScreen() {
           </div>
         ) : null}
 
-        {state.included === 0 ? <p className="mt-6 text-sm text-fg-2">{t('review.noneIncluded')}</p> : null}
+        {state.included === 0 ? <p className="mt-4 text-sm text-fg-2">{t('review.noneIncluded')}</p> : null}
 
         {failureText !== null && failure?.kind !== undefined && !(failure.kind === 'code' && failure.code === 'price_missing') ? (
-          <div className="kk-card-flat mt-5 flex flex-col gap-3 p-4" role="alert">
+          <div className="kk-card-flat mt-4 flex flex-col gap-3 p-4" role="alert">
             <p className="flex items-start gap-2 text-sm font-bold text-danger">
-              <AlertIcon size={18} />
+              <AlertIcon size={16} />
               <span className="min-w-0 flex-1 break-words">{failureText}</span>
             </p>
             <button type="button" className="kk-btn kk-btn-secondary kk-tactile" disabled={busy} onClick={() => void submit()}>
@@ -242,16 +249,16 @@ export function ExportScreen() {
           </div>
         ) : null}
 
-        <section className="mt-8 flex flex-col gap-3" aria-labelledby="export-files">
-          <h2 id="export-files" className="text-xl">
+        <section className="mt-3 flex flex-col gap-2" aria-labelledby="export-files">
+          <h2 id="export-files" className="sr-only">
             {t('export.downloadsTitle')}
           </h2>
           <p
-            className={`flex items-center gap-2 text-sm ${done === null ? 'text-fg-2' : 'font-bold text-success'}`}
+            className={done === null ? 'sr-only' : 'flex items-center gap-2 text-sm font-bold text-success'}
             role="status"
             aria-live="polite"
           >
-            {done !== null ? <CheckIcon size={18} /> : null}
+            {done !== null ? <CheckIcon size={16} /> : null}
             {done === null ? t('export.downloadsHint') : t('export.done')}
           </p>
           {done !== null ? (
@@ -262,44 +269,46 @@ export function ExportScreen() {
               {stale ? <p className="text-sm text-warning">{t('export.stale')}</p> : null}
             </>
           ) : null}
-          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+          <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {KINDS.map(({ kind, label, desc, Icon }) => {
               const file = filesByKind.get(kind);
               return (
                 <li
                   key={kind}
-                  className={`kk-card m-0 flex flex-col gap-3 p-3 ${file === undefined ? 'opacity-70' : ''}`}
+                  className={`kk-card m-0 flex min-h-14 items-center gap-3 py-1 pr-2 pl-3 ${file === undefined ? 'opacity-70' : ''}`}
                 >
-                  <div className="flex items-start gap-3">
-                    <span
-                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] ${
-                        file !== undefined ? 'bg-success text-surface' : 'bg-subtle text-fg-2'
-                      }`}
-                    >
-                      {file !== undefined ? <CheckIcon size={22} /> : <Icon size={22} />}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-display text-lg break-words">{t(label)}</p>
-                      <p className="text-sm text-fg-2">{t(desc)}</p>
-                      {file !== undefined ? (
-                        <p className="kk-money mt-1 text-xs break-all text-fg-muted">{file.filename}</p>
-                      ) : null}
-                    </div>
+                  <span
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ${
+                      file !== undefined ? 'bg-success text-surface' : 'bg-subtle text-fg-2'
+                    }`}
+                  >
+                    {file !== undefined ? <CheckIcon size={20} /> : <Icon size={20} />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-display text-base font-bold break-words">{t(label)}</p>
+                    <p className="truncate text-xs font-medium text-fg-2">{t(desc)}</p>
+                    {file !== undefined ? (
+                      <p className="kk-money truncate text-xs text-fg-muted">{file.filename}</p>
+                    ) : null}
                   </div>
                   {file !== undefined ? (
                     <a
                       href={file.url}
                       download={file.filename}
-                      className="kk-btn kk-btn-success kk-tactile w-full"
+                      className="kk-btn kk-btn-success kk-btn-icon kk-tactile shrink-0"
                       aria-label={`${t('export.download')}: ${t(label)}`}
+                      title={t('export.download')}
                     >
-                      <DownloadIcon size={18} />
-                      {t('export.download')}
+                      <DownloadIcon size={20} />
                     </a>
                   ) : (
-                    <button type="button" className="kk-btn kk-btn-secondary w-full" disabled aria-label={`${t('export.download')}: ${t(label)}`}>
-                      <DownloadIcon size={18} />
-                      {t('export.download')}
+                    <button
+                      type="button"
+                      className="kk-btn kk-btn-secondary kk-btn-icon shrink-0"
+                      disabled
+                      aria-label={`${t('export.download')}: ${t(label)}`}
+                    >
+                      <DownloadIcon size={20} />
                     </button>
                   )}
                 </li>
@@ -308,9 +317,9 @@ export function ExportScreen() {
           </ul>
         </section>
 
-        <details className="kk-details kk-card-flat mt-8 px-4 py-1">
+        <details className="kk-details kk-card-flat mt-3 px-4">
           <summary>{t('export.guide.title')}</summary>
-          <div className="flex flex-col gap-3 border-t border-line pt-3 pb-3 text-sm text-fg-2">
+          <div className="flex flex-col gap-3 border-t border-line py-3 text-sm text-fg-2">
             <ol className="m-0 flex list-decimal flex-col gap-1.5 pl-5">
               <li>{t('export.guide.step1')}</li>
               <li>{t('export.guide.step2')}</li>
@@ -322,10 +331,6 @@ export function ExportScreen() {
           </div>
         </details>
 
-        <Link to="/review" className="kk-btn kk-btn-ghost mt-4 w-full text-fg-2">
-          <ArrowLeftIcon size={18} />
-          {t('export.backToReview')}
-        </Link>
       </Column>
 
       <StickyBar>

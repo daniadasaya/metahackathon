@@ -2,6 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { Column } from '../components/Column';
 import { EmptyState } from '../components/EmptyState';
 import { AlertIcon, ArrowRightIcon, CheckIcon, PhotoIcon, RetryIcon } from '../components/Icons';
 import { Skeleton } from '../components/Skeleton';
@@ -14,10 +15,6 @@ import { useT } from '../lib/locale';
 import { isGoldenJobId } from '../lib/golden';
 import { setStoredJobId } from '../lib/store';
 
-function Column({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-[420px] md:max-w-none px-4 pt-6 pb-8">{children}</div>;
-}
-
 /** Products on `photoIndex` that fell back to the composite: the ones a cleanup retry can fix. */
 function retryTargets(job: JobState, photoIndex: number): string[] {
   return job.products
@@ -29,7 +26,7 @@ function retryTargets(job: JobState, photoIndex: number): string[] {
 function Meter({ done, total, finished, label }: { done: number; total: number; finished: boolean; label: string }) {
   const ratio = finished ? 1 : total > 0 ? Math.min(1, done / total) : 0;
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1">
       <p className="text-sm font-bold text-fg-2">{label}</p>
       <div
         className="kk-meter"
@@ -87,7 +84,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
       <Column>
         <h1 className="text-2xl">{t('progress.title')}</h1>
         <div className="mt-6">
-          <EmptyState text={t('progress.loadFailed')} icon={<AlertIcon size={28} />}>
+          <EmptyState text={t('progress.loadFailed')} icon={<AlertIcon size={24} />}>
             {code !== null ? <p className="text-sm text-danger">{errorText(code)}</p> : null}
             <button type="button" className="kk-btn kk-btn-secondary kk-tactile" onClick={uploadAgain}>
               {t('progress.uploadAgain')}
@@ -102,8 +99,8 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
     return (
       <Column>
         <h1 className="text-2xl">{t('progress.title')}</h1>
-        <div className="mt-6 flex flex-col gap-4" role="status" aria-label={t('common.loading')}>
-          <Skeleton className="h-14 w-full" />
+        <div className="mt-6 flex flex-col gap-3" role="status" aria-label={t('common.loading')}>
+          <Skeleton className="h-12 w-full" />
           <Skeleton className="h-5 w-2/3" />
           <Skeleton className="h-5 w-1/2" />
         </div>
@@ -150,12 +147,12 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
         ) : null}
 
         {isGoldenJobId(jobId) ? (
-          <p className="kk-card-flat mt-4 px-3 py-2 text-sm text-fg-2" role="note">
+          <p className="kk-card-flat mt-3 px-3 py-2 text-sm text-fg-2" role="note">
             {t('notice.mock')}
           </p>
         ) : null}
 
-        <section className="kk-card mt-6 flex flex-col gap-4 p-4" aria-label={t('progress.stripLabel')}>
+        <section className="kk-card mt-4 flex flex-col gap-4 p-4" aria-label={t('progress.stripLabel')}>
           <StageStrip
             label={t('progress.stripLabel')}
             stageNames={stageNames}
@@ -171,10 +168,10 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
           {clean ? (
             <div className="flex items-center gap-3">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-success text-surface">
-                <CheckIcon size={26} />
+                <CheckIcon size={24} />
               </span>
               <div className="min-w-0">
-                <p className="font-display text-xl font-extrabold tracking-[-0.02em]">
+                <p className="font-display text-lg font-bold">
                   {t('review.count', { n: productCount })}
                 </p>
                 <p className="text-sm text-fg-2">
@@ -204,7 +201,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
         </section>
 
         {errors.length > 0 ? (
-          <section className="mt-8" aria-labelledby="errors-title">
+          <section className="mt-6" aria-labelledby="errors-title">
             <h2 id="errors-title" className="text-xl">
               {t('progress.errorsTitle')}
             </h2>
@@ -217,7 +214,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
                   <li key={key} className="kk-card-flat m-0 p-3">
                     <p className="flex items-center gap-2 text-sm font-bold text-fg">
                       <span className="text-danger">
-                        <AlertIcon size={18} />
+                        <AlertIcon size={16} />
                       </span>
                       {t('progress.errorItem', {
                         n: photoNumber(error.photo_index),
@@ -232,7 +229,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
                         disabled={busy}
                         onClick={() => void retry(error, skus)}
                       >
-                        <RetryIcon size={18} />
+                        <RetryIcon size={16} />
                         {busy ? t('progress.retrying') : t('progress.retryItem', { n: photoNumber(error.photo_index) })}
                       </button>
                     ) : null}
@@ -249,8 +246,8 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
         ) : null}
 
         {!running && productCount === 0 ? (
-          <div className="mt-8">
-            <EmptyState text={t('progress.noProducts')} icon={<PhotoIcon size={28} />}>
+          <div className="mt-6">
+            <EmptyState text={t('progress.noProducts')} icon={<PhotoIcon size={24} />}>
               <button type="button" className="kk-btn kk-btn-secondary kk-tactile" onClick={uploadAgain}>
                 {t('progress.uploadAgain')}
               </button>
@@ -259,7 +256,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
         ) : null}
 
         {!running && productCount > 0 ? (
-          <div className="mt-8 flex justify-center">
+          <div className="mt-4 flex justify-center">
             <button type="button" className="kk-btn kk-btn-ghost" onClick={uploadAgain}>
               {t('progress.uploadAgain')}
             </button>
@@ -273,7 +270,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
             {finished
               ? t('progress.reviewCta', { n: productCount })
               : t('progress.reviewPartial', { n: productCount })}
-            <ArrowRightIcon size={22} />
+            <ArrowRightIcon size={20} />
           </Link>
         </StickyBar>
       ) : null}

@@ -34,35 +34,35 @@
   --font-mono: var(--ff-mono);
 }
 
-/* 360px type scale (brandkit §3) */
+/* One proportional system (brandkit §3, spec): 12 / 14 / 16 / 18 / 22 / 28 plus two money steps. */
 @theme {
-  --text-xs: 13px;
-  --text-xs--line-height: 18px;
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
   --text-xs--letter-spacing: 0.02em;
   --text-xs--font-weight: 600;
-  --text-sm: 15px;
-  --text-sm--line-height: 22px;
+  --text-sm: 14px;
+  --text-sm--line-height: 20px;
   --text-sm--font-weight: 500;
-  --text-base: 17px;
-  --text-base--line-height: 26px;
+  --text-base: 16px;
+  --text-base--line-height: 24px;
   --text-base--font-weight: 500;
-  --text-lg: 22px;
-  --text-lg--line-height: 30px;
+  --text-lg: 18px;
+  --text-lg--line-height: 26px;
   --text-lg--letter-spacing: -0.015em;
   --text-lg--font-weight: 700;
-  --text-xl: 28px;
-  --text-xl--line-height: 34px;
+  --text-xl: 22px;
+  --text-xl--line-height: 30px;
   --text-xl--letter-spacing: -0.02em;
   --text-xl--font-weight: 800;
-  --text-2xl: 38px;
-  --text-2xl--line-height: 42px;
-  --text-2xl--letter-spacing: -0.03em;
+  --text-2xl: 28px;
+  --text-2xl--line-height: 34px;
+  --text-2xl--letter-spacing: -0.02em;
   --text-2xl--font-weight: 800;
-  --text-price: 26px;
-  --text-price--line-height: 32px;
+  --text-price: 20px;
+  --text-price--line-height: 26px;
   --text-price--font-weight: 700;
-  /* Preview tile price: two per row inside 158px cards, so it sits one step under `price`. */
-  --text-price-sm: 20px;
-  --text-price-sm--line-height: 26px;
+  /* Preview tile price: two per row inside ~175px cards, so it sits one step under `price`. */
+  --text-price-sm: 17px;
+  --text-price-sm--line-height: 24px;
   --text-price-sm--font-weight: 700;
 }

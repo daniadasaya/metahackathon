@@ -1,6 +1,7 @@
 import { useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useMemo } from 'react';
 
+import { Column } from '../components/Column';
 import { AlertIcon, ArrowRightIcon, CheckIcon, LayersIcon, PhotoIcon, StoreIcon } from '../components/Icons';
 import { EmptyState } from '../components/EmptyState';
 import { ReviewCard } from '../components/ReviewCard';
@@ -19,10 +20,6 @@ import { replaceCatalog, setStoredJobId, useCatalog, useStoredJobId } from '../l
 
 /** At most this many SKUs are named inline in the bar; the rest are counted. */
 const NAMED_BLOCKERS = 3;
-
-function Column({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-[420px] md:max-w-none px-4 pt-6 pb-8">{children}</div>;
-}
 
 /** Scrolls to the first product that blocks export and puts the cursor in its price field. */
 function focusFirstBlocker(blockers: readonly ReviewedProduct[]): void {
@@ -78,12 +75,12 @@ export function ReviewScreen() {
         <h1 className="text-2xl">{t('review.title')}</h1>
         <div className="mt-6">
           {jobId !== null && job === undefined && !query.isError ? (
-            <div className="flex flex-col gap-4" role="status" aria-label={t('common.loading')}>
-              <Skeleton className="h-40 w-full" />
-              <Skeleton className="h-40 w-full" />
+            <div className="flex flex-col gap-3" role="status" aria-label={t('common.loading')}>
+              <Skeleton className="h-36 w-full" />
+              <Skeleton className="h-36 w-full" />
             </div>
           ) : running ? (
-            <EmptyState text={t('review.stillRunning')} icon={<LayersIcon size={28} />}>
+            <EmptyState text={t('review.stillRunning')} icon={<LayersIcon size={24} />}>
               <Link to="/jobs/$jobId" params={{ jobId: jobId ?? '' }} className="kk-btn kk-btn-secondary kk-tactile">
                 {t('review.seeProgress')}
               </Link>
@@ -91,7 +88,7 @@ export function ReviewScreen() {
           ) : (
             <EmptyState
               text={query.isError ? t('review.loadFailed') : t('review.empty')}
-              icon={query.isError ? <AlertIcon size={28} /> : <PhotoIcon size={28} />}
+              icon={query.isError ? <AlertIcon size={24} /> : <PhotoIcon size={24} />}
             >
               <button type="button" className="kk-btn kk-btn-secondary kk-tactile" onClick={uploadNew}>
                 {t('review.uploadNew')}
@@ -117,11 +114,11 @@ export function ReviewScreen() {
         <h1 className="text-2xl">{t('review.title')}</h1>
         <p className="mt-2 text-base text-fg-2">{t('review.lead')}</p>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+        <div className="mt-3 flex items-center justify-between gap-2">
           <span className="kk-count whitespace-nowrap">{t('review.count', { n: catalog.length })}</span>
           <div className="flex items-center">
             <Link to="/review/preview" className="kk-btn kk-btn-ghost px-2 whitespace-nowrap text-accent-2">
-              <StoreIcon size={18} />
+              <StoreIcon size={16} />
               {t('review.previewCta')}
             </Link>
             <button type="button" className="kk-btn kk-btn-ghost px-2 whitespace-nowrap text-fg-2" onClick={uploadNew}>
@@ -133,7 +130,7 @@ export function ReviewScreen() {
           <p className="mt-2 text-sm text-fg-muted">{t('review.excluded', { n: state.excluded })}</p>
         ) : null}
 
-        <ul className="m-0 mt-4 flex list-none flex-col gap-4 p-0">
+        <ul className="m-0 mt-3 flex list-none flex-col gap-3 p-0">
           {catalog.map((product) => (
             <ReviewCard key={product.sku} product={product} suggestion={suggestions.get(product.sku) ?? null} />
           ))}
@@ -168,7 +165,7 @@ export function ReviewScreen() {
           }}
         >
           {t('review.exportCta')}
-          {exportable ? <ArrowRightIcon size={22} /> : null}
+          {exportable ? <ArrowRightIcon size={20} /> : null}
         </button>
       </StickyBar>
     </>

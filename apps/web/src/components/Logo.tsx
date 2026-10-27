@@ -56,12 +56,12 @@ interface WordmarkProps {
   name: string;
 }
 
-/** Header lockup (brandkit §1.3): 28px mark, 8px gap, Outfit 800 22px (`lg`) wordmark. */
+/** Header lockup (brandkit §1.3): 24px mark, 8px gap, Outfit 800 16px (`base`) wordmark. */
 export function Wordmark({ name }: WordmarkProps) {
   return (
     <span className="inline-flex items-center gap-2">
-      <Logo size={28} />
-      <span className="font-display text-lg font-extrabold text-fg">
+      <Logo size={24} />
+      <span className="font-display text-base font-extrabold text-fg">
         {name}
       </span>
     </span>
