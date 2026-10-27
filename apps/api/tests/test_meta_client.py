@@ -7,13 +7,16 @@ of both fidelity verdicts.
 
 from __future__ import annotations
 
+import asyncio
+import builtins
 import socket
+import sys
+from collections.abc import Iterator
 from typing import Any
 
 import pytest
 
 from app import meta_client, schemas
-from app.meta_client import settings
 
 
 @pytest.fixture(autouse=True)
@@ -128,3 +131,172 @@ def test_segment_concept_no_match_returns_empty(_block_network: None) -> None:
     img = b"photo-bytes-for-segment" * 10
     result = asyncio.run(meta_client.segment_concept(img, "nonexistent-concept-xyz"))
     assert result == []
+
+
+# ---------------------------------------------------------------------------
+# Shared live-client lifecycle (regression pins)
+#
+# `_live_client()` builds one process-level AsyncOpenAI and every caller
+# reuses it; `aclose_live_client()` drops it. These tests prove the pin
+# offline: `openai.AsyncOpenAI` is faked on the `openai` module (the real
+# import happens inside the function) and the key is forced via a patched
+# `settings` — no network, no real key. Each test resets the module global
+# so suite ordering cannot leak state.
+# ---------------------------------------------------------------------------
+
+
+class _FakeAsyncOpenAI:
+    """Stand-in for ``openai.AsyncOpenAI`` recording construction kwargs."""
+
+    constructions: int = 0
+    close_error: Exception | None = None
+
+    def __init__(self, base_url: str, api_key: str) -> None:
+        _FakeAsyncOpenAI.constructions += 1
+        self.base_url = base_url
+        self.api_key = api_key
+        self.close_calls = 0
+
+    async def close(self) -> None:
+        self.close_calls += 1
+        error = _FakeAsyncOpenAI.close_error
+        if error is not None:
+            raise error
+
+
+class _FakeOpenAIPackage:
+    """Stands in for the ``openai`` module, exporting the fake client."""
+
+    AsyncOpenAI = _FakeAsyncOpenAI
+
+
+@pytest.fixture
+def _live_lifecycle(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """Force live-capable settings, fake the openai package, reset the global.
+
+    Saves the prior ``_shared_live_client`` and restores it in ``finally``, so
+    suite ordering cannot leak state.
+    """
+    import app.settings as settings_module
+
+    monkeypatch.setattr(
+        meta_client,
+        "settings",
+        settings_module.Settings(
+            model_api_key="test-key-offline", base_url="http://127.0.0.1:8180", meta_mock=False
+        ),
+    )
+    monkeypatch.setitem(sys.modules, "openai", _FakeOpenAIPackage())
+    prior = meta_client._shared_live_client
+    meta_client._shared_live_client = None
+    _FakeAsyncOpenAI.constructions = 0
+    _FakeAsyncOpenAI.close_error = None
+    try:
+        yield None
+    finally:
+        meta_client._shared_live_client = prior
+        _FakeAsyncOpenAI.close_error = None
+        _FakeAsyncOpenAI.constructions = 0
+
+
+def test_live_client_returns_same_instance(_live_lifecycle: None) -> None:
+    first = meta_client._live_client()
+    second = meta_client._live_client()
+    assert first is second
+    assert isinstance(first, _FakeAsyncOpenAI)
+    assert first.base_url == meta_client.META_BASE_URL
+    assert first.api_key == "test-key-offline"
+    assert _FakeAsyncOpenAI.constructions == 1, (
+        "the second _live_client() call must reuse the shared client, not "
+        "construct another — per-call construction leaked transports"
+    )
+
+
+def test_live_client_without_key_raises_and_caches_nothing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import app.settings as settings_module
+
+    monkeypatch.setattr(
+        meta_client,
+        "settings",
+        settings_module.Settings(
+            model_api_key=None, base_url="http://127.0.0.1:8180", meta_mock=True
+        ),
+    )
+    # Fake the package too, so the key branch is what fires even on a host
+    # where the real openai is not installed.
+    monkeypatch.setitem(sys.modules, "openai", _FakeOpenAIPackage())
+    prior = meta_client._shared_live_client
+    meta_client._shared_live_client = None
+    try:
+        with pytest.raises(meta_client.MetaLiveUnavailable, match="MODEL_API_KEY"):
+            meta_client._live_client()
+        assert meta_client._shared_live_client is None
+    finally:
+        meta_client._shared_live_client = prior
+
+
+def test_live_client_without_openai_package_raises(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import app.settings as settings_module
+
+    monkeypatch.setattr(
+        meta_client,
+        "settings",
+        settings_module.Settings(
+            model_api_key="test-key-offline", base_url="http://127.0.0.1:8180", meta_mock=False
+        ),
+    )
+
+    real_import = builtins.__import__
+
+    def _missing_openai(name: str, *args: Any, **kwargs: Any) -> Any:
+        if name == "openai":
+            raise ImportError("openai package faked as missing")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", _missing_openai)
+
+    prior = meta_client._shared_live_client
+    meta_client._shared_live_client = None
+    try:
+        with pytest.raises(meta_client.MetaLiveUnavailable, match="openai"):
+            meta_client._live_client()
+        assert meta_client._shared_live_client is None
+    finally:
+        meta_client._shared_live_client = prior
+
+
+def test_aclose_drops_and_next_call_builds_new(
+    _live_lifecycle: None,
+) -> None:
+    first = meta_client._live_client()
+    assert _FakeAsyncOpenAI.constructions == 1
+    asyncio.run(meta_client.aclose_live_client())
+    assert first.close_calls == 1
+    assert meta_client._shared_live_client is None
+    second = meta_client._live_client()
+    assert second is not first
+    assert _FakeAsyncOpenAI.constructions == 2
+
+
+def test_aclose_is_idempotent_when_nothing_shared(
+    _live_lifecycle: None,
+) -> None:
+    asyncio.run(meta_client.aclose_live_client())  # no raise
+    asyncio.run(meta_client.aclose_live_client())  # still no raise
+    assert meta_client._shared_live_client is None
+
+
+def test_aclose_close_failure_propagates(
+    _live_lifecycle: None,
+) -> None:
+    client = meta_client._live_client()
+    _FakeAsyncOpenAI.close_error = RuntimeError("transport already destroyed")
+    with pytest.raises(meta_client.MetaLiveUnavailable, match="closing the shared live client"):
+        asyncio.run(meta_client.aclose_live_client())
+    assert client.close_calls == 1
+    # dropped even though close failed — the error is not retried or swallowed
+    assert meta_client._shared_live_client is None
