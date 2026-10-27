@@ -484,6 +484,14 @@ def _output_text_of(response: Any) -> str:
     parts: list[str] = []
     output = getattr(response, "output", None) or []
     for item in output:
+        # Search-grounded Responses (Stage E, 2026-10-28): the model may emit
+        # intermediate commentary messages (phase == "commentary") before and
+        # around web_search calls. Only the final answer message carries the
+        # content — concatenating commentary preambles corrupts JSON parsing
+        # (observed live: preamble text + JSON failed validation). SAM records
+        # carry no phase, so this filter is a no-op for Stage B.
+        if getattr(item, "phase", None) == "commentary":
+            continue
         item_type = getattr(item, "type", None)
         if item_type == "refusal":
             raise MetaLiveUnavailable(
@@ -925,26 +933,55 @@ async def _live_verify_fidelity(
         ) from exc
 
 
+def _strip_code_fences(text: str) -> str:
+    """Strip optional markdown code fences around a JSON answer.
+
+    Observed live 2026-10-28: with ``web_search`` active the model may wrap
+    the JSON answer in `````json ... ````` fences. The schema format keeps the
+    payload clean, but the repair path must tolerate fences either way.
+    """
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        lines = stripped.splitlines()
+        lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        stripped = "\n".join(lines).strip()
+    return stripped
+
+
 async def _live_extract_product(
     clean_png: bytes, context: ExtractContext
 ) -> list[ProductEntry]:
-    """Live Stage E (P5 + one P6 repair retry), verified 2026-10-27 (live probe).
+    """Live Stage E (P5 v2 + one P6 repair retry), verified 2026-10-28.
 
-    ``POST /v1/chat/completions``, model ``muse-spark-1.3-contributor``,
+    ``POST /v1/responses``, model ``muse-spark-1.3-contributor``,
     (contributor variant: identical capability to 1.3 at roughly 12x lower price (input $0.10/M vs $1.25/M, output $0.20/M vs $4.25/M); inputs and outputs are used to train Meta's models, which is acceptable because every sample photo in this project is generated, not client data),
-    ``temperature=0.2``, ``response_format={"type": "json_object"}`` +
-    pydantic validation, exactly one P6 repair retry on validation failure
-    (docs structured output: https://dev.meta.ai/docs/structured-output —
-    ``json_schema``/``text.format`` exist but the ``json_object`` +
-    validation shape was kept per spec). Two decisive calls, both HTTP 200
-    first try: captions WITH "Harga 15000 per pcs" → ``price_hint_idr`` =
-    15000 (seller's own words, pre-fillable) and ``price_suggestion_idr``
-    = 15000, brand "Koomuak"; captions with NO price → both null,
-    ``price_suggestion_idr`` null (not an invention). The price rules bind
-    the prompt, not this code — the model returned hints, never decisions.
-    One review-fix: raw live ``category`` values ("snack", "chocolate
-    wafer bar", "Makanan Ringan") are free-str ``str`` per schemas.py, so
-    fixtures normalize them to the P5 schema bucket "Makanan & Minuman".
+    ``temperature=0.2``, ``instructions`` (system role) + one multimodal user
+    message (``input_text`` + ``input_image`` data URL),
+    ``tools=[{"type": "web_search", "search_context_size": "low",
+    "user_location": {"type": "approximate", "country": "ID"}}]``
+    (docs: https://dev.meta.ai/docs/search-grounding — search grounding is
+    only available on ``/v1/responses``, never on ``/v1/chat/completions``),
+    ``text={"format": {"type": "json_schema", "name": "ProductEntry",
+    "schema": ProductEntry.model_json_schema()}}`` (docs:
+    https://dev.meta.ai/docs/structured-output — Responses uses
+    ``text.format``, not ``response_format``). Verified live 2026-10-28 on
+    KK-0011 (Samsung phone, no seller price): ``json_schema`` + ``web_search``
+    coexist — baseline call completed with NO search fired (schema-valid JSON,
+    ``price_hint_idr`` null); a captions-naming-"Samsung Galaxy A54" call
+    fired 4 ``web_search_call`` items and returned grounded descriptions +
+    ``price_suggestion_idr`` = 3500000 with ``price_hint_idr`` null intact.
+    Intermediate ``phase == "commentary"`` messages are skipped by
+    :func:`_output_text_of` so only the final JSON answer is parsed; optional
+    markdown fences are stripped before validation. Exactly one P6 repair
+    retry on ``(ValueError, ValidationError)``; a second failure raises
+    :class:`MetaLiveUnavailable`. ``404 model_not_found`` surfaces, never
+    retried ; 429/5xx/timeout retry 2s/5s/12s.
+
+    Price law  binds the P5 v2 prompt, not this code:
+    ``price_hint_idr`` ONLY from the seller's own captions/visible_text,
+    never from ``web_search``.
     """
     client = _live_client()
     data_url = _data_url(clean_png)
@@ -954,59 +991,99 @@ async def _live_extract_product(
     # schemas.py is frozen, so there is no separate scene_note field. The
     # exact live threading of Stage A's scene note is confirmed against the
     # first live response, not assumed here.
+    #
+    # P5 Version 2 (2026-10-28, docs/prompts-final.md ## P5): web_search is
+    # ONLY for clearly legible/stated brand+model (enriching descriptions and
+    # price_suggestion_idr); never for unbranded/generic items. Strict Price
+    # Law: price_hint_idr ONLY from captions/visible_text, never from search.
     user_text = (
         f"Seller's own notes/captions: {captions_text!r}. "
         f"Text seen in the original photo: {context.visible_text}. "
         f"Product type: {context.concept!r}. Write the catalog entry for THIS "
-        "product as JSON only: name, description_id, description_en, category, "
-        "brand, condition, attributes {color, size, variant}, price_hint_idr, "
-        "price_suggestion_idr, confidence."
+        "product. Use web_search ONLY when a brand, series, or model name is "
+        "clearly legible in the photo text above or explicitly written in the "
+        "seller's captions (e.g. 'POCO X8 Pro', 'Samsung A54', 'For 14 Pro'): "
+        "in that case enrich description_id/description_en with accurate "
+        "real-world context and estimate a realistic Indonesian market price "
+        "in price_suggestion_idr. NEVER guess a brand/model/series and NEVER "
+        "run web_search for unbranded, generic, or plain items where no brand "
+        "or model text is visible or stated. "
+        "Price rules (binding): price_hint_idr ONLY if the seller's captions "
+        "or the photo text above states an explicit price for THIS product — "
+        "NEVER populate price_hint_idr from web_search results (null when no "
+        "seller price is stated). price_suggestion_idr is an integer IDR "
+        "market estimate from web_search or confident recognition; it never "
+        "pre-fills or exports. "
+        "Return ONLY valid JSON matching the schema: name, description_id, "
+        "description_en, category (one of: 'Handphone & Tablet', 'Komputer & "
+        "Laptop', 'Audio', 'Fashion Pria', 'Fashion Wanita', 'Sepatu', 'Tas', "
+        "'Makanan & Minuman', 'Kecantikan', 'Rumah Tangga', 'Elektronik "
+        "Lainnya', 'Lainnya'), brand (string or null), condition ('new' | "
+        "'used'), attributes {color, size, variant}, price_hint_idr "
+        "(int|null), price_suggestion_idr (int|null), confidence ('high' | "
+        "'medium' | 'low')."
     )
 
-    async def _call(messages: list[dict[str, Any]]) -> Any:
-        async def _inner() -> Any:
-            return await client.chat.completions.create(
-                model=MUSE_SPARK_MODEL,
-                temperature=0.2,
-                response_format={"type": "json_object"},
-                messages=messages,
-            )
-
-        return await _live_request(_inner, what="extract_product")
-
-    def _messages(extra: str = "") -> list[dict[str, Any]]:
+    def _input(extra: str = "") -> list[dict[str, Any]]:
         return [
             {
-                "role": "system",
-                "content": (
+                "type": "message",
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": user_text + extra},
+                    {"type": "input_image", "image_url": data_url},
+                ],
+            }
+        ]
+
+    async def _call(extra: str = "") -> Any:
+        async def _inner() -> Any:
+            return await client.responses.create(  # type: ignore[attr-defined]
+                model=MUSE_SPARK_MODEL,
+                temperature=0.2,
+                instructions=(
                     "You write catalog entries for Indonesian social-commerce "
                     "sellers. You never invent specifications, prices, or brands "
                     "you cannot see."
                 ),
-            },
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": user_text + extra},
-                    {"type": "image_url", "image_url": {"url": data_url}},
+                input=_input(extra),
+                tools=[
+                    {
+                        "type": "web_search",
+                        "search_context_size": "low",
+                        "user_location": {
+                            "type": "approximate",
+                            "country": "ID",
+                        },
+                    }
                 ],
-            },
-        ]
+                text={
+                    "format": {
+                        "type": "json_schema",
+                        "name": "ProductEntry",
+                        "schema": ProductEntry.model_json_schema(),
+                    }
+                },
+            )
 
-    response = await _call(_messages())
+        return await _live_request(_inner, what="extract_product")
+
+    response = await _call()
     try:
-        return [ProductEntry.model_validate_json(response.choices[0].message.content or "")]
+        return [
+            ProductEntry.model_validate_json(_strip_code_fences(_output_text_of(response)))
+        ]
     except (ValueError, ValidationError) as first_exc:
         repair = await _call(
-            _messages(
-                f" Your previous answer failed validation: {first_exc}. Return "
-                "the same content as corrected JSON only, matching the schema "
-                "exactly. No explanation, no markdown fences."
-            )
+            f" Your previous answer failed validation: {first_exc}. Return "
+            "the same content as corrected JSON only, matching the schema "
+            "exactly. No explanation, no markdown fences."
         )
         try:
             return [
-                ProductEntry.model_validate_json(repair.choices[0].message.content or "")
+                ProductEntry.model_validate_json(
+                    _strip_code_fences(_output_text_of(repair))
+                )
             ]
         except (ValueError, ValidationError) as exc:
             raise MetaLiveUnavailable(
