@@ -69,13 +69,62 @@ def area_ok(mask, photo_area, min_ratio=AREA_MIN, max_ratio=AREA_MAX):
     return min_ratio <= r <= max_ratio
 
 def dedupe_masks(masks, threshold=IOU_THRESHOLD):
+    """Keep one mask per physical product.
+
+    Two rules, applied against everything already kept:
+
+    * **Same-concept duplicates** — the usual IoU test. SAM returns the same
+      phone several times across revisions and scores; the highest revision and
+      score wins, the rest are dropped.
+    * **Cross-concept containment** — a sub-part mask ("phone screen") that sits
+      almost entirely inside an already-kept mask for the whole object
+      ("smartphone") is the same product seen twice, not a second product. It is
+      dropped only when it is both heavily overlapping (IoU > 0.75) and more
+      than 90% contained, so a genuinely separate accessory next to the phone is
+      never suppressed.
+    """
     ordered = sorted(masks, key=lambda m: (m.revision, m.score), reverse=True)
     kept = []
     for m in ordered:
-        if any(iou(m.bbox, k.bbox) > threshold for k in kept):
+        duplicate = False
+        for k in kept:
+            overlap = iou(m.bbox, k.bbox)
+            if overlap > threshold:
+                duplicate = True
+                break
+            if (
+                m.concept != k.concept
+                and overlap > 0.75
+                and containment(m.bbox, k.bbox) > 0.90
+            ):
+                duplicate = True
+                break
+        if duplicate:
             continue
         kept.append(m)
     return kept
+
+
+def containment(a, b):
+    """Fraction of the smaller box that lies inside the larger one.
+
+    IoU punishes a small box inside a large one (a phone screen inside a phone
+    scores ~0.4 even though every pixel of it is the phone). Containment answers
+    the question the dedupe actually asks: is this the same object, seen at a
+    smaller extent?
+    """
+    ax1, ay1, ax2, ay2 = a
+    bx1, by1, bx2, by2 = b
+    ix1 = max(ax1, bx1)
+    iy1 = max(ay1, by1)
+    ix2 = min(ax2, bx2)
+    iy2 = min(ay2, by2)
+    iw = max(0, ix2 - ix1 + 1)
+    ih = max(0, iy2 - iy1 + 1)
+    inter = iw * ih
+    area_a = max(1, (ax2 - ax1 + 1) * (ay2 - ay1 + 1))
+    area_b = max(1, (bx2 - bx1 + 1) * (by2 - by1 + 1))
+    return inter / min(area_a, area_b)
 
 def reading_order(masks):
     return sorted(masks, key=lambda m: (m.bbox[1], m.bbox[0]))
@@ -169,6 +218,19 @@ def _crop_bytes_for(job_id, sku):
     img.save(buf, format="PNG")
     return buf.getvalue()
 
+
+def _ref_bytes_for(job_id, sku):
+    """Ground-truth reference for the fidelity gate, falling back to the crop.
+
+    ``crops/{sku}-ref.png`` is the two-panel image written by Stage C. When it
+    is absent — an old job, or a direct ``_run_stage_d_one`` call in a unit test
+    — the crop is the best available reference and the gate still runs.
+    """
+    path = job_dir(job_id) / "crops" / f"{sku}-ref.png"
+    if path.is_file():
+        return path.read_bytes()
+    return _crop_bytes_for(job_id, sku)
+
 async def _run_stage_d_one(job_id, product, crop_bytes, sem, deadline, prev_product=None, errors=None):
     clean_path = job_dir(job_id) / "clean" / f"{product.sku}.png"
     clean_path.parent.mkdir(parents=True, exist_ok=True)
@@ -185,36 +247,54 @@ async def _run_stage_d_one(job_id, product, crop_bytes, sem, deadline, prev_prod
             product.fidelity = None
             return product
         cleaned_bytes = cached
+    pre_verdict = None
     if cleaned_bytes is None and time.monotonic() <= deadline:
+        ref_bytes = _ref_bytes_for(job_id, product.sku)
         try:
+            # Step 1: pre-Muse-Image crop gate. Rejects an incomplete, occluded
+            # or multi-object crop BEFORE a generative edit is paid for. A
+            # rejection is the gate working, not an error: no StageError.
             async with sem:
-                cleaned_bytes = await meta_client.clean_product_image(crop_bytes, product.concept)
-            async with sem:
-                verdict = await meta_client.verify_fidelity(crop_bytes, cleaned_bytes)
+                pre_verdict = await meta_client.verify_fidelity(ref_bytes, b"")
+            if (
+                pre_verdict.same_product
+                and pre_verdict.color_match
+                and pre_verdict.logo_text_match
+            ):
+                # Step 2: Muse Image edit, then the post-edit gate against the
+                # same ground-truth reference the pre-gate saw.
+                async with sem:
+                    cleaned_bytes = await meta_client.clean_product_image(crop_bytes, product.concept)
+                async with sem:
+                    verdict = await meta_client.verify_fidelity(ref_bytes, cleaned_bytes)
         except Exception as exc:
             code = ErrorCode.MODEL_NOT_FOUND if isinstance(exc, MetaModelNotFound) else ErrorCode.CLEANUP_FAILED
             if errors is not None:
                 errors.append(StageError(photo_index=product.source_photo_index, stage=JobStage.CLEANUP, code=code))
             cleaned_bytes = None
             verdict = None
-    if cleaned_bytes is not None and verdict is not None:
-        if verdict.same_product and verdict.color_match and verdict.logo_text_match:
-            product.cleanup_method = schemas.CleanupMethod.MUSE_IMAGE
-            product.fidelity = verdict
-            clean_path.write_bytes(cleaned_bytes)
-            return product
-        fidelity_fail = verdict
-        cleaned_bytes = imaging.composite(crop_bytes)
-        product.cleanup_method = schemas.CleanupMethod.COMPOSITE
-        product.fidelity = fidelity_fail
+
+    if (
+        cleaned_bytes is not None
+        and verdict is not None
+        and verdict.same_product
+        and verdict.color_match
+        and verdict.logo_text_match
+    ):
+        product.cleanup_method = schemas.CleanupMethod.MUSE_IMAGE
+        product.fidelity = verdict
         clean_path.write_bytes(cleaned_bytes)
         return product
-    if cleaned_bytes is None:
-        cleaned_bytes = imaging.composite(crop_bytes)
+
+    # Everything else — a pre-gate rejection, a post-gate rejection, an adapter
+    # failure, or a spent deadline — ends in the deterministic composite, which
+    # cannot distort the product. The composite is built exactly once, outside
+    # the try above, so a corrupt crop raises here and is boxed by the caller as
+    # ONE error instead of two.
+    cleaned_bytes = imaging.composite(crop_bytes)
     product.cleanup_method = schemas.CleanupMethod.COMPOSITE
-    if product.fidelity is None:
-        product.fidelity = verdict
-    clean_path.write_bytes(imaging.composite(crop_bytes))
+    product.fidelity = verdict if verdict is not None else pre_verdict
+    clean_path.write_bytes(cleaned_bytes)
     return product
 
 async def run_pipeline(job_id, photos, captions):
@@ -300,8 +380,11 @@ async def run_pipeline(job_id, photos, captions):
             async with sem:
                 masks = await meta_client.segment_concept(photo, phrase)
             if not masks:
+                # One retry with a scene-relative phrase: appending "product"
+                # made SAM segment unrelated products on the counter when the
+                # concept genuinely had zero instances.
                 async with sem:
-                    masks = await meta_client.segment_concept(photo, phrase + " product")
+                    masks = await meta_client.segment_concept(photo, f"foreground {phrase}")
         except Exception as exc:
             code = ErrorCode.MODEL_NOT_FOUND if isinstance(exc, MetaModelNotFound) else ErrorCode.SEGMENTATION_FAILED
             errors.append(StageError(photo_index=i, stage=JobStage.SEGMENT, code=code))
@@ -344,7 +427,11 @@ async def run_pipeline(job_id, photos, captions):
     masks_per_photo = [m if m is not None else [] for m in masks_per_photo]
     while len(masks_per_photo) < len(photos):
         masks_per_photo.append([])
-    all_masks = []
+    # Dedupe per photo, then combine: two different photos legitimately show the
+    # same box coordinates, and a global pass would delete a real product from
+    # the second photo as a "duplicate" of the first.
+    mask_to_photo = {}
+    deduped = []
     for i, photo_masks in enumerate(masks_per_photo):
         photo_area = None
         try:
@@ -352,15 +439,13 @@ async def run_pipeline(job_id, photos, captions):
                 photo_area = im.size[0] * im.size[1]
         except Exception:
             photo_area = None
-        for m in photo_masks:
-            if photo_area is not None and not area_ok(m, photo_area):
-                continue
-            all_masks.append((i, m))
-    flat_masks = [m for (_, m) in all_masks]
-    deduped = dedupe_masks(flat_masks, IOU_THRESHOLD)
-    mask_to_photo = {}
-    for idx, (pi, m) in enumerate(all_masks):
-        mask_to_photo[id(m)] = pi
+        area_kept = [
+            m for m in photo_masks
+            if photo_area is None or area_ok(m, photo_area)
+        ]
+        for m in dedupe_masks(area_kept, IOU_THRESHOLD):
+            mask_to_photo[id(m)] = i
+            deduped.append(m)
     ordered = reading_order(deduped)
     skus = assign_skus(ordered)
     state.stage = JobStage.CLEANUP
@@ -383,6 +468,16 @@ async def run_pipeline(job_id, photos, captions):
         except Exception:
             errors.append(StageError(photo_index=photo_index, stage=JobStage.CLEANUP, code=ErrorCode.CLEANUP_FAILED))
             continue
+        # Ground-truth reference for the Stage D gate: the unmasked photo region
+        # beside the cut-out on magenta. Written once per SKU and reused by every
+        # retry, so the gate always compares against the original product. A
+        # failure here is not fatal: _ref_bytes_for falls back to the crop.
+        ref_path = crops_dir / f"{sku}-ref.png"
+        if not ref_path.is_file():
+            try:
+                ref_path.write_bytes(imaging.gate_reference(photo, mask, crop_bytes))
+            except Exception:
+                pass
         bbox = mask.bbox
         product = Product(
             sku=sku,
@@ -559,25 +654,42 @@ async def toggle_cleanup_product(job_id, sku):
         clean_path.write_bytes(cleaned)
         product.cleanup_method = schemas.CleanupMethod.COMPOSITE
     else:
+        ref_bytes = _ref_bytes_for(job_id, sku)
+        verdict = None
         try:
+            # Same two-step gate as the pipeline: the crop must pass on its own
+            # before a generative edit is requested.
             async with sem:
-                cleaned = await meta_client.clean_product_image(crop_bytes, product.concept)
-            async with sem:
-                verdict = await meta_client.verify_fidelity(crop_bytes, cleaned)
+                pre_verdict = await meta_client.verify_fidelity(ref_bytes, b"")
+            if (
+                pre_verdict.same_product
+                and pre_verdict.color_match
+                and pre_verdict.logo_text_match
+            ):
+                async with sem:
+                    cleaned = await meta_client.clean_product_image(crop_bytes, product.concept)
+                async with sem:
+                    verdict = await meta_client.verify_fidelity(ref_bytes, cleaned)
+                if not (
+                    verdict.same_product
+                    and verdict.color_match
+                    and verdict.logo_text_match
+                ):
+                    cleaned = imaging.composite(crop_bytes)
+                    product.cleanup_method = schemas.CleanupMethod.COMPOSITE
+                else:
+                    product.cleanup_method = schemas.CleanupMethod.MUSE_IMAGE
+            else:
+                # Pre-gate rejected the crop: no edit was attempted.
+                cleaned = imaging.composite(crop_bytes)
+                product.cleanup_method = schemas.CleanupMethod.COMPOSITE
+                verdict = pre_verdict
         except Exception:
             cleaned = imaging.composite(crop_bytes)
-            clean_path.write_bytes(cleaned)
             product.cleanup_method = schemas.CleanupMethod.COMPOSITE
         else:
-            if verdict.same_product and verdict.color_match and verdict.logo_text_match:
-                clean_path.write_bytes(cleaned)
-                product.cleanup_method = schemas.CleanupMethod.MUSE_IMAGE
-                product.fidelity = verdict
-            else:
-                cleaned = imaging.composite(crop_bytes)
-                clean_path.write_bytes(cleaned)
-                product.cleanup_method = schemas.CleanupMethod.COMPOSITE
-                product.fidelity = verdict
+            product.fidelity = verdict
+        clean_path.write_bytes(cleaned)
     state.products[idx] = product
     state.updated_at = _now()
     _write_job(job_id, state)

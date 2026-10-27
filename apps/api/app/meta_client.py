@@ -306,6 +306,14 @@ def _mock_clean_product_image(crop_png: bytes, product_label: str) -> bytes:
 def _mock_verify_fidelity(original_png: bytes, cleaned_png: bytes) -> FidelityVerdict:
     # Pack from the original's slot; the verdict file from pair parity.
     pack, _ = _locate(original_png)
+    if not cleaned_png:
+        # Pre-cleanup crop check (P4a): mock always passes so offline runs
+        # never block before Stage D; the post-check parity below is untouched.
+        filename = "fidelity_pass.json"
+        payload = _read_payload(pack, filename)
+        validated = _validated(FidelityVerdict, payload, pack, filename)
+        assert isinstance(validated, FidelityVerdict)
+        return validated
     even = hashlib.sha256(original_png + b"\x00" + cleaned_png).digest()[0] % 2 == 0
     # Even digest → pass, odd → fail: both gate outcomes stay reachable.
     filename = "fidelity_pass.json" if even else "fidelity_fail.json"
@@ -582,7 +590,8 @@ async def _live_discover_concepts(
                     "content": (
                         "You analyze photos taken by small online sellers. Your "
                         "job is to prepare the photo for concept segmentation "
-                        "by listing the product types visible in it."
+                        "by listing the foreground product types clearly "
+                        "presented for sale on the main surface."
                     ),
                 },
                 {
@@ -591,10 +600,24 @@ async def _live_discover_concepts(
                         {
                             "type": "text",
                             "text": (
-                                "List every distinct product TYPE sold in this "
-                                f"photo. Seller captions: {captions!r}. Return "
-                                "ONLY JSON: {\"concepts\": [...], "
-                                "\"scene_note\": \"...\", \"visible_text\": [...]}"
+                                "List every distinct foreground product TYPE clearly presented for sale "
+                                f"on the main counter, table, or display surface in this photo. Seller captions: {captions!r}.\n"
+                                "Rules:\n"
+                                "- Output concepts as short English noun phrases: \"smartphone\", \"smartphone box\", "
+                                "\"phone case\", \"charging case\", \"power bank\", \"charging cable\", \"sneakers\", "
+                                "\"instant noodle cup\". One phrase per visually distinct product type. "
+                                "Multiple identical items are ONE concept.\n"
+                                "- When sealed retail product boxes are stacked on the main counter, list their box type "
+                                "(e.g. \"smartphone box\") rather than \"phone case\".\n"
+                                "- Never put brand names, model names, colors, or commas inside a concept phrase.\n"
+                                "- ONLY list foreground products on the main selling surface. Ignore distant or blurry "
+                                "items hanging on background walls/pegboards/shelves, open brown shipping cartons in the "
+                                "back room, plastic display stands/holders, price tags/signs, pens/notebooks, hands, "
+                                "furniture, walls, posters, and reflections or items trapped underneath glass counter shelves.\n"
+                                "- Transcribe any readable text (brands, model numbers, price tags) verbatim into visible_text.\n"
+                                "Return ONLY JSON:\n"
+                                "{\"concepts\": [\"...\"], \"scene_note\": \"one sentence describing the scene\", "
+                                "\"visible_text\": [\"...\"]}"
                             ),
                         },
                         {"type": "image_url", "image_url": {"url": data_url}},
@@ -688,10 +711,16 @@ async def _live_segment_concept(
                 f"segment_concept: raster length {len(raster)} != "
                 f"{record.mask.width}x{record.mask.height}"
             )
+        score = float(record.confidence if record.confidence is not None else 0.0)
+        if score < 0.70:
+            continue
+        fg_pixels = sum(1 for b in raster if b)
+        mask_area = record.mask.width * record.mask.height
+        if mask_area <= 0 or (fg_pixels / mask_area) < 0.38:
+            continue
         png = _raster_to_mode1_png(
             raster, record.mask.width, record.mask.height
         )
-        score = record.confidence if record.confidence is not None else 0.0
         results.append(
             MaskResult(
                 concept=wanted,
@@ -743,7 +772,8 @@ async def _live_clean_product_image(
                 "the product exactly: same shape, same colors, same logos, same "
                 "text, same details — do not redesign, restyle, or add or remove "
                 "any part of the product. Remove the original background, hands, "
-                "and any other objects completely."
+                "plastic display stands or holders, price tags, and any other "
+                "non-product objects completely."
             ),
             n=1,
             size="1024x1024",
@@ -763,56 +793,126 @@ async def _live_clean_product_image(
 async def _live_verify_fidelity(
     original_png: bytes, cleaned_png: bytes
 ) -> FidelityVerdict:
-    """Live Stage D gate (P4), verified 2026-10-27 (live probe).
+    """Live Stage D gate (P4 v2: P4a pre-cleanup crop gate + P4b post-edit gate).
 
     ``POST /v1/chat/completions``, model ``muse-spark-1.3-contributor``,
     (contributor variant: identical capability to 1.3 at roughly 12x lower price (input $0.10/M vs $1.25/M, output $0.20/M vs $4.25/M); inputs and outputs are used to train Meta's models, which is acceptable because every sample photo in this project is generated, not client data),
-    ``temperature=0.0``, ``response_format={"type": "json_object"}``, one
-    ``user`` message with two ``image_url`` data URLs (docs:
-    https://dev.meta.ai/docs/image-understanding — up to 50 images per
-    request). Both gate outcomes proven live: (crop, Muse-cleaned PNG) →
-    fail ``{same_product: false, color_match: true, logo_text_match:
-    false}`` — the edit's PEANUT→HAZELNUT redesign and gibberish text were
-    caught; (cleaned, phones-photo) → all-false fail. A fail is a verdict,
-    never an error.
+    ``temperature=0.0``, ``response_format={"type": "json_object"}``.
+    Two modes on ``cleaned_png``:
+    * P4a (``not cleaned_png``): one ``image_url`` (the candidate crop),
+      rejects partial/sandwiched/half-hidden fragments, under-glass items,
+      background clutter, and merged boxes before Muse Image runs.
+    * P4b (``bool(cleaned_png)``): two ``image_url`` data URLs
+      (docs: https://dev.meta.ai/docs/image-understanding — up to 50 images
+      per request), ground-truth Image 1 vs studio Image 2. A fail is a
+      verdict, never an error.
     """
     client = _live_client()
-    first = _data_url(original_png)
-    second = _data_url(cleaned_png)
+    if not cleaned_png:
+        first = _data_url(original_png)
 
-    async def _call() -> Any:
-        return await client.chat.completions.create(
-            model=MUSE_SPARK_MODEL,
-            temperature=0.0,
-            response_format={"type": "json_object"},
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a strict quality inspector for product photography.",
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": (
-                                "Do image 1 and image 2 show the SAME product, "
-                                "unchanged? Check: (a) product shape and details "
-                                "identical, nothing added or removed; (b) colors "
-                                "match; (c) any logo or printed text is identical "
-                                "and legible. Be strict: if the edit redesigned, "
-                                "recolored, or altered any detail, fail it. Return "
-                                "ONLY JSON: {\"same_product\": bool, "
-                                "\"color_match\": bool, \"logo_text_match\": "
-                                "bool, \"reason\": \"one short sentence\"}"
-                            ),
-                        },
-                        {"type": "image_url", "image_url": {"url": first}},
-                        {"type": "image_url", "image_url": {"url": second}},
-                    ],
-                },
-            ],
-        )
+        async def _call() -> Any:
+            return await client.chat.completions.create(
+                model=MUSE_SPARK_MODEL,
+                temperature=0.0,
+                response_format={"type": "json_object"},
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a strict quality inspector for product photography.",
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": (
+                                    "You are a strict product crop inspector for an e-commerce catalog pipeline.\n"
+                                    "The image shows the candidate product cut-out (if two panels are shown: LEFT is the "
+                                    "original store photo context with a red box marking the candidate product, and RIGHT "
+                                    "is the segmented cut-out on a solid bright magenta #FF00FF mask background).\n\n"
+                                    "Decide whether the segmented cut-out is a VALID, SINGLE, SUBSTANTIALLY COMPLETE "
+                                    "foreground product ready for studio cleanup.\n"
+                                    "Set same_product=false, color_match=false, logo_text_match=false (and reject the crop) "
+                                    "if ANY of the following is true:\n"
+                                    "1. PARTIAL / SANDWICHED / WEDGE-BITTEN FRAGMENT: Another object (such as an upper box in a "
+                                    "stack, a price sign/card, or a cable coil) blocks a major face or cuts a large angular wedge "
+                                    "or diagonal bite (>12% of the body) out of the side of the product in the RIGHT panel, or "
+                                    "only the side walls of a sandwiched middle/bottom box are visible (note: a small rectangular "
+                                    "stand-clip cutout notch centered at the very bottom rim of an upright vertical phone is "
+                                    "acceptable in this pre-check).\n"
+                                    "2. TRAPPED UNDER GLASS / CROSSED BY CABLES: The object is underneath a glass "
+                                    "counter/shelf at the bottom edge of the photo with charging cables crossing over its "
+                                    "face, or has a hole through its center.\n"
+                                    "3. BACKGROUND CLUTTER OR MERGED DISTINCT ITEMS: The cut-out is a distant blurry item "
+                                    "hanging on a background wall rack, an open brown shipping carton in the back room, or "
+                                    "merges two distinct rigid products/boxes together (note: a coiled bundle of charging "
+                                    "cables resting together on the counter counts as ONE valid cable product).\n\n"
+                                    "Set same_product=true, color_match=true, logo_text_match=true if the cut-out shows ONE "
+                                    "clear foreground product on the main counter with its primary face/body intact (>=75% "
+                                    "visible), even if a small corner (<25%) is notched where an adjacent price tag, cable, "
+                                    "or stand lip was masked out.\n"
+                                    "Return ONLY JSON:\n"
+                                    "{\"same_product\": bool, \"color_match\": bool, \"logo_text_match\": bool, "
+                                    "\"reason\": \"one short sentence\"}"
+                                ),
+                            },
+                            {"type": "image_url", "image_url": {"url": first}},
+                        ],
+                    },
+                ],
+            )
+    else:
+        first = _data_url(original_png)
+        second = _data_url(cleaned_png)
+
+        async def _call() -> Any:  # noqa: F811 - mode branch redefines the factory
+            return await client.chat.completions.create(
+                model=MUSE_SPARK_MODEL,
+                temperature=0.0,
+                response_format={"type": "json_object"},
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a strict quality inspector for product photography.",
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": (
+                                    "You are a strict quality and fidelity inspector for e-commerce product photography.\n"
+                                    "Image 1 is the ground-truth reference (if two panels are shown: LEFT is the original "
+                                    "photo region with a red box around the target item, and RIGHT is the segmented cut-out "
+                                    "on magenta).\n"
+                                    "Image 2 is the AI-edited studio image.\n\n"
+                                    "Check whether Image 2 is a faithful studio version of the EXACT single product shown in Image 1:\n"
+                                    "(a) same_product: Image 2 must show one complete, intact single product of the exact same "
+                                    "product type, exact same item count (1 item must stay 1 item — never turn 1 box into 2 or 3 "
+                                    "stacked boxes, never turn a phone screen into a charging cable), and exact same physical "
+                                    "model, camera/port layout, and natural geometry. If Image 2 still has a missing cutout "
+                                    "notch, missing corner wedge, or missing chunk taken out of the product's body (such as a "
+                                    "missing bottom stand-notch or a missing price-tag wedge in the silhouette of Image 2), OR "
+                                    "if Image 1 was a sandwiched box fragment (<70% visible), OR if Image 2 retained a physical "
+                                    "plastic display stand/holder or added a second object, same_product MUST be false.\n"
+                                    "(b) color_match: The product's body, screen, and accent colors in Image 2 match Image 1 "
+                                    "without recoloring.\n"
+                                    "(c) logo_text_match: Any visible brand logo or printed text on the product in Image 1 is "
+                                    "identical and legible in Image 2 (or true if the product has no visible logo/text in "
+                                    "either image).\n\n"
+                                    "Be strict: if any check fails, set that boolean to false.\n"
+                                    "Return ONLY JSON:\n"
+                                    "{\"same_product\": bool, \"color_match\": bool, \"logo_text_match\": bool, "
+                                    "\"reason\": \"one short sentence\"}"
+                                ),
+                            },
+                            {"type": "image_url", "image_url": {"url": first}},
+                            {"type": "image_url", "image_url": {"url": second}},
+                        ],
+                    },
+                ],
+            )
 
     response = await _live_request(_call, what="verify_fidelity")
     try:

@@ -328,7 +328,7 @@ def test_stage_d_shared_semaphore_caps_in_flight_calls(tmp_path, monkeypatch):
     monkeypatch.setattr(pipeline.meta_client, "extract_product", fast_extract)
 
     asyncio.run(pipeline.run_pipeline("conc-cap", [_photo_png()], {"general": "t", "photos": []}))
-    assert tracker.calls == 24  # 12 cleans + 12 verifies
+    assert tracker.calls == 36  # 12 pre-verifies + 12 cleans + 12 post-verifies
     assert tracker.peak == pipeline.META_CONCURRENCY
 
 
@@ -519,7 +519,9 @@ def test_rerun_reuses_every_cached_stage_under_concurrency(tmp_path, monkeypatch
     state1 = pipeline._load_job_state("conc-cache")
     assert [p.sku for p in state1.products] == [f"KK-{i:04d}" for i in range(1, 5)]
     a1, b1, c1, e1 = first
-    assert (a1.calls, b1.calls, c1.calls, e1.calls) == (2, 4, 8, 4)
+    # Stage D is three calls per product: pre-gate verify, clean, post-gate
+    # verify (4 products x 3).
+    assert (a1.calls, b1.calls, c1.calls, e1.calls) == (2, 4, 12, 4)
 
     # Second run of the same job: every stage must come from disk cache.
     second = tuple(InFlight() for _ in range(4))
