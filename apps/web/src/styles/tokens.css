@@ -78,26 +78,19 @@
 }
 
 /*
- * Tactile edge recipe (brandkit §4): a 2px solid edge at rest that collapses while the
- * element is pressed. Motion is transform only, ≤160ms, removed under reduced motion.
- * `--edge` lets a component recolour the edge (primary button uses --accent-secondary).
+ * Press feedback: a native-style dim — no edge, no movement.
+ * Opacity only, ≤160ms, removed under reduced motion.
  */
 .kk-tactile {
-  box-shadow: 0 2px 0 var(--edge, var(--border-strong));
-  transition: transform 120ms ease-out;
+  transition: opacity 120ms ease-out;
 }
 
 .kk-tactile:active:not(:disabled):not([aria-disabled='true']) {
-  transform: translateY(2px);
-  box-shadow: 0 0 0 var(--edge, var(--border-strong));
+  opacity: 0.75;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .kk-tactile {
     transition: none;
-  }
-
-  .kk-tactile:active:not(:disabled):not([aria-disabled='true']) {
-    transform: none;
   }
 }

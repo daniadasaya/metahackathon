@@ -60,14 +60,13 @@
   /* ---- Card ------------------------------------------------------------ */
   .kk-card {
     background: var(--bg-surface);
-    border: 1.5px solid var(--border-subtle);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--r-md);
-    box-shadow: 0 2px 0 var(--border-strong);
   }
 
   .kk-card-flat {
     background: var(--bg-surface);
-    border: 1.5px solid var(--border-subtle);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--r-md);
   }
 
@@ -97,7 +96,6 @@
   }
 
   .kk-btn-primary {
-    --edge: var(--accent-secondary);
     min-height: 48px;
     padding: 0 20px;
     font-size: 15px;
@@ -113,7 +111,7 @@
     line-height: 20px;
     background: var(--bg-surface);
     color: var(--text-primary);
-    border: 1.5px solid var(--border-strong);
+    border: 1px solid var(--border-strong);
   }
 
   .kk-btn-ghost {
@@ -154,7 +152,6 @@
 
   /* Success-tinted action: a finished export. White-on-success passes 5.36 (light) / 8.77 (dark). */
   .kk-btn-success {
-    --edge: var(--border-strong);
     min-height: 44px;
     padding: 0 16px;
     font-size: 14px;
@@ -165,7 +162,6 @@
 
   .kk-btn:disabled,
   .kk-btn[aria-disabled='true'] {
-    --edge: var(--border-subtle);
     background: var(--bg-subtle);
     color: var(--text-muted);
     cursor: not-allowed;
@@ -180,7 +176,7 @@
     min-height: 32px;
     padding: 0 12px;
     border-radius: 999px;
-    border: 1.5px solid var(--border-strong);
+    border: 1px solid var(--border-strong);
     background: var(--bg-surface);
     color: var(--text-primary);
     font-family: var(--ff-body);
@@ -199,7 +195,6 @@
   }
 
   .kk-chip[aria-pressed='true'] {
-    --edge: var(--accent-secondary);
     background: var(--accent-primary);
     color: var(--accent-primary-fg);
     border-color: var(--accent-secondary);
@@ -214,7 +209,6 @@
   }
 
   .kk-chip-wide[aria-pressed='true'] {
-    --edge: var(--border-strong);
     background: var(--bg-subtle);
     color: var(--text-primary);
     border-color: var(--border-strong);
@@ -226,7 +220,7 @@
     width: 100%;
     min-height: 44px;
     padding: 8px 12px;
-    border: 2px solid var(--border-strong);
+    border: 1.5px solid var(--border-strong);
     border-radius: var(--r-sm);
     background: var(--bg-surface);
     color: var(--text-primary);
@@ -293,7 +287,7 @@
   /* ---- Segmented locale switch ---------------------------------------- */
   .kk-seg {
     display: inline-flex;
-    border: 1.5px solid var(--border-strong);
+    border: 1px solid var(--border-strong);
     border-radius: 10px;
     background: var(--bg-surface);
   }
@@ -354,7 +348,7 @@
   .kk-tile[data-state='pending'] {
     background: var(--bg-subtle);
     color: var(--text-muted);
-    border: 1.5px solid var(--border-subtle);
+    border: 1px solid var(--border-subtle);
   }
 
   .kk-tile[data-state='done'] {
@@ -373,17 +367,6 @@
     border: 2px solid var(--status-danger);
   }
 
-  /* The edge pulses via opacity on a pseudo-element: box-shadow itself is never animated. */
-  .kk-tile[data-state='active']::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow: 0 2px 0 var(--accent-secondary);
-    pointer-events: none;
-    animation: kk-edge-pulse 1.4s ease-in-out infinite alternate;
-  }
-
   .kk-rule {
     flex: none;
     width: 6px;
@@ -400,20 +383,7 @@
     background: var(--accent-primary);
   }
 
-  @keyframes kk-edge-pulse {
-    from {
-      opacity: 1;
-    }
-    to {
-      opacity: 0.6;
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .kk-tile[data-state='active']::after {
-      animation: none;
-    }
-
     .kk-switch-knob {
       transition: none;
     }
@@ -429,7 +399,7 @@
     color: var(--text-primary);
     border: 1.5px solid var(--status-danger);
     border-radius: var(--r-md);
-    box-shadow: 0 2px 0 var(--border-strong);
+    box-shadow: 0 8px 24px -12px color-mix(in srgb, var(--text-primary) 18%, transparent);
   }
 
   /* ---- Sticky bottom bar (summary + primary action) ---------------------- */
@@ -440,10 +410,10 @@
     margin-top: auto;
     padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
     background: var(--bg-surface);
-    border-top: 1.5px solid var(--border-strong);
+    border-top: 1px solid var(--border-strong);
     border-radius: var(--r-md) var(--r-md) 0 0;
-    /* Floating layer: the edge is drawn upward, the soft lift uses the strong border token. */
-    box-shadow: 0 -2px 0 var(--border-subtle);
+    /* Floating layer: a soft diffuse lift, no hard edge. */
+    box-shadow: 0 -8px 24px -12px color-mix(in srgb, var(--text-primary) 14%, transparent);
   }
 
   .kk-bar::before {
@@ -506,15 +476,14 @@
     gap: 12px;
     padding: 12px;
     text-align: left;
-    border: 2px dashed var(--border-strong);
+    border: 1px dashed var(--border-strong);
     border-radius: var(--r-md);
     background: var(--bg-surface);
-    box-shadow: 0 2px 0 var(--border-strong);
   }
 
   .kk-hero[data-filled='true'] {
     border-style: solid;
-    border-width: 1.5px;
+    border-width: 1px;
     border-color: var(--border-subtle);
   }
 
@@ -528,7 +497,6 @@
     border-radius: 10px;
     background: var(--accent-primary);
     color: var(--accent-primary-fg);
-    box-shadow: 0 2px 0 var(--accent-secondary);
   }
 
   /* ---- Sample pack tile (U2): three in a row, letter tile over a short label ---- */
@@ -568,7 +536,6 @@
   }
 
   .kk-pack[aria-pressed='true'] {
-    --edge: var(--accent-secondary);
     border-color: var(--accent-secondary);
     border-width: 2px;
     padding: 7.5px 5.5px;
@@ -735,7 +702,7 @@
     width: 100%;
     height: 44px;
     padding: 0 48px 0 14px;
-    border: 2px solid var(--border-strong);
+    border: 1.5px solid var(--border-strong);
     border-radius: var(--r-sm);
     background: var(--bg-surface);
     color: var(--text-primary);
@@ -887,9 +854,7 @@
       background: var(--bg-canvas);
       border: 1.5px solid var(--border-strong);
       border-radius: var(--r-lg);
-      box-shadow:
-        0 2px 0 var(--border-strong),
-        0 24px 64px -24px color-mix(in srgb, var(--text-primary) 22%, transparent);
+      box-shadow: 0 24px 64px -24px color-mix(in srgb, var(--text-primary) 22%, transparent);
       /* `clip`, not `hidden`: rounds the corners without becoming the scroll container, so the
          sticky header and bar keep sticking to the viewport. */
       overflow: clip;
