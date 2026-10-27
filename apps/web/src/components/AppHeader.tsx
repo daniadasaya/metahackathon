@@ -35,7 +35,7 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-10 border-b border-line bg-canvas">
-      <div className="mx-auto flex min-h-14 w-full max-w-[420px] items-center justify-between gap-2 px-4">
+      <div className="mx-auto flex min-h-14 w-full max-w-[420px] md:max-w-none items-center justify-between gap-2 px-4">
         <Link to="/" className="inline-flex min-h-11 items-center rounded-[12px]" aria-label={t('app.name')}>
           <Wordmark name={t('app.name')} />
         </Link>
@@ -69,7 +69,7 @@ export function AppHeader() {
           </button>
         </div>
       </div>
-      <div className="mx-auto flex w-full max-w-[420px] items-center gap-3 px-4 pb-2">
+      <div className="mx-auto flex w-full max-w-[420px] md:max-w-none items-center gap-3 px-4 pb-2">
         <p className="shrink-0 text-xs text-fg-muted">{t('header.step', { n: step, total: TOTAL_STEPS })}</p>
         <div className="kk-steps min-w-0 flex-1" aria-hidden="true">
           {Array.from({ length: TOTAL_STEPS }, (_, index) => (

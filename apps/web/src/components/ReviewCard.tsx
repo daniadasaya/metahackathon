@@ -48,10 +48,10 @@ export const ReviewCard = memo(function ReviewCard({ product, suggestion }: Revi
       data-price-state={priceState}
     >
       <div className="flex gap-3">
-        <ProductPhoto src={product.clean_url} className="h-[104px] w-[104px]" />
+        <ProductPhoto src={product.clean_url} className="h-[88px] w-[88px]" />
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
           <textarea
-            rows={2}
+            rows={3}
             className="kk-input resize-none px-2.5 py-1.5 font-display text-lg"
             value={product.name}
             aria-label={t('review.nameFor', { sku })}

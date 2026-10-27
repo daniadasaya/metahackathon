@@ -120,7 +120,7 @@ export function UploadScreen() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-8">
+      <div className="mx-auto w-full max-w-[420px] md:max-w-none px-4 pt-6 pb-8">
         <h1 className="text-2xl">{t('upload.title')}</h1>
         <p className="mt-2 text-base text-fg-2">{t('upload.lead')}</p>
 

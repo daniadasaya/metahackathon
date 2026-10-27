@@ -21,7 +21,7 @@ import { replaceCatalog, setStoredJobId, useCatalog, useStoredJobId } from '../l
 const NAMED_BLOCKERS = 3;
 
 function Column({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-8">{children}</div>;
+  return <div className="mx-auto w-full max-w-[420px] md:max-w-none px-4 pt-6 pb-8">{children}</div>;
 }
 
 /** Scrolls to the first product that blocks export and puts the cursor in its price field. */

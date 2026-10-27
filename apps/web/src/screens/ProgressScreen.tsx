@@ -15,7 +15,7 @@ import { isGoldenJobId } from '../lib/golden';
 import { setStoredJobId } from '../lib/store';
 
 function Column({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-8">{children}</div>;
+  return <div className="mx-auto w-full max-w-[420px] md:max-w-none px-4 pt-6 pb-8">{children}</div>;
 }
 
 /** Products on `photoIndex` that fell back to the composite: the ones a cleanup retry can fix. */

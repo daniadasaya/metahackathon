@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 export function StickyBar({ children }: { children: ReactNode }) {
   return (
     <div className="kk-bar">
-      <div className="mx-auto flex w-full max-w-[388px] flex-col gap-2">{children}</div>
+      <div className="mx-auto flex w-full max-w-[388px] md:max-w-none flex-col gap-2">{children}</div>
     </div>
   );
 }

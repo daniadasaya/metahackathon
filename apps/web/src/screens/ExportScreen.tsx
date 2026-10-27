@@ -54,7 +54,7 @@ interface ExportDone {
 }
 
 function Column({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-8">{children}</div>;
+  return <div className="mx-auto w-full max-w-[420px] md:max-w-none px-4 pt-6 pb-8">{children}</div>;
 }
 
 /** Screen 5: seller details, one export request, four downloads, and how to use the CSV. */

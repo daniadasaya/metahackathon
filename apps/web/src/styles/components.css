@@ -8,8 +8,8 @@
     background: var(--bg-canvas);
     color: var(--text-primary);
     font-family: var(--ff-body);
-    font-size: 16px;
-    line-height: 24px;
+    font-size: 17px;
+    line-height: 26px;
     font-weight: 500;
     -webkit-text-size-adjust: 100%;
   }
@@ -100,8 +100,8 @@
     --edge: var(--accent-secondary);
     min-height: 56px;
     padding: 0 24px;
-    font-size: 19px;
-    line-height: 26px;
+    font-size: 22px;
+    line-height: 30px;
     background: var(--accent-primary);
     color: var(--accent-primary-fg);
   }
@@ -109,7 +109,8 @@
   .kk-btn-secondary {
     min-height: 48px;
     padding: 0 16px;
-    font-size: 16px;
+    font-size: 17px;
+    line-height: 26px;
     background: var(--bg-surface);
     color: var(--text-primary);
     border: 1.5px solid var(--border-strong);
@@ -119,7 +120,8 @@
     min-height: 44px;
     min-width: 44px;
     padding: 0 12px;
-    font-size: 14px;
+    font-size: 15px;
+    line-height: 22px;
     background: transparent;
     color: var(--text-primary);
   }
@@ -146,8 +148,8 @@
   .kk-btn-compact {
     min-height: 44px;
     padding: 0 14px;
-    font-size: 14px;
-    line-height: 20px;
+    font-size: 15px;
+    line-height: 22px;
   }
 
   /* Success-tinted action: a finished export. White-on-success passes 5.36 (light) / 8.77 (dark). */
@@ -155,7 +157,8 @@
     --edge: var(--border-strong);
     min-height: 48px;
     padding: 0 16px;
-    font-size: 16px;
+    font-size: 17px;
+    line-height: 26px;
     background: var(--status-success);
     color: var(--bg-surface);
   }
@@ -181,8 +184,8 @@
     background: var(--bg-surface);
     color: var(--text-primary);
     font-family: var(--ff-body);
-    font-size: 14px;
-    line-height: 20px;
+    font-size: 15px;
+    line-height: 22px;
     font-weight: 600;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
@@ -221,8 +224,8 @@
     background: var(--bg-surface);
     color: var(--text-primary);
     font-family: var(--ff-body);
-    font-size: 16px;
-    line-height: 24px;
+    font-size: 17px;
+    line-height: 26px;
     font-weight: 500;
   }
 
@@ -291,7 +294,7 @@
     color: var(--text-primary);
     font-family: var(--ff-display);
     font-weight: 700;
-    font-size: 14px;
+    font-size: 15px;
     cursor: pointer;
   }
 
@@ -313,8 +316,8 @@
     border-radius: 16px;
     font-family: var(--ff-display);
     font-weight: 800;
-    font-size: 24px;
-    line-height: 28px;
+    font-size: 28px;
+    line-height: 34px;
     letter-spacing: -0.02em;
   }
 
@@ -536,8 +539,8 @@
     color: var(--text-primary);
     font-family: var(--ff-display);
     font-weight: 800;
-    font-size: 22px;
-    line-height: 28px;
+    font-size: 26px;
+    line-height: 32px;
   }
 
   .kk-pack[aria-pressed='true'] {
@@ -577,13 +580,13 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    min-height: 32px;
-    padding: 4px 12px;
+    min-height: 36px;
+    padding: 4px 14px;
     border-radius: 999px;
     background: var(--bg-subtle);
     color: var(--text-primary);
-    font-size: 14px;
-    line-height: 20px;
+    font-size: 15px;
+    line-height: 22px;
     font-weight: 700;
   }
 
@@ -639,8 +642,8 @@
     align-items: center;
     gap: 6px;
     color: var(--status-success);
-    font-size: 12px;
-    line-height: 16px;
+    font-size: 13px;
+    line-height: 18px;
     font-weight: 700;
     letter-spacing: 0.02em;
   }
@@ -677,13 +680,13 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    min-height: 24px;
-    padding: 0 8px;
+    min-height: 26px;
+    padding: 0 9px;
     border-radius: 999px;
     border: 1.5px solid currentColor;
     background: var(--bg-surface);
-    font-size: 12px;
-    line-height: 16px;
+    font-size: 13px;
+    line-height: 18px;
     font-weight: 700;
     letter-spacing: 0.02em;
   }
@@ -707,21 +710,21 @@
   .kk-price-input {
     box-sizing: border-box;
     width: 100%;
-    height: 56px;
+    height: 60px;
     padding: 0 52px 0 14px;
     border: 2px solid var(--border-strong);
     border-radius: var(--r-sm);
     background: var(--bg-surface);
     color: var(--text-primary);
     font-family: var(--ff-mono);
-    font-size: 22px;
-    line-height: 28px;
+    font-size: 26px;
+    line-height: 32px;
     font-weight: 700;
   }
 
   .kk-price-input::placeholder {
     font-family: var(--ff-body);
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 500;
   }
 
@@ -735,7 +738,7 @@
 
   .kk-disc {
     position: absolute;
-    top: 14px;
+    top: 16px;
     right: 14px;
     display: flex;
     align-items: center;
@@ -752,14 +755,14 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    min-height: 56px;
+    min-height: 60px;
     padding: 0 14px;
     border-radius: var(--r-sm);
     background: var(--bg-subtle);
     color: var(--text-primary);
     font-family: var(--ff-display);
-    font-size: 19px;
-    line-height: 26px;
+    font-size: 22px;
+    line-height: 30px;
     font-weight: 700;
   }
 
@@ -770,7 +773,8 @@
     min-height: 44px;
     list-style: none;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 15px;
+    line-height: 22px;
     font-weight: 700;
     color: var(--text-secondary);
   }
@@ -810,6 +814,88 @@
 
     .kk-meter > span {
       transition: none;
+    }
+  }
+}
+
+/*
+ * Desktop staging (>= 768px). Additive: below 768px none of this applies, so the mobile layout is
+ * untouched. The app stays one centered column (<= 520px) but sits ON a staged canvas: two soft
+ * corner glows (alpha mixes of existing accent tokens) and an oversized Lightbox-Grid motif drawn
+ * in CSS from the Logo geometry (three tiles + spark). Static: nothing here animates.
+ */
+@layer base {
+  @media (min-width: 768px) {
+    html {
+      background-color: var(--bg-canvas);
+      background-image:
+        radial-gradient(
+          70vmax 55vmax at 0% 0%,
+          color-mix(in srgb, var(--accent-primary) 16%, transparent),
+          transparent 70%
+        ),
+        radial-gradient(
+          65vmax 50vmax at 100% 100%,
+          color-mix(in srgb, var(--accent-secondary) 12%, transparent),
+          transparent 70%
+        );
+      background-attachment: fixed;
+    }
+
+    body {
+      box-sizing: border-box;
+      padding: 32px 24px;
+      background: transparent;
+    }
+
+    #root {
+      width: 100%;
+      max-width: 520px;
+      min-height: calc(100dvh - 64px);
+      margin: 0 auto;
+      background: var(--bg-canvas);
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--r-lg);
+      box-shadow:
+        0 2px 0 var(--border-strong),
+        0 24px 64px -24px color-mix(in srgb, var(--text-primary) 22%, transparent);
+      /* `clip`, not `hidden`: rounds the corners without becoming the scroll container, so the
+         sticky header and bar keep sticking to the viewport. */
+      overflow: clip;
+    }
+
+    /* Oversized motif: tile 1 plus two shadow copies = the three soft tiles of the mark. */
+    body::before {
+      --tile: clamp(150px, 24vmin, 280px);
+      --gap: calc(var(--tile) * 0.18);
+      content: '';
+      position: fixed;
+      z-index: -1;
+      left: calc(var(--tile) * -0.35);
+      bottom: calc(var(--tile) * -0.3);
+      width: var(--tile);
+      height: var(--tile);
+      border-radius: calc(var(--tile) * 0.22);
+      background: color-mix(in srgb, var(--accent-secondary) 9%, transparent);
+      box-shadow:
+        0 calc(var(--tile) * -1 - var(--gap)) 0 0 color-mix(in srgb, var(--accent-secondary) 9%, transparent),
+        calc(var(--tile) + var(--gap)) 0 0 0 color-mix(in srgb, var(--accent-secondary) 9%, transparent);
+      pointer-events: none;
+    }
+
+    /* The spark, top-right of the grid, in the primary accent. */
+    body::after {
+      --tile: clamp(150px, 24vmin, 280px);
+      content: '';
+      position: fixed;
+      z-index: -1;
+      right: calc(var(--tile) * -0.15);
+      top: calc(var(--tile) * 0.3);
+      width: var(--tile);
+      height: var(--tile);
+      background: color-mix(in srgb, var(--accent-primary) 13%, transparent);
+      clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+      pointer-events: none;
     }
   }
 }

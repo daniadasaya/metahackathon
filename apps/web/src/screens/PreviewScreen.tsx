@@ -9,7 +9,7 @@ import { useT } from '../lib/locale';
 import { setStoreName, useCatalog, useSeller } from '../lib/store';
 
 function Column({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-[420px] px-4 pt-6 pb-10">{children}</div>;
+  return <div className="mx-auto w-full max-w-[420px] md:max-w-none px-4 pt-6 pb-10">{children}</div>;
 }
 
 function PriceLine({ product }: { product: ReviewedProduct }) {
@@ -26,7 +26,7 @@ function PriceLine({ product }: { product: ReviewedProduct }) {
     return <span className="text-sm font-bold text-warning">{t('review.noPrice')}</span>;
   }
   return (
-    <span className="kk-money text-[19px] leading-6 font-bold tracking-[-0.02em] break-words text-fg">
+    <span className="kk-money text-price-sm tracking-[-0.03em] break-words text-fg">
       {formatRupiah(product.price_idr)}
     </span>
   );
@@ -107,7 +107,7 @@ export function PreviewScreen() {
                 className={`kk-card m-0 flex min-w-0 flex-col gap-2 p-2 ${soldOut ? 'opacity-60' : ''}`}
               >
                 <ProductPhoto src={product.clean_url} className="aspect-square w-full" />
-                <h2 className="kk-clamp-2 px-1 text-base leading-5 break-words">{product.name}</h2>
+                <h2 className="kk-clamp-2 px-1 text-base break-words">{product.name}</h2>
                 <div className="px-1">
                   <PriceLine product={product} />
                 </div>
