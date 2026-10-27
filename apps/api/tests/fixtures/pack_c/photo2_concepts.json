@@ -1,20 +1,60 @@
 {
-  "placeholder": true,
-  "recorded_at": null,
+  "placeholder": false,
+  "recorded_at": "2026-10-27T08:55:14+07:00",
   "pack": "c",
   "surface": "concepts",
-  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
+  "source": "live muse-spark-1.3 chat.completions P1 (temp 0.4) on Snacks_on_counter photo 2026-10-27; Seeded from live Meta Model API responses captured 2026-10-27 (live probe).",
   "model_id": "muse-spark-1.3",
   "payload": [
     {
-      "phrase": "chocolate bar",
-      "scene_note": "Two chocolate bars placed in front of the cardboard box.",
-      "visible_text": null
+      "phrase": "potato chips sachet",
+      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
+      "visible_text": "Chips, Kripik, KitKat, Koomuak"
     },
     {
-      "phrase": "potato chips bag",
-      "scene_note": "Two chips bags standing at the right edge of the cardboard box.",
-      "visible_text": "Promo 2 pcs 25rb"
+      "phrase": "kripik cassava chips sachet",
+      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
+      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+    },
+    {
+      "phrase": "wafer snack pack",
+      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
+      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+    },
+    {
+      "phrase": "chocolate wafer bar",
+      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
+      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+    },
+    {
+      "phrase": "carton boxed milk drink",
+      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
+      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+    },
+    {
+      "phrase": "instant noodle pack",
+      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
+      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+    },
+    {
+      "phrase": "bottled soda",
+      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
+      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+    },
+    {
+      "phrase": "bottled mineral water",
+      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
+      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+    },
+    {
+      "phrase": "bottled juice drink",
+      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
+      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+    },
+    {
+      "phrase": "hanging sachet snacks",
+      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
+      "visible_text": "Chips, Kripik, KitKat, Koomuak"
     }
   ]
 }

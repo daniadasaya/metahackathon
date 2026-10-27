@@ -95,6 +95,7 @@ from app.schemas import (
 from app.settings import settings
 
 __all__ = [
+    "aclose_live_client",
     "discover_concepts",
     "segment_concept",
     "clean_product_image",
@@ -343,26 +344,60 @@ def _mock_health_probe() -> HealthResponse:
 # Live branch — SAM segment path VERIFIED 2026-10-26 against
 # https://dev.meta.ai/docs/sam/{overview,segmenting,reading-segmentation,client-libraries}
 # with one captured non-streaming response (status=completed, 39 records).
-# Remaining live functions keep their hypothesis docstrings until probed.
+# Live client is a process-lifetime singleton (per-call clients leaked
+# unclosed httpx transports — "Event loop is closed" noise at teardown).
+# Remaining live functions keep their hypothesis
+# docstrings until probed.
 # ---------------------------------------------------------------------------
 
 
+_shared_live_client: Any | None = None
+
+
 def _live_client() -> Any:
-    """Build the OpenAI-compatible client, or name what is missing."""
-    try:
-        from openai import AsyncOpenAI
-    except ImportError as exc:
-        raise MetaLiveUnavailable(
-            "live Meta calls need the 'openai' client package, which is not "
-            "installed: requirements.txt is locked at four packages and adding "
-            "one is a Lead decision (due with the API key)."
-        ) from exc
-    api_key = settings.model_api_key
-    if not api_key:
-        raise MetaLiveUnavailable(
-            "MODEL_API_KEY is not set; live Meta calls are impossible."
-        )
-    return AsyncOpenAI(base_url=META_BASE_URL, api_key=api_key)
+    """Return the shared OpenAI-compatible client, creating it on first use.
+
+    One client per process: it owns a connection pool, so creating one per
+    call leaks transports and spams ``Event loop is closed`` errors at loop
+    teardown (a leaked-transport finding). Callers never close it; scripts and suite
+    teardown use :func:`aclose_live_client`. Raises the same
+    :class:`MetaLiveUnavailable` as before when the package or key is absent.
+    """
+    global _shared_live_client
+    if _shared_live_client is None:
+        try:
+            from openai import AsyncOpenAI
+        except ImportError as exc:
+            raise MetaLiveUnavailable(
+                "live Meta calls need the 'openai' client package, which is not "
+                "installed: requirements.txt is locked at four packages and adding "
+                "one is a Lead decision (due with the API key)."
+            ) from exc
+        api_key = settings.model_api_key
+        if not api_key:
+            raise MetaLiveUnavailable(
+                "MODEL_API_KEY is not set; live Meta calls are impossible."
+            )
+        _shared_live_client = AsyncOpenAI(base_url=META_BASE_URL, api_key=api_key)
+    return _shared_live_client
+
+
+async def aclose_live_client() -> None:
+    """Close and drop the shared live client.
+
+    Idempotent. For probe scripts and suite teardown — the running server
+    keeps the process-lifetime client open by design. A close failure is
+    re-raised with context, never swallowed.
+    """
+    global _shared_live_client
+    client, _shared_live_client = _shared_live_client, None
+    if client is not None:
+        try:
+            await client.close()
+        except Exception as exc:
+            raise MetaLiveUnavailable(
+                f"closing the shared live client failed: {exc}"
+            ) from exc
 
 
 def _is_transient(exc: Exception) -> bool:
@@ -519,11 +554,17 @@ def _raster_to_mode1_png(raster: bytes, width: int, height: int) -> bytes:
 async def _live_discover_concepts(
     image_bytes: bytes, captions: str
 ) -> list[Concept]:
-    """HYPOTHESIS for P1 (prompts-final.md v1, UNVERIFIED).
+    """Live Stage A (P1), verified 2026-10-27.
 
-    Chat Completions, ``muse-spark-1.3``, temp 0.4, ``json_object`` response.
-    Mapping guess: the shared ``scene_note`` and the joined ``visible_text``
-    list attach to every concept — confirm against the live response.
+    ``POST /v1/chat/completions``, model ``muse-spark-1.3``,
+    ``temperature=0.4``, ``response_format={"type": "json_object"}``, one
+    ``user`` message carrying ``input_text``-equivalent text +
+    ``image_url`` data URL (docs:
+    https://dev.meta.ai/docs/image-understanding). Two live photos, both
+    HTTP 200 first try (~11s each): 10 concepts (snacks photo) and 4
+    (phones photo), schema-valid ``Concept[]`` with no comma in any phrase,
+    shared ``scene_note`` + joined ``visible_text`` attached to every
+    concept. Temp/``json_object``/vision shape exactly as hypothesized.
     """
     client = _live_client()
     data_url = _data_url(image_bytes)
@@ -671,12 +712,19 @@ async def _live_segment_concept(
 async def _live_clean_product_image(
     crop_png: bytes, product_label: str
 ) -> bytes:
-    """HYPOTHESIS for P3 (prompts-final.md v1, UNVERIFIED).
+    """Live Stage D cleanup (P3), verified 2026-10-27.
 
-    Images **edits**, ``muse-image-1.0``, ``n=1``, ``response_format="b64_json"``,
-    ``output_format="png"``, ``size="1024x1024"`` (aspect ratio, not pixels).
-    OPEN QUESTION from the runbook: whether ``image`` takes a file object or
-    a data URL on this endpoint — the first 400 answers it; capture verbatim.
+    ``POST /v1/images/edits``, model ``muse-image-1.0``, multipart
+    ``image`` = file object (``crop.png``, ``image/png``) — the runbook's
+    open question is answered: **file object, not data URL** on this
+    endpoint (docs: https://dev.meta.ai/docs/image-generation — "pass the
+    image bytes as ``image``, exactly like OpenAI's ``images.edit``").
+    ``n=1``, ``size="1024x1024"`` (aspect ratio only — returned PNG is
+    1600x1600 RGB), ``response_format="b64_json"``,
+    ``output_format="png"``, ``reasoning_strength`` omitted. HTTP 200
+    first try (~27s, 2.3MB PNG). Note: the edit redesigned the product
+    (PEANUT→HAZELNUT imagery, garbled brand/fine-print text) — the P4 gate
+    below failed it, which is the design working, not an error.
     """
     client = _live_client()
     image_file = io.BytesIO(crop_png)
@@ -713,11 +761,17 @@ async def _live_clean_product_image(
 async def _live_verify_fidelity(
     original_png: bytes, cleaned_png: bytes
 ) -> FidelityVerdict:
-    """HYPOTHESIS for P4 (prompts-final.md v1, UNVERIFIED).
+    """Live Stage D gate (P4), verified 2026-10-27 (live probe).
 
-    A real call, not a heuristic: two images in, strict JSON verdict out,
-    temperature 0. Pass = all three booleans true; anything else is a fail
-    verdict, not an error — the pipeline falls back to the composite.
+    ``POST /v1/chat/completions``, model ``muse-spark-1.3``,
+    ``temperature=0.0``, ``response_format={"type": "json_object"}``, one
+    ``user`` message with two ``image_url`` data URLs (docs:
+    https://dev.meta.ai/docs/image-understanding — up to 50 images per
+    request). Both gate outcomes proven live: (crop, Muse-cleaned PNG) →
+    fail ``{same_product: false, color_match: true, logo_text_match:
+    false}`` — the edit's PEANUT→HAZELNUT redesign and gibberish text were
+    caught; (cleaned, phones-photo) → all-false fail. A fail is a verdict,
+    never an error.
     """
     client = _live_client()
     first = _data_url(original_png)
@@ -771,12 +825,22 @@ async def _live_verify_fidelity(
 async def _live_extract_product(
     clean_png: bytes, context: ExtractContext
 ) -> list[ProductEntry]:
-    """HYPOTHESIS for P5 + one P6 repair retry (prompts-final.md v1, UNVERIFIED).
+    """Live Stage E (P5 + one P6 repair retry), verified 2026-10-27 (live probe).
 
-    One call per product, temp 0.2, ``json_object`` + pydantic validation; on
-    validation failure exactly one repair retry carries the error text (P6).
-    A second failure is a product-level error. The price rules bind the
-    prompt, not this code — the model returns hints, never decisions.
+    ``POST /v1/chat/completions``, model ``muse-spark-1.3``,
+    ``temperature=0.2``, ``response_format={"type": "json_object"}`` +
+    pydantic validation, exactly one P6 repair retry on validation failure
+    (docs structured output: https://dev.meta.ai/docs/structured-output —
+    ``json_schema``/``text.format`` exist but the ``json_object`` +
+    validation shape was kept per spec). Two decisive calls, both HTTP 200
+    first try: captions WITH "Harga 15000 per pcs" → ``price_hint_idr`` =
+    15000 (seller's own words, pre-fillable) and ``price_suggestion_idr``
+    = 15000, brand "Koomuak"; captions with NO price → both null,
+    ``price_suggestion_idr`` null (not an invention). The price rules bind
+    the prompt, not this code — the model returned hints, never decisions.
+    One review-fix: raw live ``category`` values ("snack", "chocolate
+    wafer bar", "Makanan Ringan") are free-str ``str`` per schemas.py, so
+    fixtures normalize them to the P5 schema bucket "Makanan & Minuman".
     """
     client = _live_client()
     data_url = _data_url(clean_png)
