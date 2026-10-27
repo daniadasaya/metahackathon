@@ -3,13 +3,20 @@
  * origin. The server's `message` is developer English and is never read here beyond parsing the
  * envelope; only `code` leaves this module.
  *
- * `mockJob.ts` is the Demo Safe Mode placeholder (product invariant: zero API calls) and nothing else:
- * only a `mock-*` job id, which only a Demo Safe sample pack produces, ever reaches it. A real
- * upload never does; when the backend is absent `createJob` says so instead of simulating a job.
+ * `golden.ts` is the Demo Safe Mode transport (zero API calls): a `golden-{pack}` job
+ * id, which only a sample pack picked with the toggle on produces, is answered from the static
+ * bundle under `/samples/{pack}/golden/` and never reaches `/api/...`. A real upload never gets
+ * one; when the backend is absent `createJob` says so instead of simulating a job.
  */
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
-import { getMockJob, isMockJobId, makeMockJobId, retryMockCleanup } from './mockJob';
+import {
+  goldenExportFiles,
+  goldenJobId,
+  goldenJobState,
+  isGoldenJobId,
+  loadGolden,
+} from './golden';
 import type { components } from './types';
 
 export type JobState = components['schemas']['JobState'];
@@ -83,7 +90,12 @@ export interface SamplePackFiles {
 export async function fetchSamplePack(pack: SamplePack): Promise<SamplePackFiles> {
   const photos: File[] = [];
   for (let n = 1; n <= SAMPLE_PACK_PHOTOS; n += 1) {
-    const response = await fetch(`/samples/${pack}/photo${n}.jpg`);
+    let response: Response;
+    try {
+      response = await fetch(`/samples/${pack}/photo${n}.jpg`);
+    } catch {
+      throw new ApiError(0, null);
+    }
     const type = response.headers.get('content-type') ?? '';
     if (!response.ok || !type.startsWith('image/')) throw new ApiError(404, 'not_found');
     const blob = await response.blob();
@@ -103,7 +115,12 @@ export async function fetchSamplePack(pack: SamplePack): Promise<SamplePackFiles
 /** Creates a job and returns its id. Demo Safe Mode with a sample pack makes no request at all. */
 export async function createJob(input: CreateJobInput): Promise<string> {
   if (input.demoSafe && input.samplePack !== null) {
-    return makeMockJobId(SAMPLE_PACK_PHOTOS);
+    try {
+      await loadGolden(input.samplePack);
+    } catch {
+      throw new ApiError(404, 'not_found');
+    }
+    return goldenJobId(input.samplePack);
   }
 
   const form = new FormData();
@@ -129,9 +146,12 @@ export async function createJob(input: CreateJobInput): Promise<string> {
 }
 
 export async function getJob(jobId: string): Promise<JobState> {
-  if (isMockJobId(jobId)) {
-    const mock = getMockJob(jobId);
-    if (mock !== null) return mock;
+  if (isGoldenJobId(jobId)) {
+    try {
+      return await goldenJobState(jobId);
+    } catch {
+      throw new ApiError(404, 'not_found');
+    }
   }
   let response: Response;
   try {
@@ -144,10 +164,8 @@ export async function getJob(jobId: string): Promise<JobState> {
 }
 
 export async function retryCleanup(jobId: string, sku: string): Promise<void> {
-  if (isMockJobId(jobId)) {
-    await retryMockCleanup(jobId, sku);
-    return;
-  }
+  // A golden job is finished and clean; there is nothing to retry and nobody to ask.
+  if (isGoldenJobId(jobId)) return;
   let response: Response;
   try {
     response = await fetch(
@@ -170,6 +188,14 @@ export type ExportKind = components['schemas']['ExportKind'];
  * surfaces as `ApiError(0, null)`, distinct from a server refusal that carries a `code`.
  */
 export async function exportJob(jobId: string, body: ExportRequest): Promise<ExportResponse> {
+  // Demo Safe Mode: the bundled files are the export. No request, not even to the exporter.
+  if (isGoldenJobId(jobId)) {
+    try {
+      return { job_id: jobId, files: await goldenExportFiles(jobId) };
+    } catch {
+      throw new ApiError(404, 'not_found');
+    }
+  }
   let response: Response;
   try {
     response = await fetch(`/api/jobs/${encodeURIComponent(jobId)}/export`, {

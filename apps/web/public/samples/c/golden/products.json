@@ -1,0 +1,128 @@
+{
+  "source": "mock",
+  "generated_at": "2026-10-26T04:01:51.179Z",
+  "photos": 2,
+  "seller": {
+    "store_name": "Toko Contoh",
+    "wa_number": "6281234567890"
+  },
+  "products": [
+    {
+      "sku": "KK-0001",
+      "job_id": "golden-c",
+      "source_photo_index": 0,
+      "concept": "smartphone",
+      "bbox": [
+        60,
+        40,
+        280,
+        500
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0001-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0001.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": true,
+        "color_match": false,
+        "logo_text_match": true,
+        "reason": "print text intact but fabric colour shifted from black toward navy"
+      },
+      "name": "Cokelat Susu Batang 60g",
+      "description_id": "Cokelat susu batang 60 gram, manis lembut meleleh di mulut. Kemasan foil utuh belum dibuka.",
+      "description_en": "60-gram milk chocolate bar, sweet and smooth. Unopened intact foil wrapping.",
+      "category": "Makanan & Minuman",
+      "brand": "SilverQueen",
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": "60g",
+        "variant": "Susu"
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": 22000,
+      "confidence": "high",
+      "price_idr": 22000,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0002",
+      "job_id": "golden-c",
+      "source_photo_index": 0,
+      "concept": "phone case",
+      "bbox": [
+        30,
+        50,
+        210,
+        330
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0002-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0002.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Same t-shirt with matching colour and print; only wrinkles smoothed."
+      },
+      "name": "Samsung Galaxy A54 8/128",
+      "description_id": "Ponsel bekas kondisi mulus, layar jernih tanpa gores dan baterai masih awet. Dijual lengkap dengan kardus dan kabel bawaan.",
+      "description_en": "Used phone in smooth condition with a clear scratch-free screen and a battery that still lasts. Sold with the original box and cable.",
+      "category": "Handphone & Tablet",
+      "brand": "Samsung",
+      "condition": "used",
+      "attributes": {
+        "color": "hitam",
+        "size": null,
+        "variant": "8/128"
+      },
+      "price_hint_idr": 4500000,
+      "price_suggestion_idr": null,
+      "confidence": "high",
+      "price_idr": 4500000,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0003",
+      "job_id": "golden-c",
+      "source_photo_index": 0,
+      "concept": "smartphone",
+      "bbox": [
+        40,
+        60,
+        300,
+        440
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0003-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0003.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": false,
+        "color_match": false,
+        "logo_text_match": false,
+        "reason": "logo text redrawn; colour shifted toward blue"
+      },
+      "name": "iPhone 11 64GB",
+      "description_id": "Ponsel bekas kondisi baik, tombol dan kamera berfungsi normal. Baterai 82 persen, cocok untuk pemakaian sehari-hari.",
+      "description_en": "Used phone in good condition with working buttons and camera. Battery at 82 percent, suitable for daily use.",
+      "category": "Handphone & Tablet",
+      "brand": "Apple",
+      "condition": "used",
+      "attributes": {
+        "color": "putih",
+        "size": null,
+        "variant": "64GB"
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": 5200000,
+      "confidence": "medium",
+      "price_idr": 5200000,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    }
+  ]
+}

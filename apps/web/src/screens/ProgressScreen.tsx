@@ -10,7 +10,7 @@ import { ApiError, retryCleanup, useJob, type JobState } from '../lib/api';
 import { photoNumber, STAGE_LETTERS } from '../lib/display';
 import { STAGE_ORDER, sortedErrors, stageIndex, tileStates, type StageError } from '../lib/jobView';
 import { useT } from '../lib/locale';
-import { isMockJobId } from '../lib/mockJob';
+import { isGoldenJobId } from '../lib/golden';
 import { setStoredJobId } from '../lib/store';
 
 function Column({ children }: { children: React.ReactNode }) {
@@ -124,7 +124,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
         <p className="mt-2 text-base text-fg-2">{t('progress.doneWithNotes', { n: productCount })}</p>
       ) : null}
 
-      {isMockJobId(jobId) ? (
+      {isGoldenJobId(jobId) ? (
         <p className="kk-card-flat mt-3 px-3 py-2 text-sm text-fg-2" role="note">
           {t('notice.mock')}
         </p>

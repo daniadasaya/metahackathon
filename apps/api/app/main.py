@@ -566,7 +566,7 @@ async def get_product_page(job_id: str, sku: str) -> Response:
 
 # Path prefixes the catch-all must never answer with the HTML shell: an
 # unknown API path is a missing route, an unknown asset path a missing file.
-RESERVED_PREFIXES = ("api", "assets")
+RESERVED_PREFIXES = ("api", "assets", "samples")
 
 
 def _not_found(path: str) -> JSONResponse:
@@ -589,17 +589,27 @@ def _mount_assets() -> None:
             StaticFiles(directory=ASSETS_DIR, check_dir=False),
             name="assets",
         )
-        return
+    if (STATIC_DIR / "samples").is_dir():
+        app.mount(
+            "/samples",
+            StaticFiles(directory=STATIC_DIR / "samples", check_dir=False),
+            name="samples",
+        )
     if not STATIC_DIR.is_dir():
         logger.warning(
             "Built SPA not found at %s; only the API routes are served. "
             "Run the web build to produce it.",
             STATIC_DIR,
         )
-    else:
+    elif not ASSETS_DIR.is_dir():
         logger.warning(
             "Built SPA assets not found at %s; /assets will answer 404.",
             ASSETS_DIR,
+        )
+    if STATIC_DIR.is_dir() and not (STATIC_DIR / "samples").is_dir():
+        logger.warning(
+            "Sample assets not found at %s; /samples will answer 404.",
+            STATIC_DIR / "samples",
         )
 
 

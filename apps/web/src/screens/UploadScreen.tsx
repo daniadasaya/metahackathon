@@ -6,9 +6,11 @@ import { StickyBar } from '../components/StickyBar';
 import { Toast } from '../components/Toast';
 import { CheckIcon, CloseIcon, PhotoIcon, PlusIcon } from '../components/Icons';
 import { ApiError, BackendUnavailableError, createJob, fetchSamplePack, type SamplePack } from '../lib/api';
+import { isGoldenJobId } from '../lib/golden';
 import { useT, type MessageKey } from '../lib/locale';
 import {
   getDemoSafe,
+  replaceCatalog,
   setDemoSafe,
   setStoredJobId,
   useDemoSafe,
@@ -95,6 +97,8 @@ export function UploadScreen() {
         demoSafe: getDemoSafe(),
         samplePack: pack,
       });
+      // A golden run always has the same id: starting it again must start from the bundled catalog.
+      if (isGoldenJobId(jobId)) replaceCatalog([]);
       setStoredJobId(jobId);
       await navigate({ to: '/jobs/$jobId', params: { jobId } });
     } catch (error) {
@@ -104,14 +108,11 @@ export function UploadScreen() {
         return;
       }
       const code = error instanceof ApiError ? error.code : null;
-      const missingSample = pack !== null && error instanceof ApiError && error.status === 404;
       const offline = error instanceof ApiError && error.status === 0;
       setToast(
-        missingSample
-          ? t('upload.samplePhotosMissing')
-          : offline
-            ? t('upload.networkFailed')
-            : (errorText(code ?? 'internal_error') ?? t('errors.internal_error')),
+        offline
+          ? t('upload.networkFailed')
+          : (errorText(code ?? 'internal_error') ?? t('errors.internal_error')),
       );
       setBusy(false);
     }
