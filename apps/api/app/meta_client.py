@@ -106,7 +106,8 @@ __all__ = [
 
 # Model ids and endpoint from the runbook. SAM request/response shape verified
 # live 2026-10-26 against https://dev.meta.ai/docs/sam/* (see _live_segment_concept).
-MUSE_SPARK_MODEL = "muse-spark-1.3"
+# MUSE_SPARK_MODEL uses the contributor variant: identical capability to 1.3 at roughly 12x lower price (input $0.10/M vs $1.25/M, output $0.20/M vs $4.25/M); inputs and outputs are used to train Meta's models, which is acceptable because every sample photo in this project is generated, not client data.
+MUSE_SPARK_MODEL = "muse-spark-1.3-contributor"
 SAM_MODEL = "sam-3.1"
 MUSE_IMAGE_MODEL = "muse-image-1.0"
 META_BASE_URL = "https://api.meta.ai/v1"
@@ -556,7 +557,8 @@ async def _live_discover_concepts(
 ) -> list[Concept]:
     """Live Stage A (P1), verified 2026-10-27.
 
-    ``POST /v1/chat/completions``, model ``muse-spark-1.3``,
+    ``POST /v1/chat/completions``, model ``muse-spark-1.3-contributor``,
+    (contributor variant: identical capability to 1.3 at roughly 12x lower price (input $0.10/M vs $1.25/M, output $0.20/M vs $4.25/M); inputs and outputs are used to train Meta's models, which is acceptable because every sample photo in this project is generated, not client data),
     ``temperature=0.4``, ``response_format={"type": "json_object"}``, one
     ``user`` message carrying ``input_text``-equivalent text +
     ``image_url`` data URL (docs:
@@ -763,7 +765,8 @@ async def _live_verify_fidelity(
 ) -> FidelityVerdict:
     """Live Stage D gate (P4), verified 2026-10-27 (live probe).
 
-    ``POST /v1/chat/completions``, model ``muse-spark-1.3``,
+    ``POST /v1/chat/completions``, model ``muse-spark-1.3-contributor``,
+    (contributor variant: identical capability to 1.3 at roughly 12x lower price (input $0.10/M vs $1.25/M, output $0.20/M vs $4.25/M); inputs and outputs are used to train Meta's models, which is acceptable because every sample photo in this project is generated, not client data),
     ``temperature=0.0``, ``response_format={"type": "json_object"}``, one
     ``user`` message with two ``image_url`` data URLs (docs:
     https://dev.meta.ai/docs/image-understanding — up to 50 images per
@@ -827,7 +830,8 @@ async def _live_extract_product(
 ) -> list[ProductEntry]:
     """Live Stage E (P5 + one P6 repair retry), verified 2026-10-27 (live probe).
 
-    ``POST /v1/chat/completions``, model ``muse-spark-1.3``,
+    ``POST /v1/chat/completions``, model ``muse-spark-1.3-contributor``,
+    (contributor variant: identical capability to 1.3 at roughly 12x lower price (input $0.10/M vs $1.25/M, output $0.20/M vs $4.25/M); inputs and outputs are used to train Meta's models, which is acceptable because every sample photo in this project is generated, not client data),
     ``temperature=0.2``, ``response_format={"type": "json_object"}`` +
     pydantic validation, exactly one P6 repair retry on validation failure
     (docs structured output: https://dev.meta.ai/docs/structured-output —

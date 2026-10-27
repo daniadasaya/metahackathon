@@ -259,50 +259,89 @@ async def run_pipeline(job_id, photos, captions):
         concepts_per_photo = cached
     else:
         concepts_per_photo = [[] for _ in photos]
-        for i, photo in enumerate(photos):
+
+        async def _concepts_one(i: int, photo: bytes) -> None:
+            # One photo's Stage A. A skipped photo (budget spent) is not a
+            # failure: no error, concepts stay empty, exactly as the old
+            # sequential `break` did.
             if time.monotonic() > deadline:
-                break
+                return
+            caption = str(general) + "\n" + str(photo_caps[i] if i < len(photo_caps) else "")
             try:
                 async with sem:
-                    concepts = await meta_client.discover_concepts(photo, str(general) + "\n" + str(photo_caps[i] if i < len(photo_caps) else ""))
-                concepts_per_photo[i] = [c.model_dump(mode="json") for c in concepts]
+                    concepts = await meta_client.discover_concepts(photo, caption)
             except Exception as exc:
                 concepts_per_photo[i] = []
                 code = ErrorCode.MODEL_NOT_FOUND if isinstance(exc, MetaModelNotFound) else ErrorCode.CONCEPTS_FAILED
                 errors.append(StageError(photo_index=i, stage=JobStage.CONCEPTS, code=code))
+                return
+            concepts_per_photo[i] = [c.model_dump(mode="json") for c in concepts]
+
+        # Stage A fans out across photos; the shared semaphore caps in-flight
+        # Meta calls at META_CONCURRENCY.
+        await asyncio.gather(*(_concepts_one(i, p) for i, p in enumerate(photos)))
         _save_concepts(job_id, concepts_per_photo)
     while len(concepts_per_photo) < len(photos):
         concepts_per_photo.append([])
     state.stage = JobStage.SEGMENT
     state.updated_at = _now()
     _write_job(job_id, state)
-    masks_per_photo = []
-    for i, photo in enumerate(photos):
+    masks_per_photo: list[Any] = [None] * len(photos)
+    segment_tasks = []
+    seg_keys = []  # (photo_index, concept_index) per task, same order as segment_tasks
+
+    async def _segment_one(i: int, photo: bytes, phrase: str):
+        # One concept on one photo, including the single zero-mask retry.
+        # Returns None when skipped past the deadline: a skipped concept is not
+        # an error, but it forbids caching a partial mask set for the photo.
         if time.monotonic() > deadline:
-            masks_per_photo.append([])
-            continue
+            return None
+        try:
+            async with sem:
+                masks = await meta_client.segment_concept(photo, phrase)
+            if not masks:
+                async with sem:
+                    masks = await meta_client.segment_concept(photo, phrase + " product")
+        except Exception as exc:
+            code = ErrorCode.MODEL_NOT_FOUND if isinstance(exc, MetaModelNotFound) else ErrorCode.SEGMENTATION_FAILED
+            errors.append(StageError(photo_index=i, stage=JobStage.SEGMENT, code=code))
+            return []
+        return list(masks)
+
+    for i, photo in enumerate(photos):
         cached_masks = _load_masks(job_id, i)
         if cached_masks is not None:
-            masks_per_photo.append(cached_masks)
+            masks_per_photo[i] = cached_masks
             continue
-        photo_masks = []
         concepts = concepts_per_photo[i] if i < len(concepts_per_photo) else []
-        for c in concepts:
+        for ci, c in enumerate(concepts):
             phrase = c.get("phrase", "") if isinstance(c, dict) else getattr(c, "phrase", "")
             if not phrase:
                 continue
-            try:
-                async with sem:
-                    masks = await meta_client.segment_concept(photo, str(phrase))
-                if not masks:
-                    async with sem:
-                        masks = await meta_client.segment_concept(photo, str(phrase) + " product")
-                photo_masks.extend(masks)
-            except Exception as exc:
-                code = ErrorCode.MODEL_NOT_FOUND if isinstance(exc, MetaModelNotFound) else ErrorCode.SEGMENTATION_FAILED
-                errors.append(StageError(photo_index=i, stage=JobStage.SEGMENT, code=code))
-        _save_masks(job_id, i, photo_masks)
-        masks_per_photo.append(photo_masks)
+            seg_keys.append((i, ci))
+            segment_tasks.append(_segment_one(i, photo, str(phrase)))
+    # Stage B fans out across every (photo, concept) pair at once; the shared
+    # semaphore caps in-flight Meta calls.
+    seg_results = await asyncio.gather(*segment_tasks)
+    ran_by_photo: dict[int, list] = {}
+    for (i, ci), masks in zip(seg_keys, seg_results):
+        ran_by_photo.setdefault(i, []).append((ci, masks))
+    for i in range(len(photos)):
+        if masks_per_photo[i] is not None:
+            continue  # cached from a previous run
+        photo_masks = []
+        complete = True
+        for _ci, masks in sorted(ran_by_photo.get(i, []), key=lambda pair: pair[0]):
+            if masks is None:
+                complete = False
+                continue
+            photo_masks.extend(masks)
+        masks_per_photo[i] = photo_masks
+        # Errors already leave masks as [] (still cached, as before); a
+        # deadline-skipped concept leaves the photo uncached for a later retry.
+        if complete:
+            _save_masks(job_id, i, photo_masks)
+    masks_per_photo = [m if m is not None else [] for m in masks_per_photo]
     while len(masks_per_photo) < len(photos):
         masks_per_photo.append([])
     all_masks = []
@@ -376,43 +415,55 @@ async def run_pipeline(job_id, photos, captions):
     _write_job(job_id, state)
     entries = dict(cached_entries) if cached_entries else {}
     cleaned_count = 0
-    for i, product in enumerate(products):
-        crop_bytes = _crop_bytes_for(job_id, product.sku)
-        prev_p = prev_map.get(product.sku)
-        updated = await _run_stage_d_one(job_id, product, crop_bytes, sem, deadline, prev_product=prev_p, errors=errors)
-        products[i] = updated
+
+    async def _cleanup_one(i: int, product: Product) -> Product:
+        # One product's Stage D. _run_stage_d_one already isolates adapter
+        # failures; this catch boxes the rest (disk, decode) so one bad product
+        # can never cancel its siblings or the job.
+        nonlocal cleaned_count
+        try:
+            crop_bytes = _crop_bytes_for(job_id, product.sku)
+            prev_p = prev_map.get(product.sku)
+            updated = await _run_stage_d_one(job_id, product, crop_bytes, sem, deadline, prev_product=prev_p, errors=errors)
+        except Exception:
+            errors.append(StageError(photo_index=product.source_photo_index, stage=JobStage.CLEANUP, code=ErrorCode.CLEANUP_FAILED))
+            return product
         cleaned_count += 1
-        state.progress = JobProgress(photos_total=len(photos), photos_done=len(photos), products_total=len(products), products_cleaned=cleaned_count)
-        state.products = list(products)
-        state.errors = list(errors)
-        state.updated_at = _now()
-        _write_job(job_id, state)
+        return updated
+
+    # Stage D fans out across products; the shared semaphore caps in-flight
+    # Meta calls. SKUs were assigned before this stage, so completion
+    # order cannot renumber anything.
+    d_results = await asyncio.gather(*(_cleanup_one(i, p) for i, p in enumerate(products)))
+    for i, updated in enumerate(d_results):
+        products[i] = updated
+    state.progress = JobProgress(photos_total=len(photos), photos_done=len(photos), products_total=len(products), products_cleaned=cleaned_count)
+    state.products = list(products)
+    state.errors = list(errors)
+    state.updated_at = _now()
+    _write_job(job_id, state)
     state.stage = JobStage.EXTRACT
     state.updated_at = _now()
     _write_job(job_id, state)
     captions_payload = captions if isinstance(captions, dict) else {"general": "", "photos": []}
     captions_json = json.dumps(captions_payload, ensure_ascii=False)
-    for i, product in enumerate(products):
-        if product.sku in entries:
-            entry = entries[product.sku]
-        else:
-            entry = None
-            visible_text = _visible_text_for(product, concepts_per_photo)
-            context = ExtractContext(seller_captions=captions_json, concept=product.concept, visible_text=visible_text)
-            clean_img_path = job_dir(job_id) / "clean" / f"{product.sku}.png"
-            clean_img_bytes = clean_img_path.read_bytes() if clean_img_path.is_file() else b""
-            if not clean_img_bytes:
-                clean_img_bytes = _crop_bytes_for(job_id, product.sku)
-            if time.monotonic() <= deadline:
-                try:
-                    async with sem:
-                        extracted = await meta_client.extract_product(clean_img_bytes, context)
-                    if extracted:
-                        entry = extracted[0]
-                    else:
-                        raise ValueError("empty extraction")
-                except Exception as first_exc:
-                    # One repair retry (P6): re-invoke the adapter once.
+
+    async def _extract_one(i: int, product: Product) -> Product:
+        # One product's Stage E: cache-first per SKU, one adapter call plus the
+        # single repair retry. Every failure lands in errors[]; nothing
+        # propagates to the gather.
+        entry = None
+        try:
+            if product.sku in entries:
+                entry = entries[product.sku]
+            else:
+                visible_text = _visible_text_for(product, concepts_per_photo)
+                context = ExtractContext(seller_captions=captions_json, concept=product.concept, visible_text=visible_text)
+                clean_img_path = job_dir(job_id) / "clean" / f"{product.sku}.png"
+                clean_img_bytes = clean_img_path.read_bytes() if clean_img_path.is_file() else b""
+                if not clean_img_bytes:
+                    clean_img_bytes = _crop_bytes_for(job_id, product.sku)
+                if time.monotonic() <= deadline:
                     try:
                         async with sem:
                             extracted = await meta_client.extract_product(clean_img_bytes, context)
@@ -420,16 +471,28 @@ async def run_pipeline(job_id, photos, captions):
                             entry = extracted[0]
                         else:
                             raise ValueError("empty extraction")
-                    except Exception as second_exc:
-                        code = ErrorCode.MODEL_NOT_FOUND if isinstance(second_exc, MetaModelNotFound) else ErrorCode.EXTRACTION_FAILED
-                        errors.append(StageError(photo_index=product.source_photo_index, stage=JobStage.EXTRACT, code=code))
-                        entry = None
-            else:
-                errors.append(StageError(photo_index=product.source_photo_index, stage=JobStage.EXTRACT, code=ErrorCode.EXTRACTION_FAILED))
-                entry = None
-            if entry is not None:
-                entries[product.sku] = entry
-                _save_entries(job_id, entries)
+                    except Exception:
+                        # One repair retry: re-invoke the adapter once.
+                        try:
+                            async with sem:
+                                extracted = await meta_client.extract_product(clean_img_bytes, context)
+                            if extracted:
+                                entry = extracted[0]
+                            else:
+                                raise ValueError("empty extraction")
+                        except Exception as second_exc:
+                            code = ErrorCode.MODEL_NOT_FOUND if isinstance(second_exc, MetaModelNotFound) else ErrorCode.EXTRACTION_FAILED
+                            errors.append(StageError(photo_index=product.source_photo_index, stage=JobStage.EXTRACT, code=code))
+                            entry = None
+                else:
+                    errors.append(StageError(photo_index=product.source_photo_index, stage=JobStage.EXTRACT, code=ErrorCode.EXTRACTION_FAILED))
+                    entry = None
+                if entry is not None:
+                    entries[product.sku] = entry
+        except Exception:
+            # Unexpected raise (disk, decode) — box it per product.
+            errors.append(StageError(photo_index=product.source_photo_index, stage=JobStage.EXTRACT, code=ErrorCode.EXTRACTION_FAILED))
+            entry = None
         if entry is not None:
             product.name = entry.name
             product.description_id = entry.description_id
@@ -441,11 +504,19 @@ async def run_pipeline(job_id, photos, captions):
             product.price_hint_idr = entry.price_hint_idr
             product.price_suggestion_idr = entry.price_suggestion_idr
             product.confidence = entry.confidence
-        products[i] = product
-        state.products = list(products)
-        state.errors = list(errors)
-        state.updated_at = _now()
-        _write_job(job_id, state)
+        return product
+
+    # Stage E fans out across products. entries.json and job.json are
+    # written once after the gather: concurrent completions never interleave a
+    # write of either file.
+    e_results = await asyncio.gather(*(_extract_one(i, p) for i, p in enumerate(products)))
+    for i, merged in enumerate(e_results):
+        products[i] = merged
+    _save_entries(job_id, entries)
+    state.products = list(products)
+    state.errors = list(errors)
+    state.updated_at = _now()
+    _write_job(job_id, state)
     state.status = JobStatus.DONE
     state.stage = JobStage.DONE
     state.progress = JobProgress(photos_total=len(photos), photos_done=len(photos), products_total=len(products), products_cleaned=cleaned_count)
