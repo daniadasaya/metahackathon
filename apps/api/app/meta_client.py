@@ -599,7 +599,8 @@ async def _live_discover_concepts(
                         "You analyze photos taken by small online sellers. Your "
                         "job is to prepare the photo for concept segmentation "
                         "by listing the foreground product types clearly "
-                        "presented for sale on the main surface."
+                        "presented for sale, whether on the main surface or "
+                        "held up for sale."
                     ),
                 },
                 {
@@ -609,19 +610,22 @@ async def _live_discover_concepts(
                             "type": "text",
                             "text": (
                                 "List every distinct foreground product TYPE clearly presented for sale "
-                                f"on the main counter, table, or display surface in this photo. Seller captions: {captions!r}.\n"
+                                f"in this photo — whether laid on the main counter, table, mat, or display "
+                                f"counter, held up in a seller's hand, or hung on a hanger or mannequin. Seller captions: {captions!r}.\n"
                                 "Rules:\n"
                                 "- Output concepts as short English noun phrases: \"smartphone\", \"smartphone box\", "
                                 "\"phone case\", \"charging case\", \"power bank\", \"charging cable\", \"sneakers\", "
                                 "\"instant noodle cup\". One phrase per visually distinct product type. "
                                 "Multiple identical items are ONE concept.\n"
-                                "- When sealed retail product boxes are stacked on the main counter, list their box type "
+                                "- When sealed retail product boxes are held up or stacked on the main counter, list their box type "
                                 "(e.g. \"smartphone box\") rather than \"phone case\".\n"
                                 "- Never put brand names, model names, colors, or commas inside a concept phrase.\n"
-                                "- ONLY list foreground products on the main selling surface. Ignore distant or blurry "
-                                "items hanging on background walls/pegboards/shelves, open brown shipping cartons in the "
-                                "back room, plastic display stands/holders, price tags/signs, pens/notebooks, hands, "
-                                "furniture, walls, posters, and reflections or items trapped underneath glass counter shelves.\n"
+                                "- ONLY list foreground products presented for sale (on a surface, in a hand, on a "
+                                "hanger/mannequin). Ignore the hand, arm, or person holding the product, the mannequin "
+                                "or hanger itself, distant or blurry items hanging on background walls/pegboards/shelves, "
+                                "open brown shipping cartons in the back room, plastic display stands/holders, price tags/signs, "
+                                "pens/notebooks, furniture, walls, posters, and reflections or items trapped underneath glass "
+                                "counter shelves.\n"
                                 "- Transcribe any readable text (brands, model numbers, price tags) verbatim into visible_text.\n"
                                 "Return ONLY JSON:\n"
                                 "{\"concepts\": [\"...\"], \"scene_note\": \"one sentence describing the scene\", "
@@ -777,9 +781,11 @@ async def _live_clean_product_image(
                 "Place this exact product on a clean off-white studio background "
                 "(#F7F7F5), soft even lighting, gentle natural shadow beneath it, "
                 "centered, front view, e-commerce product photography. Preserve "
-                "the product exactly: same shape, same colors, same logos, same "
-                "text, same details — do not redesign, restyle, or add or remove "
-                "any part of the product. Remove the original background, hands, "
+                "the product's actual surface, colors, logos, and printed text "
+                "100% intact. Also clean up distracting photographer "
+                "silhouettes, outdoor or room reflections, and harsh glare on "
+                "glossy packaging or screens, without altering the product "
+                "itself. Remove the original background, hands, "
                 "plastic display stands or holders, price tags, and any other "
                 "non-product objects completely."
             ),
@@ -953,7 +959,7 @@ def _strip_code_fences(text: str) -> str:
 async def _live_extract_product(
     clean_png: bytes, context: ExtractContext
 ) -> list[ProductEntry]:
-    """Live Stage E (P5 v2 + one P6 repair retry), verified 2026-10-28.
+    """Live Stage E (P5 v3 + one P6 repair retry), verified 2026-10-28.
 
     ``POST /v1/responses``, model ``muse-spark-1.3-contributor``,
     (contributor variant: identical capability to 1.3 at roughly 12x lower price (input $0.10/M vs $1.25/M, output $0.20/M vs $4.25/M); inputs and outputs are used to train Meta's models, which is acceptable because every sample photo in this project is generated, not client data),
@@ -977,11 +983,16 @@ async def _live_extract_product(
     markdown fences are stripped before validation. Exactly one P6 repair
     retry on ``(ValueError, ValidationError)``; a second failure raises
     :class:`MetaLiveUnavailable`. ``404 model_not_found`` surfaces, never
-    retried ; 429/5xx/timeout retry 2s/5s/12s.
+    retried; 429/5xx/timeout retry 2s/5s/12s.
 
-    Price law  binds the P5 v2 prompt, not this code:
-    ``price_hint_idr`` ONLY from the seller's own captions/visible_text,
-    never from ``web_search``.
+    Price Law binds the P5 v3 prompt, not this code:
+    ``price_hint_idr`` ONLY from the seller's own captions/visible_text for
+    THIS product (Indonesian shorthand parsed: '15rb'/'15k' → 15000,
+    '1,5jt'/'1.5 juta' → 1500000; multi-item scenes disambiguated; phone
+    numbers, model numbers, and spec figures never prices), never from
+    ``web_search``. Copy rules: zero meta-commentary/camera-talk; sealed
+    retail box = the product inside (BNIB); accessories stay accessories;
+    hands/background/props unnamed.
     """
     client = _live_client()
     data_url = _data_url(clean_png)
@@ -992,28 +1003,89 @@ async def _live_extract_product(
     # exact live threading of Stage A's scene note is confirmed against the
     # first live response, not assumed here.
     #
-    # P5 Version 2 (2026-10-28, docs/prompts-final.md ## P5): web_search is
-    # ONLY for clearly legible/stated brand+model (enriching descriptions and
-    # price_suggestion_idr); never for unbranded/generic items. Strict Price
-    # Law: price_hint_idr ONLY from captions/visible_text, never from search.
+    # P5 Version 3 (2026-10-28, docs/prompts-final.md ## P5): storefront copy
+    # ONLY (zero meta-commentary / camera-talk); sealed retail boxes = the
+    # product inside as BNIB, never an empty box; accessories stay accessories
+    # ("For 14 Pro" = a case FOR that phone); hands/background/props never
+    # named; strict Price Law with Indonesian slang parsing, per-product
+    # disambiguation, and no phone/spec numbers as prices.
     user_text = (
         f"Seller's own notes/captions: {captions_text!r}. "
         f"Text seen in the original photo: {context.visible_text}. "
         f"Product type: {context.concept!r}. Write the catalog entry for THIS "
-        "product. Use web_search ONLY when a brand, series, or model name is "
+        "product. "
+        "STOREFRONT COPY ONLY — ZERO META-COMMENTARY OR CAMERA-TALK: name, "
+        "description_id, and description_en must read as natural, persuasive, "
+        "ready-to-publish e-commerce listings for Instagram, WhatsApp, and "
+        "Meta Shop — NEVER talk about the photo, the camera, the image, or "
+        "what can or cannot be seen. STRICTLY FORBIDDEN in name, "
+        "description_id, and description_en: any reference to the photo or to "
+        "missing information — NEVER write phrases like 'tidak terlihat di "
+        "foto', 'tidak tertera di gambar', 'berdasarkan foto', 'terlihat "
+        "pada gambar', 'not visible in the photo', 'not shown in the image', "
+        "'cannot be determined from the photo', 'RAM/storage variant and "
+        "color not visible', or ANY similar meta-commentary; NEVER add "
+        "disclaimers about missing attributes (RAM, storage, color, size, "
+        "variant): when color/size/variant is not visible or stated, set "
+        "that attributes field to null and OMIT it from the prose entirely "
+        "without commenting on its absence. "
+        "RETAIL BOX = THE PRODUCT INSIDE (BNIB), NEVER AN EMPTY BOX: when "
+        "the product type is a retail box/package (e.g. 'smartphone box', "
+        "'shoe box', 'product box') or the image shows sealed product "
+        "packaging, the seller is selling THE ACTUAL PRODUCT INSIDE as a "
+        "brand-new unit (BNIB / baru bersegel) — NEVER describe it as "
+        "'Dus/box original ...', 'Kotak kemasan ...', or 'cocok untuk "
+        "penjualan unit baru' as if an empty cardboard box were for sale, "
+        "UNLESS the seller's captions explicitly say they sell only the "
+        "empty box ('jual dus saja', 'kotak kosong', 'box only'). Name and "
+        "describe the phone inside: e.g. a sealed 'POCO X8 Pro' box is the "
+        "'POCO X8 Pro 5G Smartphone (Baru / BNIB Segel)', highlighting the "
+        "phone's features and that it comes brand-new in its sealed box. "
+        "ACCESSORY VS MAIN DEVICE: when the product type or visual item is "
+        "an accessory ('phone case', 'screen protector', 'tempered glass', "
+        "'charging cable', 'charger', 'strap') with compatibility text "
+        "printed on it (e.g. 'For 14 Pro', 'For Samsung A54'), describe and "
+        "price it as THE ACCESSORY FOR that device (e.g. 'Casing Pelindung "
+        "untuk iPhone 14 Pro'), NEVER as the smartphone itself. "
+        "IGNORE NON-PRODUCT CONTENT: never mention hands/fingers holding "
+        "the item, outdoor/indoor backgrounds (rice fields, tables, walls, "
+        "bedsheets), display stands, price cards, or surface "
+        "reflections/glare in name, description_id, or description_en. "
+        "Use web_search ONLY when a brand, series, or model name is "
         "clearly legible in the photo text above or explicitly written in the "
-        "seller's captions (e.g. 'POCO X8 Pro', 'Samsung A54', 'For 14 Pro'): "
-        "in that case enrich description_id/description_en with accurate "
-        "real-world context and estimate a realistic Indonesian market price "
-        "in price_suggestion_idr. NEVER guess a brand/model/series and NEVER "
+        "seller's captions (e.g. 'POCO X8 Pro', 'Samsung A54'): "
+        "in that case enrich description_id/description_en with 2-3 accurate, "
+        "buyer-relevant highlights and estimate a realistic Indonesian market "
+        "price in price_suggestion_idr. NEVER guess a brand/model/series and NEVER "
         "run web_search for unbranded, generic, or plain items where no brand "
         "or model text is visible or stated. "
-        "Price rules (binding): price_hint_idr ONLY if the seller's captions "
-        "or the photo text above states an explicit price for THIS product — "
-        "NEVER populate price_hint_idr from web_search results (null when no "
-        "seller price is stated). price_suggestion_idr is an integer IDR "
-        "market estimate from web_search or confident recognition; it never "
-        "pre-fills or exports. "
+        "Only include model-level specs verified for all units of that "
+        "model; never guess unit-specific RAM/storage/color variants that "
+        "are not visible or stated (leave those attributes fields null "
+        "silently, no commentary). "
+        "Price rules (binding): parse Indonesian price shorthand in the "
+        "seller's captions or visible_text for THIS product — '15rb'/'15k' "
+        "-> 15000, '1,5jt'/'1.5 juta' -> 1500000, '250rb/pcs'/'@250k' -> "
+        "250000. Multi-item disambiguation: visible_text and captions may "
+        "come from a multi-product photo with price tags for OTHER items "
+        "(e.g. a 'Rp 1.500.000' smartphone sign next to a phone case or "
+        "charging cable; a caption 'HP 3jt, Casing 50rb'): set "
+        "price_hint_idr ONLY if the stated price clearly belongs to THIS "
+        "product (concept/brand) — NEVER attach another item's price to this "
+        "product. Non-price numbers are NEVER prices: WhatsApp/phone numbers "
+        "('08...', '628...'), model numbers ('X8', 'A54', '14 Pro'), or "
+        "technical specs ('6500mAh', '100W', '50MP', '256GB', '120Hz'). "
+        "Strict Price Law: price_hint_idr MUST be null unless the seller's "
+        "captions or visible_text explicitly states a price for THIS "
+        "product — NEVER populate price_hint_idr from web_search results. "
+        "price_suggestion_idr is an integer IDR market estimate for the "
+        "actual item sold (from web_search or confident recognition); it "
+        "never pre-fills or exports. "
+        "Condition: sealed retail boxes ('segel', 'BNIB'), tagged new goods, "
+        "and sealed food/skincare default to 'new'. Unboxed loose devices "
+        "with visible wear or captions stating 'second', 'bekas', 'seken', "
+        "'preloved', 'batangan', 'minus' are 'used' (mention any stated "
+        "defect honestly, without photo meta-commentary). "
         "Return ONLY valid JSON matching the schema: name, description_id, "
         "description_en, category (one of: 'Handphone & Tablet', 'Komputer & "
         "Laptop', 'Audio', 'Fashion Pria', 'Fashion Wanita', 'Sepatu', 'Tas', "
@@ -1042,9 +1114,13 @@ async def _live_extract_product(
                 model=MUSE_SPARK_MODEL,
                 temperature=0.2,
                 instructions=(
-                    "You write catalog entries for Indonesian social-commerce "
-                    "sellers. You never invent specifications, prices, or brands "
-                    "you cannot see."
+                    "You write ready-to-publish storefront listings for "
+                    "Indonesian social-commerce sellers (Instagram, WhatsApp, "
+                    "Meta Shop). Your name/description_id/description_en are "
+                    "persuasive product copy — you NEVER talk about the "
+                    "photo, the camera, or what is/isn't visible, and you "
+                    "never apologize for missing attributes. You never invent "
+                    "specifications, prices, or brands you cannot see."
                 ),
                 input=_input(extra),
                 tools=[
