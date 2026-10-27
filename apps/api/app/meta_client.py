@@ -59,13 +59,14 @@ Price Law: the adapter returns ``price_hint_idr`` /
 ``price_suggestion_idr`` exactly as the fixture carries them. It never
 computes, infers, or defaults a price.
 
-LIVE BRANCH (``META_MOCK=false``) is structure only, written from the
-``meta-model-api`` skill runbook and ``docs/prompts-final.md`` v1, both
-unverified hypotheses — no request has ever been sent. It lazy-imports the
-``openai`` client inside the live path and raises :class:`MetaLiveUnavailable`
-when the package (or the key) is absent; ``requirements.txt`` is locked at
-four packages, so live is unreachable until the Lead decides the client
-dependency with the key. The live branch is unreachable when
+LIVE BRANCH (``META_MOCK=false``): the ``segment_concept`` (SAM 3.1) path was
+verified live on 2026-10-26 (non-streaming ``POST /v1/responses``,
+status=completed, 39 records, parsed with ``meta-sam-parser`` 0.1.0). Other
+live functions keep their hypothesis docstrings until probed. The live path
+lazy-imports ``openai`` and ``meta-sam-parser`` inside the functions that need
+them and raises :class:`MetaLiveUnavailable` when a package (or the key) is
+absent; ``requirements.txt`` stays locked at four packages — adding either
+package there is a Lead decision. The live branch is unreachable when
 ``settings.meta_mock`` is true, and tests never execute it.
 """
 
@@ -102,8 +103,8 @@ __all__ = [
     "health_probe",
 ]
 
-# Model ids and endpoint from the runbook (UNVERIFIED — confirm at
-# https://dev.meta.ai before the first live call).
+# Model ids and endpoint from the runbook. SAM request/response shape verified
+# live 2026-10-26 against https://dev.meta.ai/docs/sam/* (see _live_segment_concept).
 MUSE_SPARK_MODEL = "muse-spark-1.3"
 SAM_MODEL = "sam-3.1"
 MUSE_IMAGE_MODEL = "muse-image-1.0"
@@ -339,8 +340,10 @@ def _mock_health_probe() -> HealthResponse:
 
 
 # ---------------------------------------------------------------------------
-# Live branch — UNVERIFIED HYPOTHESIS (see module docstring). Never runs
-# without the key, the client dependency, and a docs check at dev.meta.ai.
+# Live branch — SAM segment path VERIFIED 2026-10-26 against
+# https://dev.meta.ai/docs/sam/{overview,segmenting,reading-segmentation,client-libraries}
+# with one captured non-streaming response (status=completed, 39 records).
+# Remaining live functions keep their hypothesis docstrings until probed.
 # ---------------------------------------------------------------------------
 
 
@@ -416,6 +419,103 @@ def _data_url(image_bytes: bytes) -> str:
     return f"data:{mime};base64," + base64.b64encode(image_bytes).decode("ascii")
 
 
+def _output_text_of(response: Any) -> str:
+    """Collect the ``output_text`` lane from a non-streaming response.
+
+    Empty lane (zero matches) returns ``""`` — a valid result, never an
+    error. A refused response surfaces verbatim; a failed/incomplete status
+    surfaces as an error.
+    """
+    status = getattr(response, "status", None)
+    if status not in (None, "completed"):
+        if status == "incomplete":
+            raise MetaLiveUnavailable(
+                "segment_concept: response incomplete "
+                f"({getattr(response, 'incomplete_details', None)})"
+            )
+        error = getattr(response, "error", None)
+        raise MetaLiveUnavailable(
+            f"segment_concept: response status {status!r}: {error!r}"
+        )
+    parts: list[str] = []
+    output = getattr(response, "output", None) or []
+    for item in output:
+        item_type = getattr(item, "type", None)
+        if item_type == "refusal":
+            raise MetaLiveUnavailable(
+                f"segment_concept: model refused: {getattr(item, 'refusal', '')!r}"
+            )
+        for part in getattr(item, "content", None) or []:
+            if getattr(part, "type", None) == "refusal":
+                raise MetaLiveUnavailable(
+                    f"segment_concept: model refused: {getattr(part, 'refusal', '')!r}"
+                )
+            if getattr(part, "type", None) == "output_text":
+                parts.append(str(getattr(part, "text", "") or ""))
+    text = "".join(parts)
+    return text.strip()
+
+
+async def _parse_sam_output(output_text: str) -> list[Any]:
+    """Parse one ``output_text`` grammar line into mask records.
+
+    Lazy-imports the installed ``meta-sam-parser`` package (>=0.0.6 for
+    confidence; verified 2026-10-26 on v0.1.0: 39/39 probe records decode
+    with zero diagnostics). Feeds the line as a single delta plus synthetic
+    lane-done and completed events, mirroring what the streaming parser
+    consumes from a live stream.
+    """
+    if not output_text:
+        return []
+    try:
+        from meta_sam_parser import (
+            image_segmentation_format,
+            parse_responses_stream,
+        )
+    except ImportError as exc:
+        raise MetaLiveUnavailable(
+            "segment_concept: the 'meta-sam-parser' package (needs >=0.0.6 "
+            "for confidence) is not installed in this environment."
+        ) from exc
+
+    async def _events() -> Any:
+        lane = {"item_id": "msg_0", "output_index": 0, "content_index": 0}
+        yield {
+            "type": "response.output_text.delta",
+            "delta": output_text,
+            **lane,
+        }
+        yield {"type": "response.output_text.done", "text": output_text, **lane}
+        yield {
+            "type": "response.completed",
+            "response": {"id": "resp_live", "status": "completed"},
+        }
+
+    parsed = parse_responses_stream(_events(), image_segmentation_format())
+    result = await parsed.final_result()
+    status = getattr(getattr(result, "outcome", None), "status", None)
+    if status != "completed":
+        raise MetaLiveUnavailable(
+            f"segment_concept: SAM output lane did not complete: {status!r}"
+        )
+    return [r for r in result.records if getattr(r, "kind", None) == "mask"]
+
+
+def _raster_to_mode1_png(raster: bytes, width: int, height: int) -> bytes:
+    """Encode a 0/1 raster as a mode-1 PNG (matches the ``MaskResult`` wire)."""
+    if len(raster) != width * height:
+        raise MetaLiveUnavailable(
+            f"segment_concept: raster length {len(raster)} != {width}x{height}"
+        )
+    lum = Image.frombytes(
+        "L", (width, height), bytes(255 if b else 0 for b in raster)
+    )
+    img = lum.convert("1")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG", optimize=True)
+    return buf.getvalue()
+
+
 async def _live_discover_concepts(
     image_bytes: bytes, captions: str
 ) -> list[Concept]:
@@ -479,42 +579,93 @@ async def _live_discover_concepts(
 async def _live_segment_concept(
     image_bytes: bytes, concept: str
 ) -> list[MaskResult]:
-    """HYPOTHESIS for P2 (prompts-final.md v1, UNVERIFIED).
+    """Live Stage B (P2), verified 2026-10-26.
 
-    Responses API, ``sam-3.1``, streamed, prompt body is the phrase alone
-    with ``metadata={"mask_encoding": "one_bit"}``. How the target photo
-    reaches the request is an OPEN POINT: the runbook's text-prompts-only
-    note suggests the photo travels out-of-band (upload/session context),
-    but the exact threading is confirmed against the live spike, not assumed
-    here. The response side is a second OPEN POINT: ``meta-sam-parser`` is
-    not installed and its record API is unknown, so parsing waits for the
-    live spike — this names both blockers instead of inventing calls.
+    Non-streaming ``POST /v1/responses`` (docs: streaming optional), model
+    ``sam-3.1``, one user message with ``input_text`` (the phrase) +
+    ``input_image`` (data URL), ``metadata={"mask_encoding": "one_bit",
+    "include_confidence": "true"}``. The ``output_text`` grammar line starts
+    with ``<0f>`` (no ``text`` prefix) and uses ``data=H,W,!payload``
+    (height first, base85, ``!`` = one_bit). Parsed with the installed
+    ``meta-sam-parser`` package (``parse_responses_stream`` +
+    ``image_segmentation_format()`` against synthetic delta/done/completed
+    events); masks decoded with its ``decode_mask_to_raster``. Zero matches
+    (empty output_text) → ``[]``.
+    404 model_not_found surfaces, never retried; 429/5xx/
+    timeout retry 2s/5s/12s; other 400s surface verbatim.
     """
-    _ = image_bytes
+    wanted = concept.strip()
+    if not wanted:
+        return []
     client = _live_client()
 
     async def _call() -> Any:
         return await client.responses.create(  # type: ignore[attr-defined]
             model=SAM_MODEL,
-            stream=True,
-            metadata={"mask_encoding": "one_bit"},
-            input=concept,
+            input=[
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": [
+                        {"type": "input_text", "text": wanted},
+                        {"type": "input_image", "image_url": _data_url(image_bytes)},
+                    ],
+                }
+            ],
+            metadata={"mask_encoding": "one_bit", "include_confidence": "true"},
+            stream=False,
         )
 
-    stream = await _live_request(_call, what="segment_concept")
+    response = await _live_request(_call, what="segment_concept")
     try:
-        import meta_sam_parser  # noqa: F401
-    except ImportError as exc:
+        from meta_sam_parser import decode_mask_to_raster
+
+        output_text = _output_text_of(response)
+        records = await _parse_sam_output(output_text)
+    except MetaModelNotFound:
+        raise
+    except MetaLiveUnavailable:
+        raise
+    except (AttributeError, KeyError, TypeError, ValueError) as exc:
         raise MetaLiveUnavailable(
-            "segment_concept: the live request was hypothetically shaped but "
-            "the stream was not consumed — 'meta-sam-parser' is not installed "
-            "and its record API is unverified. Parser decision lands with the "
-            "live spike (Gate check)."
+            f"segment_concept: live P2 response did not match the verified "
+            f"shape: {exc}"
         ) from exc
-    raise MetaLiveUnavailable(
-        "segment_concept: parser present but its record API is unverified; "
-        f"adapt here against the captured stream ({stream!r})."
-    )
+    results: list[MaskResult] = []
+    for record in records:
+        try:
+            raster = decode_mask_to_raster(record.mask)
+        except Exception as exc:
+            raise MetaLiveUnavailable(
+                f"segment_concept: mask payload of record {record.object_id!r} "
+                f"did not decode: {exc}"
+            ) from exc
+        if len(raster) != record.mask.width * record.mask.height:
+            raise MetaLiveUnavailable(
+                f"segment_concept: raster length {len(raster)} != "
+                f"{record.mask.width}x{record.mask.height}"
+            )
+        png = _raster_to_mode1_png(
+            raster, record.mask.width, record.mask.height
+        )
+        score = record.confidence if record.confidence is not None else 0.0
+        results.append(
+            MaskResult(
+                concept=wanted,
+                bbox=(
+                    int(record.bounds.left),
+                    int(record.bounds.top),
+                    int(record.bounds.right) - 1,
+                    int(record.bounds.bottom) - 1,
+                ),
+                width=record.mask.width,
+                height=record.mask.height,
+                revision=record.revision,
+                score=float(score),
+                mask_png_base64=base64.b64encode(png).decode("ascii"),
+            )
+        )
+    return results
 
 
 async def _live_clean_product_image(
