@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 
 import { Column } from '../components/Column';
@@ -5,9 +6,33 @@ import { EmptyState } from '../components/EmptyState';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { ArrowLeftIcon, ChatIcon, StoreIcon } from '../components/Icons';
 import { formatRupiah } from '../lib/format';
-import { isWaNumber, type ReviewedProduct } from '../lib/catalog';
+import { isMergedChild, isWaNumber, mergedChildrenByParent, type ReviewedProduct } from '../lib/catalog';
 import { useT } from '../lib/locale';
 import { setStoreName, useCatalog, useSeller } from '../lib/store';
+
+/** One card's photo, with a compact control that cycles through every angle the product carries. */
+function PhotoGallery({ product, mergedPhotos }: { product: ReviewedProduct; mergedPhotos: readonly ReviewedProduct[] }) {
+  const { t } = useT();
+  const [index, setIndex] = useState(0);
+  const allUrls = [product.clean_url, ...mergedPhotos.map((m) => m.clean_url)];
+  const current = allUrls[index % allUrls.length] ?? product.clean_url;
+
+  return (
+    <div className="relative">
+      <ProductPhoto src={current} className="aspect-square w-full" />
+      {allUrls.length > 1 ? (
+        <button
+          type="button"
+          className="kk-chip kk-tactile absolute right-1 bottom-1 min-h-11 min-w-11 px-2 text-xs font-bold"
+          aria-label={t('review.nextPhotoLabel', { name: product.name })}
+          onClick={() => setIndex((i) => (i + 1) % allUrls.length)}
+        >
+          {`${(index % allUrls.length) + 1}/${allUrls.length}`}
+        </button>
+      ) : null}
+    </div>
+  );
+}
 
 function PriceLine({ product }: { product: ReviewedProduct }) {
   const { t } = useT();
@@ -65,7 +90,8 @@ export function PreviewScreen() {
   const seller = useSeller();
 
   const shown = (catalog ?? []).filter((product) => product.included);
-  const hidden = (catalog?.length ?? 0) - shown.length;
+  const childrenMap = mergedChildrenByParent(catalog ?? []);
+  const hidden = (catalog ?? []).filter((p) => !p.included && !isMergedChild(p, catalog ?? [])).length;
   const storeName = seller?.store_name ?? '';
   const storeNamed = storeName.trim() !== '';
   const sellerWa = seller?.wa_number ?? '';
@@ -103,7 +129,7 @@ export function PreviewScreen() {
                 key={product.sku}
                 className={`kk-card m-0 flex min-w-0 flex-col gap-2 p-2 ${soldOut ? 'opacity-60' : ''}`}
               >
-                <ProductPhoto src={product.clean_url} className="aspect-square w-full" />
+                <PhotoGallery product={product} mergedPhotos={childrenMap.get(product.sku) ?? []} />
                 <h2 className="kk-clamp-2 px-1 text-lg break-words">{product.name}</h2>
                 <div className="px-1">
                   <PriceLine product={product} />

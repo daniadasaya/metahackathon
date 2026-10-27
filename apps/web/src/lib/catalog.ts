@@ -77,6 +77,9 @@ function sameFidelity(a: Product['fidelity'], b: Product['fidelity']): boolean {
  * already have edited. Refreshes exactly those three server-owned fields and leaves every seller
  * edit alone. Returns `null` when nothing changed, so callers can skip the write.
  */
+/** The SKU whose studio photo `clean_url` points at (`/p/{job_id}/KK-0002.jpg`). */
+const PHOTO_SKU_PATTERN = /\/(KK-\d{4})\.(?:jpg|png)$/;
+
 export function syncServerFields(
   stored: readonly ReviewedProduct[],
   fresh: readonly Product[],
@@ -84,7 +87,10 @@ export function syncServerFields(
   const bySku = new Map(fresh.map((product) => [product.sku, product]));
   let changed = false;
   const next = stored.map((item) => {
-    const latest = bySku.get(item.sku);
+    // A promoted item carries another SKU's photo. Compare against that photo's server record,
+    // or the server's copy of `item.sku` would overwrite the promotion on every sync.
+    const photoSku = PHOTO_SKU_PATTERN.exec(item.clean_url)?.[1] ?? item.sku;
+    const latest = bySku.get(photoSku);
     if (latest === undefined || latest.job_id !== item.job_id) return item;
     if (
       latest.clean_url === item.clean_url &&
@@ -124,13 +130,136 @@ export interface Readiness {
   included: number;
 }
 
+// ---------------------------------------------------------------------------
+// Merged angle photos. A merged child stays a `ReviewedProduct` (the wire shape has no other
+// place for it): `included` is false and `concept` carries `@merge:<parent sku>`. The exporter
+// reads the same convention. Nothing here touches the server.
+// ---------------------------------------------------------------------------
+
+export const MERGE_MARKER = '@merge:';
+
+/** The concept without its merge suffix. Returns `concept` unchanged when it has none. */
+export function baseConcept(concept: string): string {
+  const at = concept.lastIndexOf(MERGE_MARKER);
+  return at === -1 ? concept : concept.slice(0, at);
+}
+
+/** The parent SKU a product is merged into, or `null` when it stands alone. */
+export function mergedIntoSku(product: ReviewedProduct): string | null {
+  if (product.included || !product.concept.includes(MERGE_MARKER)) return null;
+  const at = product.concept.lastIndexOf(MERGE_MARKER);
+  const target = product.concept.slice(at + MERGE_MARKER.length).trim();
+  return target === '' || target === product.sku ? null : target;
+}
+
+/** Included parent SKUs mapped to their merged children, in catalog order, same job only. */
+export function mergedChildrenByParent(
+  products: readonly ReviewedProduct[],
+): Map<string, ReviewedProduct[]> {
+  const children = new Map<string, ReviewedProduct[]>();
+  for (const parent of products) {
+    if (!parent.included) continue;
+    children.set(
+      parent.sku,
+      products.filter(
+        (child) =>
+          mergedIntoSku(child) === parent.sku && child.job_id === parent.job_id,
+      ),
+    );
+  }
+  return children;
+}
+
+/** True when the product is a merged child of an included parent in the same job. */
+export function isMergedChild(
+  product: ReviewedProduct,
+  allProducts: readonly ReviewedProduct[],
+): boolean {
+  const target = mergedIntoSku(product);
+  if (target === null) return false;
+  return allProducts.some(
+    (parent) => parent.included && parent.sku === target && parent.job_id === product.job_id,
+  );
+}
+
+/**
+ * Merges `childSku` into the included product `parentSku` as an extra angle photo. Children already
+ * merged into `childSku` move to `parentSku`, so no photo is orphaned.
+ */
+export function mergeProductInto(
+  products: readonly ReviewedProduct[],
+  childSku: string,
+  parentSku: string,
+): ReviewedProduct[] {
+  if (childSku === parentSku) return products.slice();
+  const child = products.find((product) => product.sku === childSku);
+  const parent = products.find((product) => product.sku === parentSku);
+  if (!child || !parent || child.job_id !== parent.job_id || !parent.included) {
+    return products.slice();
+  }
+  return products.map((product) => {
+    if (product.sku === childSku) {
+      return {
+        ...product,
+        included: false,
+        concept: `${baseConcept(product.concept)}${MERGE_MARKER}${parentSku}`,
+      };
+    }
+    if (mergedIntoSku(product) === childSku) {
+      return { ...product, concept: `${baseConcept(product.concept)}${MERGE_MARKER}${parentSku}` };
+    }
+    return product;
+  });
+}
+
+/** Takes a merged photo back out and lists it as its own included product again. */
+export function unmergeProduct(
+  products: readonly ReviewedProduct[],
+  childSku: string,
+): ReviewedProduct[] {
+  return products.map((product) =>
+    product.sku === childSku && !product.included && product.concept.includes(MERGE_MARKER)
+      ? { ...product, included: true, concept: baseConcept(product.concept) }
+      : product,
+  );
+}
+
+/**
+ * Swaps the photo of `parentSku` with that of its merged child `childSku`. The parent keeps its
+ * SKU, name, price, description and inclusion. Only the photo fields move.
+ */
+export function promoteMergedPhoto(
+  products: readonly ReviewedProduct[],
+  parentSku: string,
+  childSku: string,
+): ReviewedProduct[] {
+  const parent = products.find((product) => product.sku === parentSku);
+  const child = products.find((product) => product.sku === childSku);
+  if (!parent || !child || parent.job_id !== child.job_id || mergedIntoSku(child) !== parentSku) {
+    return products.slice();
+  }
+  const photoOf = (product: ReviewedProduct) => ({
+    source_photo_index: product.source_photo_index,
+    bbox: product.bbox,
+    crop_url: product.crop_url,
+    clean_url: product.clean_url,
+    cleanup_method: product.cleanup_method,
+    fidelity: product.fidelity,
+  });
+  return products.map((product) => {
+    if (product.sku === parentSku) return { ...product, ...photoOf(child) };
+    if (product.sku === childSku) return { ...product, ...photoOf(parent) };
+    return product;
+  });
+}
+
 export function readiness(products: readonly ReviewedProduct[]): Readiness {
   const included = products.filter((product) => product.included);
   const blockers = included.filter((product) => !hasPrice(product));
   return {
     ready: included.length - blockers.length,
     blockers,
-    excluded: products.length - included.length,
+    excluded: products.filter((product) => !product.included && !isMergedChild(product, products)).length,
     included: included.length,
   };
 }

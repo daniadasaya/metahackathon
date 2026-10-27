@@ -20,9 +20,9 @@ Reversing that order makes the catch-all swallow every ``/api/*`` request and
 answer 404. The catch-all therefore refuses to serve HTML for ``/api/*`` and
 for ``/assets/*``.
 
-The public product pages under ``/p/`` are not here yet — the pipeline owns them. Until
-then the catch-all answers them with the SPA shell, which is a known and
-accepted limitation (spec).
+The public product pages under ``/p/`` — ``GET /p/{job_id}/{sku}.jpg`` and
+``GET /p/{job_id}/{sku}`` — are registered above the static mount, so the
+catch-all never answers them with the SPA shell.
 
 This module also publishes the **complete** contract into
 ``components.schemas``. A pydantic model reaches that map only when a
@@ -421,6 +421,7 @@ async def toggle_cleanup_job(job_id: str, sku: str) -> JobState | JSONResponse:
 # --- export + public product routes -----------------------------------------
 
 import re as _re
+import html as _html
 import urllib.parse as _urlparse
 
 _MOCK_JOB_RE = _re.compile(r"^mock-\d+-\d+$")
@@ -531,20 +532,41 @@ async def get_product_page(job_id: str, sku: str) -> Response:
     if not exporter._safe_component(job_id) or not _validate_sku(sku):
         return _error(400, ErrorCode.INVALID_REQUEST, f"Invalid path component.")
     base = settings.base_url.rstrip("/")
-    img_url = f"{base}/p/{job_id}/{sku}.jpg"
+    base_sku = sku.replace("-crop", "")
     record = exporter.read_export_record(job_id)
+    img_sku = sku
     name = sku
     price_text = ""
     wa_number = None
     via_chat = False
     price_idr = None
+    extra_image_urls: list[str] = []
     if record:
-        for prod in record.get("products", []):
-            if prod.get("sku") == sku or prod.get("sku") == sku.replace("-crop", ""):
+        record_products = record.get("products", [])
+        for prod in record_products:
+            if prod.get("sku") == sku or prod.get("sku") == base_sku:
                 name = prod.get("name", name)
                 price_idr = prod.get("price_idr")
                 via_chat = bool(prod.get("price_via_chat", False))
+                # A promoted angle photo names its image in clean_url, not in sku.
+                m = exporter._SKU_IN_URL_RE.search(str(prod.get("clean_url") or ""))
+                if m:
+                    img_sku = m.group(1)
                 break
+        # Merged angle photos: excluded children whose concept targets this SKU
+        # (``{concept}@merge:{parent_sku}``). The buyer sees every angle the
+        # seller merged, not just the primary shot.
+        for prod in record_products:
+            if prod.get("included", True):
+                continue
+            child_sku = prod.get("sku")
+            concept = str(prod.get("concept") or "")
+            if not child_sku or child_sku == base_sku:
+                continue
+            if concept.endswith(f"{exporter.MERGE_MARKER}{base_sku}"):
+                m = exporter._SKU_IN_URL_RE.search(str(prod.get("clean_url") or ""))
+                child_img_sku = m.group(1) if m else child_sku
+                extra_image_urls.append(f"{base}/p/{job_id}/{child_img_sku}.jpg")
         seller = record.get("seller") or {}
         wa_number = seller.get("wa_number")
     if via_chat or price_idr is None:
@@ -558,12 +580,19 @@ async def get_product_page(job_id: str, sku: str) -> Response:
         button = f'<a href="{wa_url}">WhatsApp</a>'
     else:
         button = "<p>hubungi toko</p>"
+    img_url = f"{base}/p/{job_id}/{img_sku}.jpg"
+    safe_name = _html.escape(str(name), quote=True)
+    gallery = "".join(
+        f'<img src="{_html.escape(url, quote=True)}" alt="{safe_name}" width="256" />'
+        for url in extra_image_urls
+    )
     html = (
         "<!doctype html><html><head><meta charset='utf-8'>"
-        f"<title>{name}</title></head><body>"
-        f'<img src="{img_url}" alt="{name}" width="256" />'
-        f"<h1>{name}</h1>"
-        f"<p>{price_text}</p>"
+        f"<title>{safe_name}</title></head><body>"
+        f'<img src="{_html.escape(img_url, quote=True)}" alt="{safe_name}" width="256" />'
+        f"{gallery}"
+        f"<h1>{safe_name}</h1>"
+        f"<p>{_html.escape(price_text)}</p>"
         f"{button}"
         "</body></html>"
     )

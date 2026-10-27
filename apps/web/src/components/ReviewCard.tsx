@@ -3,10 +3,15 @@ import { memo, useId } from 'react';
 import { gateState, hasPrice, type ReviewedProduct } from '../lib/catalog';
 import { formatRupiah, parseRupiahInput } from '../lib/format';
 import { useT } from '../lib/locale';
-import { editProduct } from '../lib/store';
+import { editProduct, mergeSkuInto, promoteSkuPhoto, unmergeSku } from '../lib/store';
 import { AlertIcon, ChatIcon, CheckIcon, LayersIcon } from './Icons';
 import { ProductPhoto } from './ProductPhoto';
 import { Switch } from './Switch';
+
+interface MergeTarget {
+  sku: string;
+  name: string;
+}
 
 interface ReviewCardProps {
   product: ReviewedProduct;
@@ -15,13 +20,23 @@ interface ReviewCardProps {
    * `kk:catalog`, and nothing on this card writes it anywhere.
    */
   suggestion: number | null;
+  /** Angle photos merged into this product. They are not rows of their own. */
+  mergedPhotos: readonly ReviewedProduct[];
+  /** Included products this card may absorb as an angle photo. */
+  mergeTargets: readonly MergeTarget[];
 }
 
 /** Brandkit §4 Review Card. Name, price, availability, inclusion are editable; the rest is read-only. */
-export const ReviewCard = memo(function ReviewCard({ product, suggestion }: ReviewCardProps) {
+export const ReviewCard = memo(function ReviewCard({
+  product,
+  suggestion,
+  mergedPhotos,
+  mergeTargets,
+}: ReviewCardProps) {
   const { t, locale } = useT();
   const uid = useId();
   const { sku } = product;
+  const mergeSelectId = `${uid}-merge`;
 
   const gate = gateState(product);
   const viaChat = product.price_via_chat;
@@ -76,9 +91,70 @@ export const ReviewCard = memo(function ReviewCard({ product, suggestion }: Revi
                 {t('review.excludedBadge')}
               </span>
             )}
+            {mergedPhotos.length > 0 ? (
+              <span className="kk-pill" data-tone="neutral">
+                <LayersIcon size={14} />
+                {t('review.photosCount', { n: 1 + mergedPhotos.length })}
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
+
+      {mergedPhotos.length > 0 ? (
+        <section className="flex flex-col gap-2 rounded-[12px] border border-line p-2">
+          <h3 className="m-0 text-xs font-bold text-fg-muted">
+            {t('review.mergedPhotosTitle', { n: mergedPhotos.length })}
+          </h3>
+          <ul className="m-0 flex list-none flex-col gap-2 p-0">
+            {mergedPhotos.map((child) => (
+              <li key={child.sku} className="flex flex-wrap items-center gap-2">
+                <ProductPhoto src={child.clean_url} className="h-12 w-12 shrink-0" />
+                <span className="kk-money min-w-0 flex-1 text-xs font-bold text-fg-2 break-all">{child.sku}</span>
+                <button
+                  type="button"
+                  className="kk-chip kk-tactile min-h-11 px-3"
+                  aria-label={t('review.makePrimaryPhotoLabel', { sku: child.sku })}
+                  onClick={() => promoteSkuPhoto(sku, child.sku)}
+                >
+                  {t('review.makePrimaryPhoto')}
+                </button>
+                <button
+                  type="button"
+                  className="kk-chip kk-tactile min-h-11 px-3"
+                  aria-label={t('review.unmergePhotoLabel', { sku: child.sku })}
+                  onClick={() => unmergeSku(child.sku)}
+                >
+                  {t('review.unmergePhoto')}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {mergeTargets.length > 0 ? (
+        <div className="flex flex-col gap-1">
+          <label htmlFor={mergeSelectId} className="text-sm font-bold">
+            {t('review.mergeLabel')}
+          </label>
+          <select
+            id={mergeSelectId}
+            className="kk-input min-h-11 w-full text-sm"
+            value=""
+            onChange={(event) => {
+              if (event.target.value !== '') mergeSkuInto(sku, event.target.value);
+            }}
+          >
+            <option value="">{t('review.mergePlaceholder')}</option>
+            {mergeTargets.map((target) => (
+              <option key={target.sku} value={target.sku}>
+                {target.sku} — {target.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       {viaChat ? (
         <div className="kk-chatrow">

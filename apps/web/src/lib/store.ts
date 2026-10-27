@@ -8,7 +8,15 @@
  */
 import { useSyncExternalStore } from 'react';
 
-import { applyEdit, parseCatalog, type ProductEdit, type ReviewedProduct } from './catalog';
+import {
+  applyEdit,
+  mergeProductInto,
+  parseCatalog,
+  promoteMergedPhoto,
+  type ProductEdit,
+  type ReviewedProduct,
+  unmergeProduct,
+} from './catalog';
 import type { components } from './types';
 
 type SellerInfo = components['schemas']['SellerInfo'];
@@ -306,6 +314,26 @@ export function editProduct(sku: string, edit: ProductEdit, mode: WriteMode): vo
   }
   if (catalogTimer !== null) window.clearTimeout(catalogTimer);
   catalogTimer = window.setTimeout(persistCatalog, TEXT_DEBOUNCE_MS);
+}
+
+/** Writes a merge-state change at once: the merged photo must be durable when the tap ends. */
+function applyCatalogChange(next: (current: ReviewedProduct[]) => ReviewedProduct[]): void {
+  const current = catalogStore.get();
+  if (current === null) return;
+  catalogStore.set(next(current));
+  persistCatalog();
+}
+
+export function mergeSkuInto(childSku: string, parentSku: string): void {
+  applyCatalogChange((current) => mergeProductInto(current, childSku, parentSku));
+}
+
+export function unmergeSku(childSku: string): void {
+  applyCatalogChange((current) => unmergeProduct(current, childSku));
+}
+
+export function promoteSkuPhoto(parentSku: string, childSku: string): void {
+  applyCatalogChange((current) => promoteMergedPhoto(current, parentSku, childSku));
 }
 
 export function getSeller(): SellerInfo | null {

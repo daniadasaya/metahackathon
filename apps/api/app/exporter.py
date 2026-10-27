@@ -18,6 +18,25 @@ Image filename convention this module defines (the pipeline's write contract):
 ``data/jobs/{job_id}/crops/{sku}.png`` for the original crop. ``sku`` is used
 verbatim, so a crop is stored as ``crops/KK-0001-crop.png``. A missing file is
 a 404 on the public route, never a 500.
+
+The crop file has two spellings in the wild: the live pipeline writes
+``crops/{sku}-crop.png``, older fixtures wrote ``crops/{sku}.png``.
+:func:`crop_path` resolves either, which is what makes
+``crop_available(job_id, "KK-0001")`` and
+``resolve_image_bytes(job_id, "KK-0001-crop")`` agree on one file.
+
+**Merged angle photos.** A seller may merge several photos of the same item
+into one catalog entry. The client expresses that as a pair of fields on the
+*child* record: ``included = False`` (it is not a row of its own) and
+``concept = "{base_concept}@merge:{parent_sku}"``. :func:`merged_parent_sku`
+and :func:`merged_children_map` are the only readers of that convention; the
+child's studio image and crop then ride along in the parent's
+``additional_image_link`` and in the photo ZIP. The same gate still applies to
+them — a merged photo is exported, so it must be gate-passed like any other.
+
+Promoting one of those angles to be the main photo swaps ``clean_url`` and
+``crop_url`` between the parent and the child. :func:`photo_sku` then names
+the image to export from the URL, while ``sku`` keeps the catalog identity.
 """
 
 from __future__ import annotations
@@ -62,6 +81,12 @@ CSV_COLUMNS = [
 ]
 
 MAX_WA_ITEMS = 30
+
+#: Marker a merged child appends to its ``concept`` (see module docstring).
+MERGE_MARKER = "@merge:"
+
+#: Commerce Manager's ceiling for ``additional_image_link``.
+MAX_ADDITIONAL_IMAGES = 20
 
 
 # ---------------------------------------------------------------------------
@@ -121,17 +146,28 @@ def clean_path(job_id: str, sku: str) -> Path:
 
 
 def crop_path(job_id: str, sku: str) -> Path:
-    """On-disk path of the original crop for ``sku``."""
-    return JOBS_DIR / job_id / "crops" / f"{sku}.png"
+    """On-disk path of the original crop for ``sku``.
+
+    The live pipeline writes ``crops/{sku}-crop.png``; older fixtures wrote
+    ``crops/{sku}.png``. Both spellings resolve here so
+    ``crop_available(job_id, "KK-0001")`` and
+    ``resolve_image_bytes(job_id, "KK-0001-crop")`` land on the same file.
+    When neither exists the plain spelling is returned, so the caller's
+    ``is_file()`` check stays the single source of truth.
+    """
+    crops = JOBS_DIR / job_id / "crops"
+    plain = crops / f"{sku}.png"
+    if plain.is_file():
+        return plain
+    if not _is_crop_sku(sku):
+        hyphenated = crops / f"{sku}-crop.png"
+        if hyphenated.is_file():
+            return hyphenated
+    return plain
 
 
 def _is_crop_sku(sku: str) -> bool:
     return sku.endswith("-crop")
-
-
-def _base_sku(sku: str) -> str:
-    # Crop artefacts are stored under the crop sku verbatim (see module docstring).
-    return sku
 
 
 def crop_available(job_id: str, sku: str) -> bool:
@@ -179,6 +215,22 @@ def slugify_hashtag(text: str) -> str:
 # ---------------------------------------------------------------------------
 # Image helpers
 # ---------------------------------------------------------------------------
+
+#: The SKU an image URL points at: ``/p/{job}/KK-0001.jpg``, ``KK-0001-crop.png``.
+_SKU_IN_URL_RE = re.compile(r"/(KK-\d{4})(?:-crop)?\.(?:jpg|png)$")
+
+
+def photo_sku(product: schemas.ReviewedProduct) -> str:
+    """Return the underlying image SKU referenced by ``product.clean_url``.
+
+    A seller may promote a merged angle photo to be the main photo of a SKU.
+    The client expresses that by swapping ``clean_url`` (and ``crop_url``)
+    between the parent and the child, so the image to export is named by the
+    URL, not by the record's own ``sku``. The record's ``sku`` stays the
+    catalog identity — only the picture moves.
+    """
+    m = _SKU_IN_URL_RE.search(product.clean_url)
+    return m.group(1) if m else product.sku
 
 
 def _placeholder_jpg(sku: str, job_id: str, *, crop: bool = False) -> bytes:
@@ -246,6 +298,30 @@ def included_products(products: list[schemas.ReviewedProduct]) -> list[schemas.R
     return [p for p in products if p.included]
 
 
+def merged_parent_sku(product: schemas.ReviewedProduct) -> str | None:
+    """Return target parent SKU when ``product`` is merged as an additional photo."""
+    if product.included or MERGE_MARKER not in product.concept:
+        return None
+    _, _, target = product.concept.rpartition(MERGE_MARKER)
+    target = target.strip()
+    if not target or target == product.sku:
+        return None
+    return target
+
+
+def merged_children_map(
+    products: list[schemas.ReviewedProduct],
+) -> dict[str, list[schemas.ReviewedProduct]]:
+    """Map each included parent SKU to its ordered list of merged child products."""
+    included_skus = {p.sku for p in products if p.included}
+    children: dict[str, list[schemas.ReviewedProduct]] = {sku: [] for sku in included_skus}
+    for p in products:
+        parent = merged_parent_sku(p)
+        if parent is not None and parent in children:
+            children[parent].append(p)
+    return children
+
+
 def _blocking_skus(products: list[schemas.ReviewedProduct]) -> list[str]:
     out: list[str] = []
     for p in products:
@@ -277,12 +353,18 @@ def _gate_passed(p: schemas.ReviewedProduct) -> bool:
 
 
 def validate_image_gate(products: list[schemas.ReviewedProduct]) -> None:
-    """Raise :class:`UngatedImageError` if an included item claims an ungated image.
+    """Raise :class:`UngatedImageError` if an exported item claims an ungated image.
 
     Composite is always export-legal. ``muse-image`` is legal only when the
     record carries a fully positive fidelity verdict.
+
+    A merged child is exported too — its studio image is written to
+    ``additional_image_link`` and into the photo ZIP — so it is checked on the
+    same terms as an included product even though ``included`` is ``False``.
     """
-    skus = [p.sku for p in products if p.included and p.cleanup_method == schemas.CleanupMethod.MUSE_IMAGE and not _gate_passed(p)]
+    included_skus = {p.sku for p in products if p.included}
+    exported = [p for p in products if p.included or merged_parent_sku(p) in included_skus]
+    skus = [p.sku for p in exported if p.cleanup_method == schemas.CleanupMethod.MUSE_IMAGE and not _gate_passed(p)]
     if skus:
         raise UngatedImageError(skus)
 
@@ -290,6 +372,20 @@ def validate_image_gate(products: list[schemas.ReviewedProduct]) -> None:
 # ---------------------------------------------------------------------------
 # CSV
 # ---------------------------------------------------------------------------
+
+
+def _unique_capped(urls: list[str], limit: int) -> list[str]:
+    """Deduplicate preserving first-seen order, then cap at ``limit`` entries."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for url in urls:
+        if url in seen:
+            continue
+        seen.add(url)
+        out.append(url)
+        if len(out) >= limit:
+            break
+    return out
 
 
 def build_csv(
@@ -300,6 +396,7 @@ def build_csv(
 ) -> str:
     """Render the Commerce Manager CSV (catalog-feed §1–§3)."""
     base = base_url.rstrip("/")
+    children_by_parent = merged_children_map(products)
     rows: list[list[str]] = []
     for p in included_products(products):
         if p.price_via_chat:
@@ -309,8 +406,20 @@ def build_csv(
             continue
         brand = p.brand if p.brand else seller.store_name
         description = p.description_id if p.description_id.strip() else p.description_en
-        crop_url = f"{base}/p/{job_id}/{p.sku}-crop.jpg" if crop_available(job_id, p.sku) else ""
-        additional = crop_url if crop_available(job_id, p.sku) else ""
+        children = children_by_parent.get(p.sku, [])
+        # The image is named by the URL, not the record: a promoted angle photo
+        # means ``clean_url`` names another SKU (see :func:`photo_sku`).
+        primary_img_sku = photo_sku(p)
+        # Order: merged angle shots first (the reason the seller merged them),
+        # then the primary's original crop, then the children's crops.
+        additional_urls: list[str] = [f"{base}/p/{job_id}/{photo_sku(c)}.jpg" for c in children]
+        if crop_available(job_id, primary_img_sku):
+            additional_urls.append(f"{base}/p/{job_id}/{primary_img_sku}-crop.jpg")
+        for c in children:
+            child_img_sku = photo_sku(c)
+            if crop_available(job_id, child_img_sku):
+                additional_urls.append(f"{base}/p/{job_id}/{child_img_sku}-crop.jpg")
+        additional = ",".join(_unique_capped(additional_urls, MAX_ADDITIONAL_IMAGES))
         rows.append(
             [
                 p.sku,
@@ -320,7 +429,7 @@ def build_csv(
                 p.condition.value,
                 format_price_wire(p.price_idr),
                 f"{base}/p/{job_id}/{p.sku}",
-                f"{base}/p/{job_id}/{p.sku}.jpg",
+                f"{base}/p/{job_id}/{primary_img_sku}.jpg",
                 brand,
                 p.category,
                 additional,
@@ -425,17 +534,32 @@ def build_zip(
     base_url: str,
     csv_text: str,
 ) -> bytes:
-    """Assemble the photo ZIP with JPGs, crops, and the CSV at root."""
+    """Assemble the photo ZIP with JPGs, crops, and the CSV at root.
+
+    Merged children ride along: the seller asked for one catalog entry, but
+    every angle they merged is still a photo they own, so it ships in the ZIP
+    under its own SKU. A promoted angle photo is written under the SKU its
+    ``clean_url`` names (:func:`photo_sku`), so the ZIP always matches the
+    CSV's links. An entry is written once, never twice.
+    """
+    children_by_parent = merged_children_map(products)
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(f"katalog-{job_id}.csv", csv_text)
-        for p in included_products(products):
-            sku = p.sku
-            jpg = resolve_image_bytes(job_id, sku)
-            zf.writestr(f"{sku}.jpg", jpg)
+        written: set[str] = set()
+
+        def write_entry(sku: str) -> None:
+            if sku in written:
+                return
+            written.add(sku)
+            zf.writestr(f"{sku}.jpg", resolve_image_bytes(job_id, sku))
             if crop_available(job_id, sku):
-                crop_jpg = resolve_image_bytes(job_id, f"{sku}-crop")
-                zf.writestr(f"{sku}-crop.jpg", crop_jpg)
+                zf.writestr(f"{sku}-crop.jpg", resolve_image_bytes(job_id, f"{sku}-crop"))
+
+        for p in included_products(products):
+            write_entry(photo_sku(p))
+            for child in children_by_parent.get(p.sku, []):
+                write_entry(photo_sku(child))
     return buf.getvalue()
 
 

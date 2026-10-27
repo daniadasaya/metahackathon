@@ -11,6 +11,8 @@ import { isJobActive, useJob } from '../lib/api';
 import {
   canExport,
   hydrateCatalog,
+  isMergedChild,
+  mergedChildrenByParent,
   readiness,
   syncServerFields,
   type ReviewedProduct,
@@ -63,6 +65,9 @@ export function ReviewScreen() {
     return bySku;
   }, [job, catalog]);
 
+  // Merged angle photos hang off their parent card. Computed before the early return: hooks run first.
+  const childrenMap = useMemo(() => mergedChildrenByParent(catalog ?? []), [catalog]);
+
   function uploadNew() {
     setStoredJobId(null);
     void navigate({ to: '/' });
@@ -102,6 +107,7 @@ export function ReviewScreen() {
 
   const state = readiness(catalog);
   const exportable = canExport(state);
+  const standalone = catalog.filter((product) => !isMergedChild(product, catalog));
   const named = state.blockers.slice(0, NAMED_BLOCKERS).map((product) => product.sku).join(', ');
   const blockerText =
     state.blockers.length > NAMED_BLOCKERS
@@ -115,7 +121,7 @@ export function ReviewScreen() {
         <p className="mt-2 text-base text-fg-2">{t('review.lead')}</p>
 
         <div className="mt-3 flex items-center justify-between gap-2">
-          <span className="kk-count whitespace-nowrap">{t('review.count', { n: catalog.length })}</span>
+          <span className="kk-count whitespace-nowrap">{t('review.count', { n: standalone.length })}</span>
           <div className="flex items-center">
             <Link to="/review/preview" className="kk-btn kk-btn-ghost px-2 whitespace-nowrap text-accent-2">
               <StoreIcon size={16} />
@@ -131,8 +137,16 @@ export function ReviewScreen() {
         ) : null}
 
         <ul className="m-0 mt-3 flex list-none flex-col gap-3 p-0">
-          {catalog.map((product) => (
-            <ReviewCard key={product.sku} product={product} suggestion={suggestions.get(product.sku) ?? null} />
+          {standalone.map((product) => (
+            <ReviewCard
+              key={product.sku}
+              product={product}
+              suggestion={suggestions.get(product.sku) ?? null}
+              mergedPhotos={childrenMap.get(product.sku) ?? []}
+              mergeTargets={standalone
+                .filter((p) => p.included && p.sku !== product.sku && p.job_id === product.job_id)
+                .map((p) => ({ sku: p.sku, name: p.name }))}
+            />
           ))}
         </ul>
       </Column>

@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import io
+import csv
 import json
+import asyncio
 import zipfile
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from app import exporter, main, schemas
 
@@ -29,6 +32,7 @@ def _product(
     brand=None,
     cleanup_method="muse-image",
     fidelity=None,
+    concept="bag",
 ):
     if cleanup_method == "muse-image" and fidelity is None:
         fidelity = {  # A fully positive verdict is the only legal muse-image record.
@@ -41,7 +45,7 @@ def _product(
         sku=sku,
         job_id="mock-1-2",
         source_photo_index=0,
-        concept="bag",
+        concept=concept,
         bbox=(1, 2, 3, 4),
         crop_url=f"/p/mock-1-2/{sku}-crop.jpg",
         clean_url=f"/p/mock-1-2/{sku}.jpg",
@@ -223,3 +227,301 @@ def test_placeholder_deterministic() -> None:
     b = exporter.resolve_image_bytes("mock-1-2", "KK-0001")
     assert a == b
     assert a[:2] == b"\xff\xd8"  # jpeg
+
+
+# ---------------------------------------------------------------------------
+# Crop path: live pipeline spelling ``crops/{sku}-crop.png``
+# ---------------------------------------------------------------------------
+
+
+def _live_crop_job(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, job_id: str) -> Path:
+    """Point ``JOBS_DIR`` at a tmp tree and return its ``crops/`` directory."""
+    jobs = tmp_path / "jobs"
+    crops = jobs / job_id / "crops"
+    crops.mkdir(parents=True)
+    monkeypatch.setattr(exporter, "JOBS_DIR", jobs)
+    return crops
+
+
+def test_crop_path_resolves_live_pipeline_crop(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    crops = _live_crop_job(tmp_path, monkeypatch, "job-live-1")
+    crop_file = crops / "KK-0001-crop.png"
+    Image.new("RGBA", (8, 8), (10, 20, 30, 255)).save(crop_file, format="PNG")
+
+    # Both call shapes reach the one file the pipeline wrote.
+    assert exporter.crop_path("job-live-1", "KK-0001") == crop_file
+    assert exporter.crop_path("job-live-1", "KK-0001-crop") == crop_file
+    assert exporter.crop_available("job-live-1", "KK-0001") is True
+    assert exporter.crop_available("job-live-1", "KK-0001-crop") is True
+
+    # And the public JPG route resolves it instead of 404-ing.
+    jpg = exporter.resolve_image_bytes("job-live-1", "KK-0001-crop")
+    assert jpg[:2] == b"\xff\xd8"
+
+
+def test_crop_path_prefers_plain_spelling_when_both_exist(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    crops = _live_crop_job(tmp_path, monkeypatch, "job-live-2")
+    plain = crops / "KK-0001.png"
+    Image.new("RGB", (8, 8), (1, 2, 3)).save(plain, format="PNG")
+    Image.new("RGB", (8, 8), (4, 5, 6)).save(crops / "KK-0001-crop.png", format="PNG")
+
+    assert exporter.crop_path("job-live-2", "KK-0001") == plain
+
+
+def test_crop_available_false_when_no_crop_on_disk(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    crops = _live_crop_job(tmp_path, monkeypatch, "job-live-3")
+
+    assert exporter.crop_available("job-live-3", "KK-0001") is False
+    # No file either way: the plain spelling is returned for the caller to check.
+    assert exporter.crop_path("job-live-3", "KK-0001") == crops / "KK-0001.png"
+
+
+def test_csv_live_job_links_the_pipeline_crop(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    crops = _live_crop_job(tmp_path, monkeypatch, "job-live-4")
+    Image.new("RGBA", (8, 8), (10, 20, 30, 255)).save(crops / "KK-0001-crop.png", format="PNG")
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+
+    csv_text = exporter.build_csv(
+        "job-live-4", [_product("KK-0001", concept="smartphone")], seller, "http://example.com"
+    )
+    rows = list(csv.reader(io.StringIO(csv_text)))
+    additional = rows[1][exporter.CSV_COLUMNS.index("additional_image_link")]
+    assert additional == "http://example.com/p/job-live-4/KK-0001-crop.jpg"
+
+
+# ---------------------------------------------------------------------------
+# Multi-photo per SKU: merged angle photos (``concept = "{base}@merge:{sku}"``)
+# ---------------------------------------------------------------------------
+
+
+def _merged(sku: str, parent_sku: str, **kwargs) -> schemas.ReviewedProduct:
+    """A child angle photo merged into ``parent_sku``: excluded + marked."""
+    return _product(sku, included=False, concept=f"smartphone@merge:{parent_sku}", **kwargs)
+
+
+def test_merged_parent_sku_reads_the_marker() -> None:
+    assert exporter.merged_parent_sku(_merged("KK-0002", "KK-0001")) == "KK-0001"
+    # An included product is never a child, marker or not.
+    assert exporter.merged_parent_sku(_product("KK-0001", concept="smartphone@merge:KK-0009")) is None
+    # No marker at all.
+    assert exporter.merged_parent_sku(_product("KK-0001", concept="smartphone")) is None
+
+
+def test_merged_parent_sku_rejects_self_and_empty_target() -> None:
+    assert exporter.merged_parent_sku(_product("KK-0001", included=False, concept="bag@merge:KK-0001")) is None
+    assert exporter.merged_parent_sku(_product("KK-0002", included=False, concept="bag@merge:   ")) is None
+
+
+def test_merged_children_map_orders_children_by_parent() -> None:
+    products = [
+        _product("KK-0001", concept="smartphone"),
+        _merged("KK-0002", "KK-0001"),
+        _merged("KK-0003", "KK-0001"),
+        _product("KK-0009", concept="headphone"),
+        _merged("KK-0010", "KK-0077"),  # parent absent from the payload -> dropped
+    ]
+    children = exporter.merged_children_map(products)
+
+    assert set(children) == {"KK-0001", "KK-0009"}
+    assert [c.sku for c in children["KK-0001"]] == ["KK-0002", "KK-0003"]
+    assert children["KK-0009"] == []
+
+
+def test_csv_merges_angle_photos_into_additional_image_link(exports_dir: Path) -> None:
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    products = [
+        _product("KK-0001", 150000, False, True, "Acme", concept="smartphone"),
+        _merged("KK-0002", "KK-0001"),
+        _merged("KK-0003", "KK-0001"),
+    ]
+
+    csv_text = exporter.build_csv("mock-1-2", products, seller, "http://example.com")
+    rows = list(csv.reader(io.StringIO(csv_text)))
+
+    assert rows[0] == exporter.CSV_COLUMNS
+    assert len(rows) == 2  # header + one merged catalog entry
+    assert rows[1][0] == "KK-0001"
+    additional = rows[1][exporter.CSV_COLUMNS.index("additional_image_link")]
+    assert additional.split(",") == [
+        "http://example.com/p/mock-1-2/KK-0002.jpg",
+        "http://example.com/p/mock-1-2/KK-0003.jpg",
+        "http://example.com/p/mock-1-2/KK-0001-crop.jpg",
+        "http://example.com/p/mock-1-2/KK-0002-crop.jpg",
+        "http://example.com/p/mock-1-2/KK-0003-crop.jpg",
+    ]
+    assert [r[0] for r in rows[1:]] == ["KK-0001"]
+
+
+def test_csv_single_photo_row_is_unchanged_by_merging() -> None:
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    products = [_product("KK-0001", 150000, False, True, "Acme", concept="smartphone")]
+
+    csv_text = exporter.build_csv("mock-1-2", products, seller, "http://example.com")
+    rows = list(csv.reader(io.StringIO(csv_text)))
+
+    assert rows[1][exporter.CSV_COLUMNS.index("additional_image_link")] == (
+        "http://example.com/p/mock-1-2/KK-0001-crop.jpg"
+    )
+
+
+def test_photo_sku_reads_the_promoted_url() -> None:
+    p = _product("KK-0001")
+    assert exporter.photo_sku(p) == "KK-0001"  # /p/mock-1-2/KK-0001.jpg
+    p.clean_url = "/p/mock-1-2/KK-0002.jpg"
+    assert exporter.photo_sku(p) == "KK-0002"
+    p.clean_url = "/p/mock-1-2/KK-0003-crop.png"
+    assert exporter.photo_sku(p) == "KK-0003"
+    # No parsable SKU -> the record's own sku is the answer.
+    p.clean_url = "https://cdn.example.com/whatever.jpg"
+    assert exporter.photo_sku(p) == "KK-0001"
+
+
+def test_csv_promoted_angle_photo_becomes_the_main_image() -> None:
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    parent = _product("KK-0001", 150000, False, True, "Acme", concept="smartphone")
+    child = _merged("KK-0002", "KK-0001")
+    # The seller promoted the angle photo to main: the two image URLs swap.
+    parent.clean_url, child.clean_url = "/p/mock-1-2/KK-0002.jpg", "/p/mock-1-2/KK-0001.jpg"
+    parent.crop_url, child.crop_url = "/p/mock-1-2/KK-0002-crop.jpg", "/p/mock-1-2/KK-0001-crop.jpg"
+
+    csv_text = exporter.build_csv("mock-1-2", [parent, child], seller, "http://example.com")
+    rows = list(csv.reader(io.StringIO(csv_text)))
+
+    row = rows[1]
+    # Identity is still the parent SKU — only the picture moved.
+    assert row[exporter.CSV_COLUMNS.index("id")] == "KK-0001"
+    assert row[exporter.CSV_COLUMNS.index("link")] == "http://example.com/p/mock-1-2/KK-0001"
+    assert row[exporter.CSV_COLUMNS.index("image_link")] == "http://example.com/p/mock-1-2/KK-0002.jpg"
+    additional = row[exporter.CSV_COLUMNS.index("additional_image_link")].split(",")
+    assert additional[0] == "http://example.com/p/mock-1-2/KK-0001.jpg"
+
+
+def test_zip_promoted_angle_photo_writes_the_swapped_images(exports_dir: Path) -> None:
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    parent = _product("KK-0001", 150000, False, True, "Acme", concept="smartphone")
+    child = _merged("KK-0002", "KK-0001")
+    parent.clean_url, child.clean_url = "/p/mock-1-2/KK-0002.jpg", "/p/mock-1-2/KK-0001.jpg"
+
+    csv_text = exporter.build_csv("mock-1-2", [parent, child], seller, "http://example.com")
+    data = exporter.build_zip("mock-1-2", [parent, child], seller, "http://example.com", csv_text)
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
+        names = zf.namelist()
+
+    assert names[0] == "katalog-mock-1-2.csv"
+    for sku in ("KK-0001", "KK-0002"):
+        assert f"{sku}.jpg" in names
+        assert f"{sku}-crop.jpg" in names
+    assert len(names) == len(set(names))
+
+
+def test_product_page_shows_the_promoted_photo(exports_dir: Path) -> None:
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    parent = _product("KK-0001", 150000, False, True, "Acme", concept="smartphone")
+    child = _merged("KK-0002", "KK-0001")
+    parent.clean_url, child.clean_url = "/p/mock-1-2/KK-0002.jpg", "/p/mock-1-2/KK-0001.jpg"
+    exporter.write_export_record("mock-1-2", [parent, child], seller)
+
+    response = asyncio.run(main.get_product_page("mock-1-2", "KK-0001"))
+    body = response.body.decode()
+
+    img_srcs = [chunk.split('"')[0] for chunk in body.split('<img src="')[1:]]
+    assert img_srcs[0].endswith("/p/mock-1-2/KK-0002.jpg")  # promoted main photo
+    assert img_srcs[1].endswith("/p/mock-1-2/KK-0001.jpg")  # the angle it replaced
+    assert "KK-0001" in body  # identity in the heading is untouched
+
+
+def test_csv_caps_additional_image_link_at_twenty() -> None:
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    products = [_product("KK-0001", 150000, False, True, "Acme", concept="smartphone")]
+    products += [_merged(f"KK-{i:04d}", "KK-0001") for i in range(2, 20)]  # 18 children -> 36 urls
+
+    csv_text = exporter.build_csv("mock-1-2", products, seller, "http://example.com")
+    rows = list(csv.reader(io.StringIO(csv_text)))
+    urls = rows[1][exporter.CSV_COLUMNS.index("additional_image_link")].split(",")
+
+    assert len(urls) == 20
+    assert urls == list(dict.fromkeys(urls))  # no duplicates
+
+
+def test_price_law_ignores_merged_children_without_price() -> None:
+    products = [
+        _product("KK-0001", 150000, concept="smartphone"),
+        _merged("KK-0002", "KK-0001", price=None),
+        _merged("KK-0003", "KK-0001", price=None),
+    ]
+
+    assert [p.price_idr for p in products[1:]] == [None, None]
+    exporter.validate_price_law(products)  # must not raise
+
+
+def test_gate_checks_merged_children_without_verdict() -> None:
+    child = _merged("KK-0002", "KK-0001")
+    child.fidelity = None
+
+    with pytest.raises(exporter.UngatedImageError) as ei:
+        exporter.validate_image_gate([_product("KK-0001", concept="smartphone"), child])
+    assert ei.value.skus == ["KK-0002"]
+
+
+def test_gate_checks_merged_children_with_failing_verdict() -> None:
+    child = _merged(
+        "KK-0002",
+        "KK-0001",
+        fidelity={"same_product": False, "color_match": True, "logo_text_match": True, "reason": "redesigned"},
+    )
+
+    with pytest.raises(exporter.UngatedImageError) as ei:
+        exporter.validate_image_gate([_product("KK-0001", concept="smartphone"), child])
+    assert ei.value.skus == ["KK-0002"]
+
+
+def test_gate_allows_gate_passed_merged_children() -> None:
+    exporter.validate_image_gate(
+        [_product("KK-0001", concept="smartphone"), _merged("KK-0002", "KK-0001")]
+    )  # fully positive verdict on the child -> legal
+
+
+def test_gate_skips_merged_children_of_an_excluded_parent() -> None:
+    parent = _product("KK-0001", included=False, concept="smartphone")
+    child = _merged("KK-0002", "KK-0001")
+    child.fidelity = None
+
+    exporter.validate_image_gate([parent, child])  # neither is exported -> no raise
+
+
+def test_zip_includes_merged_angle_photos(exports_dir: Path) -> None:
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    products = [
+        _product("KK-0001", 150000, False, True, "Acme", concept="smartphone"),
+        _merged("KK-0002", "KK-0001"),
+        _merged("KK-0003", "KK-0001"),
+    ]
+    csv_text = exporter.build_csv("mock-1-2", products, seller, "http://example.com")
+
+    data = exporter.build_zip("mock-1-2", products, seller, "http://example.com", csv_text)
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
+        names = zf.namelist()
+
+    assert names[0] == "katalog-mock-1-2.csv"
+    for sku in ("KK-0001", "KK-0002", "KK-0003"):
+        assert f"{sku}.jpg" in names
+        assert f"{sku}-crop.jpg" in names
+    assert len(names) == len(set(names))  # no duplicate zip entries
+
+
+def test_run_export_with_merged_children_writes_four_files(exports_dir: Path) -> None:
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    products = [
+        _product("KK-0001", 150000, False, True, "Acme", concept="smartphone"),
+        _merged("KK-0002", "KK-0001", price=None),
+    ]
+
+    files = exporter.run_export("mock-1-2", products, seller, "http://example.com")
+
+    assert len(files) == 4
+    out = exports_dir / "mock-1-2"
+    # CRLF survives on disk; ``read_text`` would translate it away.
+    assert (out / "katalog-meta.csv").read_bytes().count(b"\r\n") == 2  # header + one entry
+    with zipfile.ZipFile(out / "katalog-kilat-images.zip") as zf:
+        assert "KK-0002.jpg" in zf.namelist()
+
