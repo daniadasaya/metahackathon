@@ -33,9 +33,9 @@
   --gate-fallback: #a04a00;
 
   /* Radii (brandkit §4) */
-  --r-sm: 12px;
-  --r-md: 20px;
-  --r-lg: 28px;
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 22px;
 
   /* Font stacks (brandkit §3) */
   --ff-display: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif;

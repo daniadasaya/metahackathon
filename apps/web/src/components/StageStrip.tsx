@@ -28,8 +28,8 @@ export function StageStrip({ stageNames, stateNames, label, states }: StageStrip
               role="img"
               aria-label={`${letter}: ${stageNames[index] ?? ''}, ${stateNames[state]}`}
             >
-              {state === 'done' ? <CheckIcon size={24} /> : null}
-              {state === 'failed' ? <RetryIcon size={20} /> : null}
+              {state === 'done' ? <CheckIcon size={20} /> : null}
+              {state === 'failed' ? <RetryIcon size={18} /> : null}
               {state === 'active' || state === 'pending' ? letter : null}
             </span>
           </li>

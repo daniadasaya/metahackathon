@@ -75,7 +75,7 @@ export function PreviewScreen() {
     <Column>
       <header className="flex items-center gap-3">
         <span className="kk-icon-tile" aria-hidden="true">
-          <StoreIcon size={24} />
+          <StoreIcon size={20} />
         </span>
         <div className="min-w-0 flex-1">
           {storeNamed ? (
@@ -125,7 +125,7 @@ export function PreviewScreen() {
 
       {hidden > 0 ? <p className="mt-4 text-sm text-fg-muted">{t('preview.hidden', { n: hidden })}</p> : null}
 
-      <details className="kk-details kk-card-flat mt-6 px-4" open={!storeNamed}>
+      <details className="kk-details kk-card-flat mt-5 px-4" open={!storeNamed}>
         <summary>{t('preview.sellerTools')}</summary>
         <div className="flex flex-col gap-3 pb-3">
           <div>

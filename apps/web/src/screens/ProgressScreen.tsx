@@ -83,7 +83,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
     return (
       <Column>
         <h1 className="text-2xl">{t('progress.title')}</h1>
-        <div className="mt-6">
+        <div className="mt-5">
           <EmptyState text={t('progress.loadFailed')} icon={<AlertIcon size={24} />}>
             {code !== null ? <p className="text-sm text-danger">{errorText(code)}</p> : null}
             <button type="button" className="kk-btn kk-btn-secondary kk-tactile" onClick={uploadAgain}>
@@ -99,7 +99,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
     return (
       <Column>
         <h1 className="text-2xl">{t('progress.title')}</h1>
-        <div className="mt-6 flex flex-col gap-3" role="status" aria-label={t('common.loading')}>
+        <div className="mt-5 flex flex-col gap-3" role="status" aria-label={t('common.loading')}>
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-5 w-2/3" />
           <Skeleton className="h-5 w-1/2" />
@@ -167,8 +167,8 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
 
           {clean ? (
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-success text-surface">
-                <CheckIcon size={24} />
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success text-surface">
+                <CheckIcon size={20} />
               </span>
               <div className="min-w-0">
                 <p className="font-display text-lg font-bold">
@@ -201,7 +201,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
         </section>
 
         {errors.length > 0 ? (
-          <section className="mt-6" aria-labelledby="errors-title">
+          <section className="mt-5" aria-labelledby="errors-title">
             <h2 id="errors-title" className="text-xl">
               {t('progress.errorsTitle')}
             </h2>
@@ -246,7 +246,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
         ) : null}
 
         {!running && productCount === 0 ? (
-          <div className="mt-6">
+          <div className="mt-5">
             <EmptyState text={t('progress.noProducts')} icon={<PhotoIcon size={24} />}>
               <button type="button" className="kk-btn kk-btn-secondary kk-tactile" onClick={uploadAgain}>
                 {t('progress.uploadAgain')}

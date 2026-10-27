@@ -73,7 +73,7 @@ export function ExportScreen() {
     return (
       <Column>
         <h1 className="text-2xl">{t('export.title')}</h1>
-        <div className="mt-6">
+        <div className="mt-5">
           <EmptyState text={t('export.empty')} icon={<UploadIcon size={24} />}>
             <button
               type="button"

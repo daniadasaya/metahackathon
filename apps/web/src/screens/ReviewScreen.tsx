@@ -73,7 +73,7 @@ export function ReviewScreen() {
     return (
       <Column>
         <h1 className="text-2xl">{t('review.title')}</h1>
-        <div className="mt-6">
+        <div className="mt-5">
           {jobId !== null && job === undefined && !query.isError ? (
             <div className="flex flex-col gap-3" role="status" aria-label={t('common.loading')}>
               <Skeleton className="h-36 w-full" />

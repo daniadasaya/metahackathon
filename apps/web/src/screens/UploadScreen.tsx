@@ -151,7 +151,7 @@ export function UploadScreen() {
 
         <label className="kk-hero kk-card-tap kk-tactile mt-4" data-filled={photos.length > 0}>
           <span className="kk-icon-tile">
-            {photos.length > 0 ? <PlusIcon size={24} /> : <UploadIcon size={24} />}
+            {photos.length > 0 ? <PlusIcon size={20} /> : <UploadIcon size={20} />}
           </span>
           <span className="min-w-0">
             <span className="block font-display text-lg font-bold text-fg">
@@ -172,7 +172,7 @@ export function UploadScreen() {
         </label>
 
         {photos.length > 0 ? (
-          <section className="mt-6" aria-labelledby="photos-title">
+          <section className="mt-5" aria-labelledby="photos-title">
             <div className="flex items-center justify-between gap-2">
               <h2 id="photos-title" className="text-xl">
                 {t('upload.photosHeading')}
@@ -214,7 +214,7 @@ export function UploadScreen() {
           </section>
         ) : null}
 
-        <section className="mt-6" aria-labelledby="samples-title" aria-describedby="samples-hint">
+        <section className="mt-5" aria-labelledby="samples-title" aria-describedby="samples-hint">
           <h2 id="samples-title" className="text-xl">
             {t('samples.title')}
           </h2>
@@ -267,7 +267,7 @@ export function UploadScreen() {
         </details>
 
         <section className="kk-card-flat mt-4 py-1 pr-2 pl-4">
-          <div className="flex min-h-[52px] items-center gap-3">
+          <div className="flex min-h-[44px] items-center gap-3">
             <h2 id="demo-title" className="min-w-0 flex-1 text-base font-bold">
               {t('demo.title')}
             </h2>

@@ -43,15 +43,15 @@ export const ReviewCard = memo(function ReviewCard({ product, suggestion }: Revi
   return (
     <li
       id={`card-${sku}`}
-      className="kk-card kk-review m-0 flex scroll-mt-24 list-none flex-col gap-3 p-3"
+      className="kk-card kk-review m-0 flex scroll-mt-20 list-none flex-col gap-2.5 p-3"
       data-included={product.included}
       data-price-state={priceState}
     >
       <div className="flex gap-3">
-        <ProductPhoto src={product.clean_url} className="h-[88px] w-[88px]" />
+        <ProductPhoto src={product.clean_url} className="h-[72px] w-[72px]" />
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
           <textarea
-            rows={3}
+            rows={2}
             className="kk-input resize-none px-2.5 py-1 font-display text-lg"
             value={product.name}
             aria-label={t('review.nameFor', { sku })}
@@ -67,7 +67,7 @@ export const ReviewCard = memo(function ReviewCard({ product, suggestion }: Revi
           />
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="kk-pill" data-tone={gate === 'pass' ? 'pass' : 'fallback'}>
-              {gate === 'pass' ? <CheckIcon size={16} /> : <LayersIcon size={16} />}
+              {gate === 'pass' ? <CheckIcon size={14} /> : <LayersIcon size={14} />}
               {gate === 'pass' ? t('review.gatePass') : t('review.gateFallback')}
             </span>
             <span className="kk-money text-xs font-bold text-fg-2">{sku}</span>
@@ -105,7 +105,7 @@ export const ReviewCard = memo(function ReviewCard({ product, suggestion }: Revi
             />
             {confirmed ? (
               <span className="kk-disc" role="img" aria-label={t('review.priceConfirmed')}>
-                <CheckIcon size={16} />
+                <CheckIcon size={14} />
               </span>
             ) : null}
           </div>
