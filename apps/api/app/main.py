@@ -362,6 +362,62 @@ async def get_job(job_id: str) -> JobState | JSONResponse:
         )
 
 
+# --- retry / toggle cleanup --------------------------------------------------
+
+def _safe_job_and_sku(job_id: str, sku: str) -> bool:
+    if not exporter._safe_component(job_id):
+        return False
+    if not exporter._safe_component(sku):
+        return False
+    return True
+
+
+@app.post(
+    "/api/jobs/{job_id}/products/{sku}/retry-cleanup",
+    response_model=JobState,
+    responses={
+        400: {"model": ErrorResponse},
+        404: {"model": ErrorResponse},
+    },
+)
+async def retry_cleanup_job(job_id: str, sku: str) -> JobState | JSONResponse:
+    if not _safe_job_and_sku(job_id, sku):
+        return _error(400, ErrorCode.INVALID_REQUEST, f"Invalid path component.")
+    try:
+        state = await pipeline.retry_cleanup_product(job_id, sku)
+    except FileNotFoundError:
+        return _error(404, ErrorCode.NOT_FOUND, f"No job record for {job_id!r}.")
+    except KeyError:
+        return _error(404, ErrorCode.NOT_FOUND, f"No product {sku!r} in job {job_id!r}.")
+    except Exception as exc:
+        logger.error("retry-cleanup failed for %r/%r: %s", job_id, sku, exc)
+        return _error(500, ErrorCode.INTERNAL_ERROR, "Retry cleanup failed.")
+    return state
+
+
+@app.post(
+    "/api/jobs/{job_id}/products/{sku}/toggle-cleanup",
+    response_model=JobState,
+    responses={
+        400: {"model": ErrorResponse},
+        404: {"model": ErrorResponse},
+    },
+)
+async def toggle_cleanup_job(job_id: str, sku: str) -> JobState | JSONResponse:
+    if not _safe_job_and_sku(job_id, sku):
+        return _error(400, ErrorCode.INVALID_REQUEST, f"Invalid path component.")
+    try:
+        state = await pipeline.toggle_cleanup_product(job_id, sku)
+    except FileNotFoundError:
+        return _error(404, ErrorCode.NOT_FOUND, f"No job record for {job_id!r}.")
+    except KeyError:
+        return _error(404, ErrorCode.NOT_FOUND, f"No product {sku!r} in job {job_id!r}.")
+    except Exception as exc:
+        logger.error("toggle-cleanup failed for %r/%r: %s", job_id, sku, exc)
+        return _error(500, ErrorCode.INTERNAL_ERROR, "Toggle cleanup failed.")
+    return state
+
+
 # --- export + public product routes -----------------------------------------
 
 import re as _re
@@ -452,7 +508,9 @@ async def get_product_image(job_id: str, sku: str) -> Response:
     try:
         data = exporter.resolve_image_bytes(job_id, sku)
     except FileNotFoundError:
-        return _error(404, ErrorCode.NOT_FOUND, f"No image for {sku!r}.")
+        # Fall back to a deterministic placeholder so a missing on-disk
+        # artefact never surfaces as a broken image in Review.
+        data = exporter._placeholder_jpg(sku, job_id, crop=False)
     except Exception as exc:
         logger.error("Image resolve failed for %r/%r: %s", job_id, sku, exc)
         return _error(500, ErrorCode.INTERNAL_ERROR, "Image unavailable.")
