@@ -44,6 +44,8 @@ export const en = {
     ctaBusy: 'Starting…',
     ctaNeed: 'Pick photos or a sample pack first.',
     samplePhotosMissing: 'The sample pack photos are not included in this build yet.',
+    backendUnavailable: 'The processing server is not available in this build. Nothing was uploaded.',
+    networkFailed: 'Could not reach the server. Check your connection and try again.',
     resumeTitle: 'You have an earlier run',
     resumeHint: 'Pick up where you left off.',
     resumeOpen: 'Continue',
@@ -63,7 +65,7 @@ export const en = {
     help: 'Sample packs show a saved result instantly, no internet needed. Your own uploads are still processed live.',
   },
   notice: {
-    mock: 'Demo mode: backend jobs are not live yet — simulated result',
+    mock: 'Demo Safe Mode: sample result, no server used',
   },
   progress: {
     title: 'Processing your catalog',

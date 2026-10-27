@@ -5,7 +5,7 @@ import { Switch } from '../components/Switch';
 import { StickyBar } from '../components/StickyBar';
 import { Toast } from '../components/Toast';
 import { CheckIcon, CloseIcon, PhotoIcon, PlusIcon } from '../components/Icons';
-import { ApiError, createJob, fetchSamplePack, type SamplePack } from '../lib/api';
+import { ApiError, BackendUnavailableError, createJob, fetchSamplePack, type SamplePack } from '../lib/api';
 import { useT, type MessageKey } from '../lib/locale';
 import {
   getDemoSafe,
@@ -59,6 +59,7 @@ export function UploadScreen() {
   const [pack, setPack] = useState<SamplePack | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [backendMissing, setBackendMissing] = useState(false);
   const nextId = useRef(1);
   const dismissToast = useCallback(() => setToast(null), []);
 
@@ -83,25 +84,34 @@ export function UploadScreen() {
   async function start() {
     if (!canStart) return;
     setBusy(true);
+    setBackendMissing(false);
     try {
       const live = pack !== null && !getDemoSafe();
       const sample = live ? await fetchSamplePack(pack) : null;
-      const result = await createJob({
+      const jobId = await createJob({
         photos: sample === null ? photos.map((photo) => photo.file) : sample.photos,
         photoCaptions: sample === null ? photos.map((photo) => photo.caption) : sample.photos.map(() => ''),
         generalCaption: sample === null ? general : sample.captions,
         demoSafe: getDemoSafe(),
         samplePack: pack,
       });
-      setStoredJobId(result.jobId);
-      await navigate({ to: '/jobs/$jobId', params: { jobId: result.jobId } });
+      setStoredJobId(jobId);
+      await navigate({ to: '/jobs/$jobId', params: { jobId } });
     } catch (error) {
+      if (error instanceof BackendUnavailableError) {
+        setBackendMissing(true);
+        setBusy(false);
+        return;
+      }
       const code = error instanceof ApiError ? error.code : null;
       const missingSample = pack !== null && error instanceof ApiError && error.status === 404;
+      const offline = error instanceof ApiError && error.status === 0;
       setToast(
         missingSample
           ? t('upload.samplePhotosMissing')
-          : (errorText(code ?? 'internal_error') ?? t('errors.internal_error')),
+          : offline
+            ? t('upload.networkFailed')
+            : (errorText(code ?? 'internal_error') ?? t('errors.internal_error')),
       );
       setBusy(false);
     }
@@ -250,6 +260,11 @@ export function UploadScreen() {
     </div>
 
     <StickyBar>
+      {backendMissing ? (
+        <p className="kk-card-flat px-3 py-2 text-sm text-fg-2" role="alert">
+          {t('upload.backendUnavailable')}
+        </p>
+      ) : null}
       {photos.length > 0 ? (
         <p className="text-center text-sm font-bold" aria-live="polite">
           {t('upload.photosCount', { n: photos.length })}

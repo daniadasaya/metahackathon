@@ -59,7 +59,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
     void navigate({ to: '/' });
   }
 
-  if (query.isError) {
+  if (query.isError && job === undefined) {
     const code = query.error.code;
     return (
       <Column>

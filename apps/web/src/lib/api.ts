@@ -3,9 +3,9 @@
  * origin. The server's `message` is developer English and is never read here beyond parsing the
  * envelope; only `code` leaves this module.
  *
- * Mock job mode (`mockJob.ts`) sits strictly behind two conditions: the real route answered
- * 404/405 because it does not exist yet (live probe), or Demo Safe Mode is on and a sample pack was
- * chosen (product invariant: zero API calls). A real upload with a live route never touches it.
+ * `mockJob.ts` is the Demo Safe Mode placeholder (product invariant: zero API calls) and nothing else:
+ * only a `mock-*` job id, which only a Demo Safe sample pack produces, ever reaches it. A real
+ * upload never does; when the backend is absent `createJob` says so instead of simulating a job.
  */
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
@@ -46,9 +46,15 @@ async function toApiError(response: Response): Promise<ApiError> {
   return new ApiError(response.status, code);
 }
 
-/** The route is not implemented on this server (stage owns it), as opposed to a real refusal. */
-function isMissingRoute(error: ApiError): boolean {
-  return error.status === 404 || error.status === 405;
+/**
+ * `POST /api/jobs` answered 404/405: there is no API behind this origin (e.g. a static-only
+ * preview build). Distinct from a 400 validation refusal, which is a real `ApiError` with a code.
+ */
+export class BackendUnavailableError extends Error {
+  constructor() {
+    super('backend_unavailable');
+    this.name = 'BackendUnavailableError';
+  }
 }
 
 export interface CreateJobInput {
@@ -58,12 +64,6 @@ export interface CreateJobInput {
   generalCaption: string;
   demoSafe: boolean;
   samplePack: SamplePack | null;
-}
-
-export interface CreateJobResult {
-  jobId: string;
-  /** True when the job is client-side simulated rather than created on the server. */
-  simulated: boolean;
 }
 
 /** Photos per bundled sample pack. */
@@ -100,9 +100,10 @@ export async function fetchSamplePack(pack: SamplePack): Promise<SamplePackFiles
   return { photos, captions };
 }
 
-export async function createJob(input: CreateJobInput): Promise<CreateJobResult> {
+/** Creates a job and returns its id. Demo Safe Mode with a sample pack makes no request at all. */
+export async function createJob(input: CreateJobInput): Promise<string> {
   if (input.demoSafe && input.samplePack !== null) {
-    return { jobId: makeMockJobId(SAMPLE_PACK_PHOTOS), simulated: true };
+    return makeMockJobId(SAMPLE_PACK_PHOTOS);
   }
 
   const form = new FormData();
@@ -113,17 +114,18 @@ export async function createJob(input: CreateJobInput): Promise<CreateJobResult>
   );
   form.append('demo_safe', String(input.demoSafe));
 
-  const response = await fetch('/api/jobs', { method: 'POST', body: form });
+  let response: Response;
+  try {
+    response = await fetch('/api/jobs', { method: 'POST', body: form });
+  } catch {
+    throw new ApiError(0, null);
+  }
   if (response.ok) {
     const state = (await response.json()) as JobState;
-    return { jobId: state.job_id, simulated: false };
+    return state.job_id;
   }
-
-  const error = await toApiError(response);
-  if (isMissingRoute(error)) {
-    return { jobId: makeMockJobId(Math.max(1, input.photos.length)), simulated: true };
-  }
-  throw error;
+  if (response.status === 404 || response.status === 405) throw new BackendUnavailableError();
+  throw await toApiError(response);
 }
 
 export async function getJob(jobId: string): Promise<JobState> {
@@ -131,7 +133,12 @@ export async function getJob(jobId: string): Promise<JobState> {
     const mock = getMockJob(jobId);
     if (mock !== null) return mock;
   }
-  const response = await fetch(`/api/jobs/${encodeURIComponent(jobId)}`);
+  let response: Response;
+  try {
+    response = await fetch(`/api/jobs/${encodeURIComponent(jobId)}`);
+  } catch {
+    throw new ApiError(0, null);
+  }
   if (!response.ok) throw await toApiError(response);
   return (await response.json()) as JobState;
 }
@@ -141,10 +148,15 @@ export async function retryCleanup(jobId: string, sku: string): Promise<void> {
     await retryMockCleanup(jobId, sku);
     return;
   }
-  const response = await fetch(
-    `/api/jobs/${encodeURIComponent(jobId)}/products/${encodeURIComponent(sku)}/retry-cleanup`,
-    { method: 'POST' },
-  );
+  let response: Response;
+  try {
+    response = await fetch(
+      `/api/jobs/${encodeURIComponent(jobId)}/products/${encodeURIComponent(sku)}/retry-cleanup`,
+      { method: 'POST' },
+    );
+  } catch {
+    throw new ApiError(0, null);
+  }
   if (!response.ok) throw await toApiError(response);
 }
 
@@ -189,6 +201,6 @@ export function useJob(jobId: string | null): UseQueryResult<JobState, ApiError>
     queryFn: () => getJob(jobId ?? ''),
     enabled: jobId !== null,
     refetchInterval: (query) => (isJobActive(query.state.data) ? POLL_INTERVAL_MS : false),
-    retry: (failureCount, error) => error.status >= 500 && failureCount < 2,
+    retry: (failureCount, error) => (error.status === 0 || error.status >= 500) && failureCount < 2,
   });
 }

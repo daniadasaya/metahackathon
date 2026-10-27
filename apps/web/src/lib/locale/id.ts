@@ -45,6 +45,8 @@ export const id = {
     ctaBusy: 'Memulai…',
     ctaNeed: 'Pilih foto atau paket contoh dulu.',
     samplePhotosMissing: 'Foto paket contoh belum tersedia di build ini.',
+    backendUnavailable: 'Server pemrosesan tidak tersedia di build ini. Tidak ada yang terkirim.',
+    networkFailed: 'Tidak bisa menghubungi server. Cek koneksi lalu coba lagi.',
     resumeTitle: 'Ada proses sebelumnya',
     resumeHint: 'Lanjutkan tanpa mengulang dari awal.',
     resumeOpen: 'Lanjutkan',
@@ -64,7 +66,7 @@ export const id = {
     help: 'Paket contoh langsung tampil dari hasil tersimpan, tanpa internet. Foto unggahanmu tetap diproses langsung.',
   },
   notice: {
-    mock: 'Mode demo: backend job belum aktif — hasil simulasi',
+    mock: 'Mode Demo Aman: hasil contoh, tanpa server',
   },
   progress: {
     title: 'Memproses katalog',

@@ -1,10 +1,10 @@
 /**
- * Mock job mode — a client-side simulated job so the whole Upload → Progress flow is drivable
- * before `POST /api/jobs` exists (live probe), and so Demo Safe Mode sample packs make zero API calls.
+ * Demo Safe Mode placeholder — a client-side job so a sample pack runs with zero API calls
+ * . It stands in for the golden bundle until the pipeline ships the real static assets.
  *
- * Strictly gated: `api.ts` reaches for this only when the real route answers 404/405, or when
- * Demo Safe Mode is on and a sample pack was picked. Once the real route exists the real path
- * takes over with no change here.
+ * Strictly gated: `api.ts` reaches for this only when Demo Safe Mode is on and a sample pack was
+ * picked. A real upload never produces a `mock-*` id, and a missing backend is reported, not
+ * simulated.
  *
  * The job is a pure function of (job id, now): the id encodes the start time and photo count, so
  * a page reload resumes the same simulated run instead of losing it. The only memory is the set
