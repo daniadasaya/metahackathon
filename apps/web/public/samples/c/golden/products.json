@@ -1,6 +1,6 @@
 {
-  "source": "mock",
-  "generated_at": "2026-10-26T04:01:51.179Z",
+  "source": "live",
+  "generated_at": "2026-10-27T22:52:39.346Z",
   "photos": 2,
   "seller": {
     "store_name": "Toko Contoh",
@@ -10,38 +10,38 @@
     {
       "sku": "KK-0001",
       "job_id": "golden-c",
-      "source_photo_index": 0,
-      "concept": "smartphone",
+      "source_photo_index": 1,
+      "concept": "seaweed snack bag",
       "bbox": [
-        60,
-        40,
-        280,
-        500
+        1099,
+        297,
+        1571,
+        755
       ],
       "crop_url": "/samples/c/golden/images/KK-0001-crop.jpg",
       "clean_url": "/samples/c/golden/images/KK-0001.jpg",
-      "cleanup_method": "composite",
+      "cleanup_method": "muse-image",
       "fidelity": {
         "same_product": true,
-        "color_match": false,
+        "color_match": true,
         "logo_text_match": true,
-        "reason": "print text intact but fabric colour shifted from black toward navy"
+        "reason": "Single Taro Net seaweed packet is intact with matching green-yellow colors and legible branding."
       },
-      "name": "Cokelat Susu Batang 60g",
-      "description_id": "Cokelat susu batang 60 gram, manis lembut meleleh di mulut. Kemasan foil utuh belum dibuka.",
-      "description_en": "60-gram milk chocolate bar, sweet and smooth. Unopened intact foil wrapping.",
+      "name": "Taro Net Seaweed Snack Rasa Rumput Laut",
+      "description_id": "Taro Net Seaweed Snack rasa Rumput Laut Asli yang renyah dan gurih. Bentuk net yang unik, teksturnya ringan dan kriuk, bikin nagih untuk camilan sehari-hari, bekal anak, teman nongkrong, atau stok warung. Stok baru minggu ini, bisa beli satuan atau langsung satu kardus untuk kebutuhan jualan. Yuk borong sekarang!",
+      "description_en": "Taro Net Seaweed Snack - crispy net-shaped snack with savory real seaweed flavor. Crunchy, tasty and addictive, perfect for daily snacking, lunch boxes, gatherings or warung stock. Fresh stock this week, available per pcs or per carton. Order now!",
       "category": "Makanan & Minuman",
-      "brand": "SilverQueen",
+      "brand": "Taro",
       "condition": "new",
       "attributes": {
         "color": null,
-        "size": "60g",
-        "variant": "Susu"
+        "size": null,
+        "variant": "Seaweed"
       },
       "price_hint_idr": null,
-      "price_suggestion_idr": 22000,
+      "price_suggestion_idr": 8700,
       "confidence": "high",
-      "price_idr": 22000,
+      "price_idr": null,
       "price_via_chat": false,
       "availability": "in stock",
       "included": true
@@ -49,80 +49,704 @@
     {
       "sku": "KK-0002",
       "job_id": "golden-c",
-      "source_photo_index": 0,
-      "concept": "phone case",
+      "source_photo_index": 1,
+      "concept": "foreground milk carton",
       "bbox": [
-        30,
-        50,
-        210,
-        330
+        870,
+        421,
+        1163,
+        787
       ],
       "crop_url": "/samples/c/golden/images/KK-0002-crop.jpg",
       "clean_url": "/samples/c/golden/images/KK-0002.jpg",
-      "cleanup_method": "muse-image",
+      "cleanup_method": "composite",
       "fidelity": {
         "same_product": true,
         "color_match": true,
-        "logo_text_match": true,
-        "reason": "Same t-shirt with matching colour and print; only wrinkles smoothed."
+        "logo_text_match": false,
+        "reason": "Small body text and gold seal text are AI-garbled and not identical to reference."
       },
-      "name": "Samsung Galaxy A54 8/128",
-      "description_id": "Ponsel bekas kondisi mulus, layar jernih tanpa gores dan baterai masih awet. Dijual lengkap dengan kardus dan kabel bawaan.",
-      "description_en": "Used phone in smooth condition with a clear scratch-free screen and a battery that still lasts. Sold with the original box and cable.",
-      "category": "Handphone & Tablet",
-      "brand": "Samsung",
-      "condition": "used",
+      "name": "Indomilk Susu UHT Strawberry Manis Segar",
+      "description_id": "Susu UHT Indomilk rasa Strawberry yang manis, creamy dan menyegarkan, dibuat dari susu sapi segar dengan proses UHT modern. Kaya kalsium, fosfor dan vitamin untuk mendukung aktivitas harian anak dan keluarga. Kemasan kotak praktis siap minum, cocok untuk bekal sekolah, camilan di rumah, atau stok warung. Stok baru minggu ini, bisa beli satuan atau langsung satu kardus untuk kebutuhan jualan dan acara!",
+      "description_en": "Sweet, creamy and refreshing Indomilk Strawberry UHT milk made from fresh cow's milk with modern UHT processing. Enriched with calcium, phosphorus and vitamins to support daily activities for kids and family. Practical ready-to-drink carton, perfect for school lunchboxes, home snacks, or warung stock. Fresh stock this week, available per piece or by the full carton!",
+      "category": "Makanan & Minuman",
+      "brand": "Indomilk",
+      "condition": "new",
       "attributes": {
-        "color": "hitam",
+        "color": null,
         "size": null,
-        "variant": "8/128"
+        "variant": "Strawberry"
       },
-      "price_hint_idr": 4500000,
-      "price_suggestion_idr": null,
+      "price_hint_idr": null,
+      "price_suggestion_idr": 5000,
       "confidence": "high",
-      "price_idr": 4500000,
+      "price_idr": null,
       "price_via_chat": false,
       "availability": "in stock",
-      "included": true
+      "included": false
     },
     {
       "sku": "KK-0003",
       "job_id": "golden-c",
-      "source_photo_index": 0,
-      "concept": "smartphone",
+      "source_photo_index": 1,
+      "concept": "foreground milk carton",
       "bbox": [
-        40,
-        60,
-        300,
-        440
+        607,
+        429,
+        906,
+        857
       ],
       "crop_url": "/samples/c/golden/images/KK-0003-crop.jpg",
       "clean_url": "/samples/c/golden/images/KK-0003.jpg",
       "cleanup_method": "composite",
       "fidelity": {
-        "same_product": false,
-        "color_match": false,
+        "same_product": true,
+        "color_match": true,
         "logo_text_match": false,
-        "reason": "logo text redrawn; colour shifted toward blue"
+        "reason": "Small printed text is garbled and 200ml is misrendered as 2010ml."
       },
-      "name": "iPhone 11 64GB",
-      "description_id": "Ponsel bekas kondisi baik, tombol dan kamera berfungsi normal. Baterai 82 persen, cocok untuk pemakaian sehari-hari.",
-      "description_en": "Used phone in good condition with working buttons and camera. Battery at 82 percent, suitable for daily use.",
-      "category": "Handphone & Tablet",
-      "brand": "Apple",
-      "condition": "used",
+      "name": "Ultra Milk Susu UHT Coklat 200ml",
+      "description_id": "Ultra Milk Susu UHT Coklat 200ml - susu coklat siap minum yang manis, creamy dan nikmat untuk dinikmati setiap hari. Cocok untuk bekal anak, teman camilan, atau stok minuman di rumah dan warung. Kemasan 200ml yang praktis, nikmat disajikan dingin. Stok baru minggu ini, bisa beli satuan atau langsung satu kardus isi 24. Yuk borong sekarang, pesan cepat via chat!",
+      "description_en": "Ultra Milk Chocolate UHT Milk 200ml - delicious, creamy ready-to-drink chocolate milk for everyday enjoyment. Perfect for kids lunchboxes, snack time, or home and shop stock. Handy 200ml pack, great served chilled. Fresh stock this week, available per piece or by full carton of 24. Order now via chat!",
+      "category": "Makanan & Minuman",
+      "brand": "Ultra Milk",
+      "condition": "new",
       "attributes": {
-        "color": "putih",
-        "size": null,
-        "variant": "64GB"
+        "color": null,
+        "size": "200ml",
+        "variant": "Coklat"
       },
       "price_hint_idr": null,
-      "price_suggestion_idr": 5200000,
-      "confidence": "medium",
-      "price_idr": 5200000,
+      "price_suggestion_idr": 5250,
+      "confidence": "high",
+      "price_idr": null,
       "price_via_chat": false,
       "availability": "in stock",
       "included": true
+    },
+    {
+      "sku": "KK-0004",
+      "job_id": "golden-c",
+      "source_photo_index": 1,
+      "concept": "seaweed snack bag",
+      "bbox": [
+        1494,
+        442,
+        1871,
+        855
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0004-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0004.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": false,
+        "color_match": false,
+        "logo_text_match": false,
+        "reason": "Front snack bag cuts a large wedge from the Chitato bag."
+      },
+      "name": "Snack Rumput Laut Renyah Gurih - Stok Baru",
+      "description_id": "Snack rumput laut renyah dan gurih dengan rasa umami yang nagih, cocok untuk teman santai di rumah, bekal, atau stok camilan harian. Teksturnya ringan dan renyah, enak dinikmati kapan saja. Bisa beli satuan yang praktis atau langsung satu kardus untuk stok keluarga dan warung. Stok baru minggu ini, yuk borong sekarang!",
+      "description_en": "Crispy and savory seaweed snack with tasty umami flavor that keeps you coming back for more. Perfect for relaxing at home, lunchbox extra, or daily snack stock. Available per piece for practical snacking or by the carton for family stock and stall needs. Fresh new stock this week — order now before it runs out!",
+      "category": "Makanan & Minuman",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0005",
+      "job_id": "golden-c",
+      "source_photo_index": 1,
+      "concept": "seaweed snack bag",
+      "bbox": [
+        1588,
+        615,
+        1940,
+        968
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0005-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0005.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": false,
+        "color_match": false,
+        "logo_text_match": false,
+        "reason": "Large wedge bite missing where front bar blocked the bag."
+      },
+      "name": "Snack Seaweed Renyah Gurih - Stok Baru Warung",
+      "description_id": "Snack rumput laut renyah dengan rasa gurih yang nagih, cocok untuk ngemil setiap hari! Stok baru minggu ini, dijamin fresh dan nikmat. Bisa dibeli satuan untuk camilan harian atau satu kardus untuk stok warung, bekal, dan acara kumpul. Praktis dibawa ke mana saja, renyahnya disukai anak-anak hingga dewasa.",
+      "description_en": "Crispy seaweed snack with a savory, addictive taste that is perfect for daily snacking! Fresh new stock this week. Available per piece for personal enjoyment or by the carton for warung stock, lunch boxes, and gatherings. Light, crunchy, and practical to carry anywhere, ready to enjoy anytime.",
+      "category": "Makanan & Minuman",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0006",
+      "job_id": "golden-c",
+      "source_photo_index": 0,
+      "concept": "snack bag",
+      "bbox": [
+        1449,
+        690,
+        1682,
+        1030
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0006-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0006.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": false,
+        "color_match": false,
+        "logo_text_match": false,
+        "reason": "Right cut-out has large diagonal wedge bite removing over 12% of bag."
+      },
+      "name": "Keripik Kentang Renyah Gurih - Stok Baru, Bisa Satuan atau Sekardus",
+      "description_id": "Camilan gurih favorit untuk segala suasana! Keripik kentang renyah dengan rasa gurih yang bikin nagih, cocok untuk teman santai, bekal, atau stok camilan di rumah dan warung. Stok baru minggu ini, masih fresh dan tersegel rapi. Bisa dibeli satuan untuk ngemil atau satu kardus untuk kebutuhan jualan dan acara. Yuk amankan stoknya sekarang!",
+      "description_en": "Your favorite crispy savory snack for any moment! Crunchy potato chips with a delicious savory taste that keeps you coming back, perfect for relaxing, lunch boxes, or stocking up at home and in your shop. Fresh new stock this week, sealed for maximum freshness. Available per piece for everyday snacking or by the carton for resale, events and stock needs. Order now while stock lasts!",
+      "category": "Makanan & Minuman",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "high",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0007",
+      "job_id": "golden-c",
+      "source_photo_index": 1,
+      "concept": "foreground wafer pack",
+      "bbox": [
+        978,
+        702,
+        1507,
+        1018
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0007-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0007.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": false,
+        "reason": "Main Roma Kelapa branding matches but smaller yellow and white text is garbled and illegible."
+      },
+      "name": "Roma Kelapa Biskuit Kelapa Renyah - Stok Baru, Bisa Satuan atau Kardus",
+      "description_id": "Roma Kelapa Biskuit Kelapa Renyah - biskuit emas yang renyah dibuat dari kelapa asli pilihan, gurih dan harum, sumber vitamin dan kalsium. Paling pas jadi teman teh, kopi, dan susu di sore hari, juga camilan favorit seluruh keluarga di rumah. Stok baru minggu ini, dijamin fresh. Bisa beli satuan untuk ngemil atau langsung satu kardus untuk stok warung dan jualan lagi. Yuk amankan stoknya sekarang!",
+      "description_en": "Roma Kelapa Coconut Biscuit - crispy, golden biscuits made with real coconut for a savory, fragrant crunch. A perfect match for tea, coffee, and milk, and a favorite snack for the whole family at home or at the stall. Made with selected coconut and a source of vitamins and calcium. Fresh stock this week, available per pack or by the carton for resellers and snack stock.",
+      "category": "Makanan & Minuman",
+      "brand": "Roma",
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": "Kelapa"
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": 10000,
+      "confidence": "high",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0008",
+      "job_id": "golden-c",
+      "source_photo_index": 0,
+      "concept": "snack bag",
+      "bbox": [
+        1186,
+        723,
+        1467,
+        1071
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0008-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0008.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": false,
+        "reason": "Bag shape and colors match but flavor text and fine print are garbled and not identical."
+      },
+      "name": "Keripik Chips Kentang Renyah - Stok Baru",
+      "description_id": "Camilan gurih favorit untuk di rumah dan stok warung! Keripik kentang Chips yang renyah dengan rasa gurih yang bikin nagih, cocok untuk teman santai, bekal anak, atau suguhan tamu. Dikemas praktis dan tersegel higienis, bisa dibeli satuan untuk ngemil atau langsung satu kardus untuk kebutuhan jualan. Stok baru minggu ini, yuk amankan sekarang! Order cepat via chat, siap kirim dan siap jual lagi.",
+      "description_en": "Your favorite savory snack, ready to enjoy and ready to resell! These crispy Chips potato crisps offer a delicious savory crunch that everyone loves, perfect for relaxing at home, kids' snacks, or serving guests. Practically packed and hygienically sealed for freshness, available for single purchase or by the carton for shop stock. Fresh new stock, order quickly via chat!",
+      "category": "Makanan & Minuman",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "high",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0009",
+      "job_id": "golden-c",
+      "source_photo_index": 1,
+      "concept": "foreground wafer pack",
+      "bbox": [
+        1243,
+        771,
+        1757,
+        1122
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0009-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0009.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": false,
+        "reason": "Main beng-beng logo matches but small wrapper text is garbled and illegible."
+      },
+      "name": "Beng-Beng Wafer Caramel Crispy Cokelat - Camilan Renyah",
+      "description_id": "Beng-Beng Wafer Caramel Crispy balut cokelat susu yang renyah dan nagih! Perpaduan wafer renyah, krim karamel manis, crispy renyah dan balutan cokelat susu yang nikmat. Praktis untuk bekal, teman ngopi, isian toples atau stok jualan warung. Stok baru minggu ini, dijamin fresh! Bisa beli satuan untuk ngemil atau langsung satu kardus untuk stok warung dan acara. Yuk order sekarang!",
+      "description_en": "Beng-Beng Caramel Crispy Chocolate Wafer - crunchy wafer layered with sweet caramel, crispy rice puffs and coated in smooth milk chocolate. Perfect for lunch boxes, coffee breaks, gatherings or resale stock. Fresh new stock this week! Available per piece for snacking or by full box for shops and events. Order now while stock lasts!",
+      "category": "Makanan & Minuman",
+      "brand": "beng-beng",
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": 2500,
+      "confidence": "high",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0010",
+      "job_id": "golden-c",
+      "source_photo_index": 1,
+      "concept": "seaweed snack bag",
+      "bbox": [
+        630,
+        860,
+        982,
+        1307
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0010-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0010.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": false,
+        "color_match": false,
+        "logo_text_match": false,
+        "reason": "Overlapping yellow bag cuts a large wedge bite over 12% from the side."
+      },
+      "name": "Snack Rumput Laut Renyah Gurih - Stok Baru",
+      "description_id": "Snack rumput laut renyah dengan rasa gurih yang bikin nagih, cocok untuk teman ngemil kapan saja! Stok baru minggu ini, bisa beli satuan untuk camilan harian atau sekardus untuk stok rumah, warung, dan acara kumpul. Teksturnya renyah, ringan, dan praktis dinikmati di rumah, di sekolah, maupun saat bepergian. Yuk order sekarang sebelum kehabisan!",
+      "description_en": "Crispy seaweed snack with a savory, addictive taste that is perfect for everyday munching! Fresh new stock this week, available per piece for daily snacks or by the carton for family stock, small shops, and gatherings. Light, crunchy, and practical to enjoy at home, at school, or on the go. Order now while stock lasts!",
+      "category": "Makanan & Minuman",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0011",
+      "job_id": "golden-c",
+      "source_photo_index": 1,
+      "concept": "seaweed snack bag",
+      "bbox": [
+        759,
+        873,
+        1237,
+        1354
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0011-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0011.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": false,
+        "color_match": false,
+        "logo_text_match": false,
+        "reason": "Overlapping product cuts a large wedge bite out of the Nabati pack."
+      },
+      "name": "Snack Rumput Laut Renyah Gurih - Bisa Satuan atau Sekardus",
+      "description_id": "Snack rumput laut renyah dengan rasa gurih yang bikin nagih! Stok baru minggu ini, tersegel dan siap dinikmati kapan saja. Bisa dibeli satuan untuk camilan harian atau satu kardus untuk stok warung, bekal, dan kumpul keluarga. Renyah, ringan, dan praktis dibawa ke mana saja. Yuk borong sekarang sebelum kehabisan!",
+      "description_en": "Crispy savory seaweed snack with a light crunch and addictive taste! Fresh stock this week, sealed and ready to enjoy anytime. Available per piece for daily snacking or by the carton for stalls, lunch boxes, and family gatherings. Practical, delicious, and perfect to share. Order now while stock lasts!",
+      "category": "Makanan & Minuman",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0012",
+      "job_id": "golden-c",
+      "source_photo_index": 1,
+      "concept": "seaweed snack bag",
+      "bbox": [
+        1697,
+        901,
+        1975,
+        1366
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0012-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0012.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Single Garuda snack bag matches reference in type, white-red-blue colors, and legible branding."
+      },
+      "name": "Snack Rumput Laut Renyah Gurih - Stok Baru Warung",
+      "description_id": "Snack Rumput Laut Renyah Gurih yang bikin nagih! Tekstur crispy dengan rasa gurih umami, cocok untuk teman ngemil di rumah, bekal sekolah, camilan kantor, atau stok jualan warung. Stok baru minggu ini, masih fresh dan tersegel rapi. Bisa beli satuan untuk coba-coba atau langsung satu kardus untuk kebutuhan keluarga dan jualan lagi. Yuk order sekarang selagi ready!",
+      "description_en": "Crunchy, savory seaweed snack that is totally addictive! Crispy texture with delicious umami flavor, perfect for daily snacking at home, school lunch, office treats, or to complete your stall display. Fresh new stock this week, hygienically sealed. Available per piece or by full carton for family stock and resale. Order now while stock lasts!",
+      "category": "Makanan & Minuman",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0013",
+      "job_id": "golden-c",
+      "source_photo_index": 0,
+      "concept": "snack bag",
+      "bbox": [
+        862,
+        927,
+        1178,
+        1118
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0013-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0013.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Studio image preserves single red snack pack with matching color and label layout."
+      },
+      "name": "Snack Keripik Renyah Kemasan - Stok Baru Warung",
+      "description_id": "Camilan keripik renyah favorit untuk stok warung dan teman ngemil di rumah! Stok baru minggu ini, kemasan tersegel, renyah dan siap jual. Bisa beli satuan untuk coba-coba atau langsung satu kardus untuk kulakan warung. Stok laris, amankan sekarang sebelum kehabisan!",
+      "description_en": "Crispy savory snack pack, perfect for restocking your small shop or for everyday snacking at home! Fresh new stock this week, sealed and ready to enjoy. Available for single purchase or by the full carton for reselling. Grab yours now while stock lasts!",
+      "category": "Makanan & Minuman",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0014",
+      "job_id": "golden-c",
+      "source_photo_index": 0,
+      "concept": "foreground wafer packet",
+      "bbox": [
+        1564,
+        943,
+        1903,
+        1236
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0014-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0014.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Single silver foil packet with barcode and blue label preserved with matching colors and layout."
+      },
+      "name": "Wafer Camilan Renyah Stok Baru - Bisa Satuan atau Satu Kardus",
+      "description_id": "Camilan wafer renyah favorit untuk warung dan stok camilan di rumah! Rasa manis gurih dengan tekstur renyah yang bikin nagih, cocok untuk teman ngopi atau ngeteh, bekal anak, dan isian toples. Stok baru minggu ini, masih fresh dan tersegel rapi. Bisa dibeli satuan untuk coba-coba atau langsung satu kardus untuk stok jualan biar lebih hemat dan praktis. Yuk amankan stoknya sekarang, cocok untuk dinikmati sendiri atau dijual lagi!",
+      "description_en": "Crispy wafer snack, a favorite for kiosks and home snack time! Sweet savory taste with a light crunchy bite, perfect with coffee or tea, for lunch boxes, or for sharing with family. Fresh new stock this week, neatly sealed and ready to sell. Available per piece or by full carton for stocking up and reselling. Order now for everyday snacking and extra shop supplies!",
+      "category": "Makanan & Minuman",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0015",
+      "job_id": "golden-c",
+      "source_photo_index": 1,
+      "concept": "seaweed snack bag",
+      "bbox": [
+        1340,
+        964,
+        1760,
+        1344
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0015-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0015.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": false,
+        "color_match": false,
+        "logo_text_match": false,
+        "reason": "Overlapping pack cuts a large diagonal wedge from the upper left of the bag."
+      },
+      "name": "Snack Rumput Laut Renyah Gurih Siap Makan",
+      "description_id": "Snack rumput laut renyah dengan rasa gurih yang bikin nagih, cocok untuk ngemil kapan saja. Stok baru minggu ini, dijamin fresh dan siap makan. Bisa dibeli satuan untuk camilan sehari-hari atau satu kardus untuk stok warung, acara, dan jualan lagi. Praktis, ringan, dan nikmat dinikmati di rumah, di kantor, atau saat kumpul bareng.",
+      "description_en": "Crispy seaweed snack with a savory, addictive taste that is perfect for everyday snacking. Fresh new stock this week. Available per piece for daily treats or by the carton for warung stock, events, and reselling. Light, practical, and delicious to enjoy at home, at work, or together with family and friends.",
+      "category": "Makanan & Minuman",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0016",
+      "job_id": "golden-c",
+      "source_photo_index": 0,
+      "concept": "snack bag",
+      "bbox": [
+        1267,
+        1004,
+        1638,
+        1214
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0016-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0016.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": false,
+        "reason": "Brand logo and flavor text are garbled and misspelled versus reference."
+      },
+      "name": "Kripik Chips Renyah Stok Baru - Bisa Satuan atau Sekardus",
+      "description_id": "Kripik chips renyah favorit untuk camilan harian dan stok warung! Tekstur garing dengan rasa gurih yang bikin nagih, cocok untuk teman santai, bekal, atau suguhan kumpul keluarga. Stok baru minggu ini, masih fresh dan tersegel rapi. Bisa beli satuan untuk coba-coba atau langsung satu kardus untuk stok jualan. Yuk amankan stoknya sekarang!",
+      "description_en": "Crispy savory chips perfect for everyday snacking and warung stock! Crunchy texture with a tasty savory flavor that is loved for relaxing at home, lunch boxes, and family gatherings. Fresh new stock this week, neatly sealed. Available for single purchase or by the full carton for resale and stock up. Order now while stock lasts!",
+      "category": "Makanan & Minuman",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0017",
+      "job_id": "golden-c",
+      "source_photo_index": 1,
+      "concept": "foreground wafer pack",
+      "bbox": [
+        1010,
+        1007,
+        1382,
+        1351
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0017-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0017.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": false,
+        "color_match": false,
+        "logo_text_match": false,
+        "reason": "Upper beng-beng pack cuts a wedge out of the Tan packet top."
+      },
+      "name": "Wafer Renyah Lapis Krim Kemasan Satuan - Stok Baru, Bisa Satuan atau Kardus",
+      "description_id": "Wafer renyah berlapis dengan isian krim manis yang lumer di mulut. Cocok untuk camilan sehari-hari, bekal anak, teman kumpul, atau stok warung. Stok baru minggu ini, segar dan siap jual. Bisa beli satuan untuk coba-coba atau langsung satu kardus untuk stok rumah dan jualan. Yuk borong sekarang!",
+      "description_en": "Crispy layered wafer with a sweet, creamy filling that melts in your mouth. Perfect for everyday snacking, kids' lunch boxes, gatherings, or restocking your shop. Fresh new stock this week. Available as a single pack or by the carton for family stock and resale. Order now while stock lasts!",
+      "category": "Makanan & Minuman",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0018",
+      "job_id": "golden-c",
+      "source_photo_index": 0,
+      "concept": "foreground wafer packet",
+      "bbox": [
+        1045,
+        1227,
+        1419,
+        1499
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0018-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0018.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Studio image shows the same single brown Koomuak packet with matching colors and branding."
+      },
+      "name": "Wafer Cokelat Koomuk Renyah - Camilan Manis Stok Baru",
+      "description_id": "Wafer cokelat renyah dengan lapisan krim manis dan tekstur garing, cocok untuk camilan sehari-hari, bekal anak, atau teman minum teh dan kopi. Stok baru minggu ini, tersegel rapi dan terjamin kesegarannya. Bisa dibeli satuan untuk coba-coba atau langsung satu kardus untuk stok warung dan keluarga. Yuk order sekarang, siap dikirim cepat!",
+      "description_en": "Crispy chocolate wafer with sweet creamy layers and a crunchy bite, perfect for everyday snacking, lunch boxes, or as a companion to tea and coffee. Fresh new weekly stock, neatly sealed for freshness. Available for single purchase or by the carton for family stock and small shops. Order now while stock lasts!",
+      "category": "Makanan & Minuman",
+      "brand": "Koomuk",
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": 3000,
+      "confidence": "high",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0019",
+      "job_id": "golden-c",
+      "source_photo_index": 0,
+      "concept": "foreground wafer packet",
+      "bbox": [
+        1604,
+        1227,
+        1975,
+        1519
+      ],
+      "crop_url": "/samples/c/golden/images/KK-0019-crop.jpg",
+      "clean_url": "/samples/c/golden/images/KK-0019.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": false,
+        "color_match": false,
+        "logo_text_match": false,
+        "reason": "Large wedge bite removed from center of carton where straws were masked out."
+      },
+      "name": "KitKat Wafer Cokelat Renyah - Camilan Stok Baru",
+      "description_id": "Istirahat makin seru dengan KitKat Wafer Cokelat - perpaduan wafer renyah dengan cokelat susu Nestle yang manis dan lumer di mulut, dikemas finger yang gampang dipatahkan dan dibagi. Cocok untuk camilan di rumah, bekal anak sekolah, teman ngopi atau ngeteh, dan stok jualan warung yang paling laris. Stok baru minggu ini, segar dan siap jual. Bisa beli satuan untuk coba-coba atau langsung satu kardus untuk stok warung lebih hemat. Yuk borong sekarang sebelum kehabisan!",
+      "description_en": "Take a break with KitKat Chocolate Wafer - crispy wafer layered with smooth Nestle milk chocolate, in easy-to-break fingers perfect for sharing. Great for snacking at home, school lunch, coffee time, or reselling at your stall. Fresh new stock this week. Available per piece or by full carton for stocking up and saving more. Order now while stock lasts!",
+      "category": "Makanan & Minuman",
+      "brand": "KitKat",
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": 4900,
+      "confidence": "high",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
     }
   ]
 }

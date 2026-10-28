@@ -38,7 +38,8 @@ const POLL_LIMIT = 120;
 /**
  * Prices a human confirmed while reviewing each golden. Keyed by SKU; `name` guards against the
  * pipeline's output drifting underneath the table (then the script stops instead of mispricing).
- * Pack A/B/C below were reviewed against the META_MOCK=true fixtures.
+ * Pack A was reviewed against the META_MOCK=true fixtures. Pack B and Pack C were reviewed against
+ * the live jobs job-f6dce0c0ee01 and job-3d538290960c.
  */
 const CONFIRMED_PRICES = {
   a: {
@@ -54,17 +55,53 @@ const CONFIRMED_PRICES = {
     'KK-0016': { name: 'Kabel Charging Second Putih dan Hitam', price: 50000 },
   },
   b: {
-    'KK-0001': { name: 'Kaos Polos Katun Hitam', price: 85000 },
-    'KK-0002': { name: 'Samsung Galaxy A54 8/128', price: 4500000 },
-    'KK-0003': { name: 'Mie Instan Cup Ayam Bawang', price: 12000 },
-    'KK-0005': { name: 'Cokelat Susu Batang 60g', price: 22000 },
-    'KK-0006': { name: 'Kaos Polos Katun Hitam', price: 85000 },
+    'KK-0001': { name: 'Jaket Denim Thrift Pilihan - Kondisi Bagus Sudah Dicuci', price: 25000 },
+    'KK-0002': { name: 'Kemeja Flanel Kotak-Kotak Merah Hitam Thrift - Obral Pilih Sendiri', price: 25000 },
+    'KK-0003': { name: 'Hoodie Zipper Navy Thrift - Hangat, Bersih & Siap Pakai', price: 25000 },
+    'KK-0004': { name: 'Kemeja Floral Thrift Motif Bunga Kondisi Bagus Sudah Dicuci', price: 25000 },
+    'KK-0005': { name: 'Baju Thrift Pilihan Kondisi Bagus Sudah Dicuci', price: 25000 },
+    'KK-0006': { name: 'Kaos Thrift Hitam Polos - Kondisi Bagus, Sudah Dicuci, Stok Terbatas', price: 25000 },
+    'KK-0007': { name: 'Kaos Thrift Obral Bisa Pilih Sendiri - Kondisi Bagus Sudah Dicuci', price: 25000 },
+    'KK-0008': { name: 'Kaos Thrift Pilihan Kondisi Bagus Sudah Dicuci', price: 25000 },
+    'KK-0009': { name: 'Kemeja Denim Thrift Biru - Kondisi Bagus Sudah Dicuci', price: 35000 },
+    'KK-0010': { name: 'Kaos Thrift Abu-abu Pilihan Kondisi Bagus Sudah Dicuci', price: 35000 },
+    'KK-0011': { name: 'Kaos Thrift Garis Hitam Putih Kondisi Bagus Sudah Dicuci', price: 35000 },
+    'KK-0012': { name: 'Kemeja Thrift Hijau Olive Kondisi Bagus - Sudah Dicuci Stok Terbatas', price: 35000 },
+    'KK-0013': { name: 'Kaos Thrift Putih Pilihan Kondisi Bagus Sudah Dicuci', price: 35000 },
+    'KK-0014': { name: 'Kaos Thrift Marun Pilihan Kondisi Bagus - Nyaman untuk Harian', price: 35000 },
+    'KK-0015': { name: 'Baju Thrift Pilihan Navy Kondisi Bagus Sudah Dicuci', price: 35000 },
   },
   c: {
-    'KK-0001': { name: 'Cokelat Susu Batang 60g', price: 22000 },
-    'KK-0002': { name: 'Samsung Galaxy A54 8/128', price: 4500000 },
-    'KK-0003': { name: 'iPhone 11 64GB', price: 5200000 },
+    'KK-0001': { name: 'Taro Net Seaweed Snack Rasa Rumput Laut', price: 9500 },
+    'KK-0002': { name: 'Indomilk Susu UHT Strawberry Manis Segar', price: 6000 },
+    'KK-0003': { name: 'Ultra Milk Susu UHT Coklat 200ml', price: 6500 },
+    'KK-0004': { name: 'Snack Rumput Laut Renyah Gurih - Stok Baru', price: 13000 },
+    'KK-0005': { name: 'Snack Seaweed Renyah Gurih - Stok Baru Warung', price: 10000 },
+    'KK-0006': { name: 'Keripik Kentang Renyah Gurih - Stok Baru, Bisa Satuan atau Sekardus', price: 12000 },
+    'KK-0007': { name: 'Roma Kelapa Biskuit Kelapa Renyah - Stok Baru, Bisa Satuan atau Kardus', price: 11000 },
+    'KK-0008': { name: 'Keripik Chips Kentang Renyah - Stok Baru', price: 12000 },
+    'KK-0009': { name: 'Beng-Beng Wafer Caramel Crispy Cokelat - Camilan Renyah', price: 3000 },
+    'KK-0010': { name: 'Snack Rumput Laut Renyah Gurih - Stok Baru', price: 13000 },
+    'KK-0011': { name: 'Snack Rumput Laut Renyah Gurih - Bisa Satuan atau Sekardus', price: 10000 },
+    'KK-0012': { name: 'Snack Rumput Laut Renyah Gurih - Stok Baru Warung', price: 10000 },
+    'KK-0013': { name: 'Snack Keripik Renyah Kemasan - Stok Baru Warung', price: 8000 },
+    'KK-0014': { name: 'Wafer Camilan Renyah Stok Baru - Bisa Satuan atau Satu Kardus', price: 10000 },
+    'KK-0015': { name: 'Snack Rumput Laut Renyah Gurih Siap Makan', price: 10000 },
+    'KK-0016': { name: 'Kripik Chips Renyah Stok Baru - Bisa Satuan atau Sekardus', price: 10000 },
+    'KK-0017': { name: 'Wafer Renyah Lapis Krim Kemasan Satuan - Stok Baru, Bisa Satuan atau Kardus', price: 10000 },
+    'KK-0018': { name: 'Wafer Cokelat Koomuk Renyah - Camilan Manis Stok Baru', price: 3500 },
+    'KK-0019': { name: 'KitKat Wafer Cokelat Renyah - Camilan Stok Baru', price: 6500 },
   },
+};
+
+/**
+ * SKUs a human excluded while reviewing the live run: the crop is a fragment of a product that
+ * another product occludes in the source photo. They stay in products.json with `included: false`
+ * (the seller's decision, visible in Review) and are never sent to the exporter.
+ */
+const REVIEW_EXCLUDED = {
+  b: ['KK-0001', 'KK-0002', 'KK-0003', 'KK-0004', 'KK-0005', 'KK-0006', 'KK-0007', 'KK-0008'],
+  c: ['KK-0002', 'KK-0004', 'KK-0005', 'KK-0006', 'KK-0007', 'KK-0008', 'KK-0010', 'KK-0011', 'KK-0012', 'KK-0015', 'KK-0016', 'KK-0017', 'KK-0019'],
 };
 
 /** Export kind -> file name inside `golden/exports/` (the names `src/lib/golden.ts` fetches). */
@@ -142,7 +179,15 @@ async function buildPack(pack) {
   if (state.errors.length > 0) throw new Error(`pack ${pack}: job finished with ${state.errors.length} error(s)`);
   if (state.products.length === 0) throw new Error(`pack ${pack}: job produced no products`);
 
-  const confirmed = state.products.map((product) => ({ ...product, price_idr: confirmedPrice(pack, product) }));
+  const excluded = REVIEW_EXCLUDED[pack] ?? [];
+  for (const sku of excluded) {
+    if (!state.products.some((product) => product.sku === sku)) throw new Error(`pack ${pack}: excluded ${sku} is not in the job`);
+  }
+  // Included = the pipeline marked it and no reviewer excluded it. Only included products are priced.
+  const confirmed = state.products.map((product) => {
+    const included = product.included && !excluded.includes(product.sku);
+    return { ...product, included, price_idr: included ? confirmedPrice(pack, product) : null };
+  });
 
   // The exporter receives exactly what the client would post: no `price_suggestion_idr`.
   const reviewed = confirmed.map(({ price_suggestion_idr: _suggestion, ...rest }) => rest);
@@ -172,7 +217,7 @@ async function buildPack(pack) {
     seller: SELLER,
     // Unreviewed pipeline state: the seller confirms prices in Review. Only
     // `price_hint_idr` is kept, and the client pre-fills from it alone.
-    products: state.products.map((product) => ({
+    products: confirmed.map((product) => ({
       ...product,
       price_idr: null,
       price_via_chat: false,
@@ -182,7 +227,8 @@ async function buildPack(pack) {
     })),
   };
   await writeFile(path.join(golden, 'products.json'), `${JSON.stringify(bundle, null, 2)}\n`);
-  console.log(`pack ${pack}: ${confirmed.length} products, job ${jobId}, source ${bundle.source}`);
+  const kept = confirmed.filter((product) => product.included).length;
+  console.log(`pack ${pack}: ${confirmed.length} products, job ${jobId}, source ${bundle.source}, ${kept} kept of ${confirmed.length} products`);
 }
 
 for (const pack of PACKS) {
