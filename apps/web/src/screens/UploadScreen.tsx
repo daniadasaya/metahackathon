@@ -24,11 +24,16 @@ interface PickedPhoto {
   caption: string;
 }
 
-const PACKS: ReadonlyArray<{ pack: SamplePack; label: MessageKey }> = [
+const LIVE_PACKS: ReadonlyArray<{ pack: SamplePack; label: MessageKey }> = [
   { pack: 'a', label: 'samples.packA' },
   { pack: 'b', label: 'samples.packB' },
   { pack: 'c', label: 'samples.packC' },
 ];
+
+/** Demo Safe Mode only: pack d is a golden bundle with no live pipeline behind it (merge demo). */
+const SAFE_ONLY_PACK: { pack: SamplePack; label: MessageKey } = { pack: 'd', label: 'samples.packD' };
+
+const SAFE_PACKS: ReadonlyArray<{ pack: SamplePack; label: MessageKey }> = [...LIVE_PACKS, SAFE_ONLY_PACK];
 
 function Thumb({ file }: { file: File }) {
   const [url, setUrl] = useState<string | null>(null);
@@ -66,6 +71,13 @@ export function UploadScreen() {
   const nextId = useRef(1);
   const dismissToast = useCallback(() => setToast(null), []);
 
+  // Pack d exists only in Demo Safe Mode. Turning the toggle off (here or in another tab) drops it,
+  // so a live run can never start from a golden-only pack.
+  useEffect(() => {
+    if (!demoSafe && pack === SAFE_ONLY_PACK.pack) setPack(null);
+  }, [demoSafe, pack]);
+
+  const packs = demoSafe ? SAFE_PACKS : LIVE_PACKS;
   const canStart = !busy && (pack !== null || photos.length > 0);
 
   function addFiles(list: FileList | null) {
@@ -90,6 +102,7 @@ export function UploadScreen() {
     setBackendMissing(false);
     try {
       const live = pack !== null && !getDemoSafe();
+      if (pack === SAFE_ONLY_PACK.pack && live) throw new Error('pack d has no live path');
       const sample = live ? await fetchSamplePack(pack) : null;
       const jobId = await createJob({
         photos: sample === null ? photos.map((photo) => photo.file) : sample.photos,
@@ -221,8 +234,8 @@ export function UploadScreen() {
           <p id="samples-hint" className="sr-only">
             {t('samples.hint')}
           </p>
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            {PACKS.map((entry) => {
+          <div className={`mt-3 grid gap-2 ${demoSafe ? 'grid-cols-2' : 'grid-cols-3'}`}>
+            {packs.map((entry) => {
               const selected = pack === entry.pack;
               return (
                 <button

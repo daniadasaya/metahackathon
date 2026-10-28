@@ -1,0 +1,323 @@
+{
+  "source": "live",
+  "generated_at": "2026-10-28T03:50:42.969Z",
+  "photos": 2,
+  "seller": {
+    "store_name": "Toko Contoh",
+    "wa_number": "6281234567890"
+  },
+  "products": [
+    {
+      "sku": "KK-0001",
+      "job_id": "golden-d",
+      "source_photo_index": 0,
+      "concept": "power bank",
+      "bbox": [
+        846,
+        832,
+        1189,
+        1288
+      ],
+      "crop_url": "/samples/d/golden/images/KK-0001-crop.jpg",
+      "clean_url": "/samples/d/golden/images/KK-0001.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Single black ROBOT 20000mAh power bank faithfully preserved with matching color and legible logo."
+      },
+      "name": "Power Bank ROBOT 20000mAh 33W Fast Charging Hitam",
+      "description_id": "Power Bank ROBOT 20000mAh 33W Fast Charging warna Hitam. Kapasitas besar 20000mAh untuk isi ulang berkali-kali, output 33W cepat menghemat waktu, praktis untuk HP, tablet, dan perangkat USB lainnya. Kondisi baru, garansi toko 7 hari. Bisa COD di tempat, harga bisa nego tipis. Stok konter aksesoris HP, siap pakai harian.",
+      "description_en": "ROBOT 20000mAh Power Bank with 33W Fast Charging in Black. Large 20000mAh capacity for multiple charges, fast 33W output to save time, practical and reliable for daily use with smartphones, tablets and other USB devices. New condition with 7-day store warranty. COD available, price slightly negotiable.",
+      "category": "Aksesoris HP",
+      "brand": "ROBOT",
+      "condition": "new",
+      "attributes": {
+        "color": "Hitam",
+        "size": null,
+        "variant": "20000mAh 33W"
+      },
+      "price_hint_idr": 185000,
+      "price_suggestion_idr": 275000,
+      "confidence": "high",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0002",
+      "job_id": "golden-d",
+      "source_photo_index": 0,
+      "concept": "phone case",
+      "bbox": [
+        183,
+        849,
+        732,
+        1354
+      ],
+      "crop_url": "/samples/d/golden/images/KK-0002-crop.jpg",
+      "clean_url": "/samples/d/golden/images/KK-0002.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Single navy iPhone 14 Pro case preserved with matching shape, ports, color and text."
+      },
+      "name": "Casing Silikon Premium untuk iPhone 14 Pro - Biru Navy",
+      "description_id": "Casing silikon premium untuk iPhone 14 Pro warna Biru Navy yang elegan dan nyaman digenggam. Desain presisi dengan lubang kamera besar, akses mudah ke tombol, speaker, dan port charger. Bahan silikon lembut dan lentur melindungi HP dari benturan, goresan, dan debu harian. Model slim tetap kokoh, cocok untuk pemakaian harian maupun tampil formal. Kondisi baru, garansi toko 7 hari. Bisa COD di tempat, harga bisa nego tipis. Stok terbatas, langsung chat untuk order!",
+      "description_en": "Premium silicone protective case for iPhone 14 Pro in elegant Navy Blue. Precise cutouts for the large camera, buttons, speakers and charging port for easy daily use. Soft flexible silicone guards against bumps, scratches and daily dust while staying slim and comfortable to hold. Perfect blend of style and protection for everyday wear. Brand-new condition with 7-day store warranty. Cash on delivery available, price slightly negotiable. Grab yours now!",
+      "category": "Aksesoris HP",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": "Navy",
+        "size": null,
+        "variant": "iPhone 14 Pro"
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": 35000,
+      "confidence": "high",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0003",
+      "job_id": "golden-d",
+      "source_photo_index": 0,
+      "concept": "wall charger",
+      "bbox": [
+        1361,
+        903,
+        1723,
+        1237
+      ],
+      "crop_url": "/samples/d/golden/images/KK-0003-crop.jpg",
+      "clean_url": "/samples/d/golden/images/KK-0003.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Studio image preserves the single white 33W charger with matching ports, colors, and markings."
+      },
+      "name": "Charger Dinding 33W Dual Port USB-A + USB-C Fast Charging - Putih",
+      "description_id": "Charger dinding 33W dual port USB-A & USB-C untuk pengisian cepat setiap hari. Output maksimal 33W membantu mengisi daya HP, tablet, dan aksesoris dengan lebih cepat dan stabil. Dilengkapi colokan standar Indonesia, bodi ringkas warna putih, dan proteksi untuk pemakaian harian yang aman. Kondisi baru dengan garansi toko 7 hari. Bisa COD di tempat, harga bisa nego tipis. Cocok untuk di rumah, kantor, dan travel. Stok siap, langsung chat untuk order!",
+      "description_en": "33W dual-port wall charger with USB-A and USB-C for fast daily charging. Up to 33W output helps power phones, tablets and accessories faster and more stable. Features Indonesia-standard plug, compact white body and reliable protection for everyday use. Brand-new condition with 7-day store warranty. COD available, price slightly negotiable. Perfect for home, office and travel. Ready stock – chat now to order!",
+      "category": "Aksesoris HP",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": "Putih",
+        "size": null,
+        "variant": "33W"
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "high",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0004",
+      "job_id": "golden-d",
+      "source_photo_index": 1,
+      "concept": "phone case@merge:KK-0002",
+      "bbox": [
+        152,
+        918,
+        748,
+        1378
+      ],
+      "crop_url": "/samples/d/golden/images/KK-0004-crop.jpg",
+      "clean_url": "/samples/d/golden/images/KK-0004.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Studio image shows the same single navy MagSafe case with matching cutouts, color, and no logos."
+      },
+      "name": "Softcase Silikon Magnetic Premium Navy Elegan",
+      "description_id": "Softcase Silikon Magnetic Premium warna Navy yang elegan. Bahan silikon lembut nyaman digenggam dengan lapisan dalam halus yang melindungi bodi HP dari baret dan benturan. Dilengkapi lingkaran magnetik untuk pengisian daya wireless, potongan presisi untuk kamera dan port, bodi slim tetap stylish. Kondisi baru dengan garansi toko 7 hari. Bisa COD di tempat, harga bisa nego tipis.",
+      "description_en": "Premium Magnetic Silicone Phone Case in elegant Navy. Soft-touch silicone with smooth velvety inner lining to protect your phone from scratches, shocks and daily wear. Built-in magnetic ring supports magnetic wireless charging, precise cutouts for camera and ports, slim and comfortable to hold. New condition with 7-day store warranty. COD available, price slightly negotiable.",
+      "category": "Aksesoris HP",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": "Navy",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": 35000,
+      "confidence": "high",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0005",
+      "job_id": "golden-d",
+      "source_photo_index": 1,
+      "concept": "power bank@merge:KK-0001",
+      "bbox": [
+        836,
+        919,
+        1205,
+        1356
+      ],
+      "crop_url": "/samples/d/golden/images/KK-0005-crop.jpg",
+      "clean_url": "/samples/d/golden/images/KK-0005.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": false,
+        "reason": "Small spec text and port labels are garbled and not identical to reference."
+      },
+      "name": "Power Bank ROBOT 20000mAh RT32 Dual USB - Baru",
+      "description_id": "Power Bank ROBOT 20000mAh RT32 warna hitam dengan kapasitas besar untuk isi ulang HP dan tablet berkali-kali. Dilengkapi dual output USB dengan output 2.1A untuk pengisian yang stabil, cocok untuk pemakaian harian, traveling, dan cadangan darurat. Barang baru dengan garansi toko 7 hari. Bisa COD di tempat, harga bisa nego tipis. Stok tersedia di konter aksesoris HP - langsung chat untuk order!",
+      "description_en": "ROBOT 20000mAh RT32 Power Bank in black with large capacity for multiple recharges for phones and tablets. Features dual USB output with 2.1A output for stable daily charging, travel, and emergency backup. Brand-new unit with 7-day store warranty. COD available, slight negotiation possible. Ready stock at the phone accessories counter – chat now to order!",
+      "category": "Aksesoris HP",
+      "brand": "ROBOT",
+      "condition": "new",
+      "attributes": {
+        "color": "Hitam",
+        "size": null,
+        "variant": "RT32 20000mAh"
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": 275000,
+      "confidence": "high",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0006",
+      "job_id": "golden-d",
+      "source_photo_index": 1,
+      "concept": "charging case@merge:KK-0007",
+      "bbox": [
+        1354,
+        942,
+        1687,
+        1188
+      ],
+      "crop_url": "/samples/d/golden/images/KK-0006-crop.jpg",
+      "clean_url": "/samples/d/golden/images/KK-0006.jpg",
+      "cleanup_method": "composite",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": false,
+        "reason": "Printed text is garbled AI gibberish, not identical legible copy of reference."
+      },
+      "name": "Charging Case TWS Putih - Casing Pengisi Daya Earbud Baru",
+      "description_id": "Charging Case TWS Putih - solusi praktis untuk menyimpan dan mengisi daya earbud Anda setiap hari. Desain ringkas, ringan, dan mudah dibawa, cocok untuk pemakaian di rumah, kantor, maupun perjalanan. Kondisi baru dengan garansi toko 7 hari. Bisa COD di tempat, harga bisa nego tipis. Stok terbatas, langsung chat untuk order!",
+      "description_en": "White TWS Charging Case - a practical solution to store and recharge your earbuds every day. Compact, lightweight and easy to carry, perfect for home, office or travel use. Brand-new condition with 7-day store warranty. Cash on delivery available, price slightly negotiable. Limited stock, chat now to order!",
+      "category": "Audio",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": "Putih",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": 75000,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": false
+    },
+    {
+      "sku": "KK-0007",
+      "job_id": "golden-d",
+      "source_photo_index": 0,
+      "concept": "charging case",
+      "bbox": [
+        1852,
+        988,
+        2187,
+        1179
+      ],
+      "crop_url": "/samples/d/golden/images/KK-0007-crop.jpg",
+      "clean_url": "/samples/d/golden/images/KK-0007.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "White earbuds case with green LED and bottom port preserved faithfully."
+      },
+      "name": "Casing Charger TWS Earbud Putih Praktis dan Ringan",
+      "description_id": "Casing charger TWS earbud warna putih yang praktis dan ringan untuk pemakaian sehari-hari. Desain minimalis yang mudah dibawa di saku atau tas, dilengkapi lampu indikator dan port pengisian di bagian bawah untuk pengisian daya yang mudah. Menjaga earbud tetap aman, rapi, dan selalu siap dipakai. Barang baru dengan garansi toko 7 hari. Bisa COD di tempat, harga bisa nego tipis.",
+      "description_en": "White TWS earbud charging case, practical and lightweight for everyday use. Clean minimalist design that fits easily in your pocket or bag, with status indicator light and bottom charging port for easy recharging. Keeps your earbuds safe, stored neatly and always ready to use. Brand-new item with 7-day store warranty. Cash on delivery available, price slightly negotiable.",
+      "category": "Audio",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": "Putih",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    },
+    {
+      "sku": "KK-0008",
+      "job_id": "golden-d",
+      "source_photo_index": 1,
+      "concept": "charging cable",
+      "bbox": [
+        1793,
+        1012,
+        2222,
+        1293
+      ],
+      "crop_url": "/samples/d/golden/images/KK-0008-crop.jpg",
+      "clean_url": "/samples/d/golden/images/KK-0008.jpg",
+      "cleanup_method": "muse-image",
+      "fidelity": {
+        "same_product": true,
+        "color_match": true,
+        "logo_text_match": true,
+        "reason": "Coiled white USB-C cable with paper straps matches in shape and color with no logos."
+      },
+      "name": "Kabel Data & Charger USB-C Putih - Baru Praktis untuk HP",
+      "description_id": "Kabel data dan charger USB-C warna putih untuk kebutuhan cas dan transfer data harian HP dan tablet. Kabel lentur dan rapi, konektor kokoh dan awet, nyaman dipakai di rumah, kantor, maupun saat bepergian. Kondisi baru dengan garansi toko 7 hari. Bisa COD di tempat, harga bisa nego tipis. Stok ready di konter aksesoris HP, langsung order via chat!",
+      "description_en": "White USB-C data and charging cable for daily charging and data transfer for phones and tablets. Flexible cable with sturdy connector, neat, durable and easy to carry for use at home, office or on the go. Brand-new condition with 7-day store warranty. COD available, price slightly negotiable. Ready stock at our HP accessories counter, order via chat now!",
+      "category": "Aksesoris HP",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": "Putih",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": 30000,
+      "confidence": "high",
+      "price_idr": null,
+      "price_via_chat": false,
+      "availability": "in stock",
+      "included": true
+    }
+  ]
+}

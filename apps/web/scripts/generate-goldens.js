@@ -32,6 +32,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SAMPLES = path.join(ROOT, 'public', 'samples');
 
 const SELLER = { store_name: 'Toko Contoh', wa_number: '6281234567890' };
+/** Same marker `apps/api/app/exporter.py` reads (`MERGE_MARKER`). */
+const MERGE_MARKER = '@merge:';
 const POLL_MS = 1000;
 const POLL_LIMIT = 120;
 
@@ -71,6 +73,12 @@ const CONFIRMED_PRICES = {
     'KK-0014': { name: 'Kaos Thrift Marun Pilihan Kondisi Bagus - Nyaman untuk Harian', price: 35000 },
     'KK-0015': { name: 'Baju Thrift Pilihan Navy Kondisi Bagus Sudah Dicuci', price: 35000 },
   },
+  d: {
+    'KK-0002': { name: 'Casing Silikon Premium untuk iPhone 14 Pro - Biru Navy', price: 45000 },
+    'KK-0003': { name: 'Charger Dinding 33W Dual Port USB-A + USB-C Fast Charging - Putih', price: 85000 },
+    'KK-0007': { name: 'Casing Charger TWS Earbud Putih Praktis dan Ringan', price: 165000 },
+    'KK-0008': { name: 'Kabel Data & Charger USB-C Putih - Baru Praktis untuk HP', price: 35000 },
+  },
   c: {
     'KK-0001': { name: 'Taro Net Seaweed Snack Rasa Rumput Laut', price: 9500 },
     'KK-0002': { name: 'Indomilk Susu UHT Strawberry Manis Segar', price: 6000 },
@@ -92,6 +100,30 @@ const CONFIRMED_PRICES = {
     'KK-0018': { name: 'Wafer Cokelat Koomuk Renyah - Camilan Manis Stok Baru', price: 3500 },
     'KK-0019': { name: 'KitKat Wafer Cokelat Renyah - Camilan Stok Baru', price: 6500 },
   },
+};
+
+/**
+ * Multi-photo merges a human made while reviewing a golden. Each entry says that the `child`
+ * product is another angle of the `parent` product. Matched by exact product NAME, never by SKU,
+ * because SKU numbers depend on detection order. A name that matches zero or several products stops
+ * the script. The child is excluded from the catalog and carries `@merge:{parentSku}` in its concept
+ * (the wire convention `exporter.py` reads); its photo rides in the parent's additional images.
+ */
+const MERGES = {
+  d: [
+    {
+      parent: 'Power Bank ROBOT 20000mAh 33W Fast Charging Hitam',
+      child: 'Power Bank ROBOT 20000mAh RT32 Dual USB - Baru',
+    },
+    {
+      parent: 'Casing Silikon Premium untuk iPhone 14 Pro - Biru Navy',
+      child: 'Softcase Silikon Magnetic Premium Navy Elegan',
+    },
+    {
+      parent: 'Casing Charger TWS Earbud Putih Praktis dan Ringan',
+      child: 'Charging Case TWS Putih - Casing Pengisi Daya Earbud Baru',
+    },
+  ],
 };
 
 /**
@@ -153,6 +185,44 @@ async function waitForJob(jobId) {
   throw new Error(`job ${jobId} did not finish in ${(POLL_LIMIT * POLL_MS) / 1000}s`);
 }
 
+/** The one product whose name is `name`; zero or several matches stop the script, nothing is guessed. */
+function productByName(pack, products, name) {
+  const matches = products.filter((product) => product.name === name);
+  if (matches.length !== 1) {
+    throw new Error(`pack ${pack}: merge name "${name}" matched ${matches.length} products, expected exactly 1`);
+  }
+  return matches[0];
+}
+
+/**
+ * Resolves MERGES to a child-SKU -> parent-SKU map. A child may not be excluded in REVIEW_EXCLUDED,
+ * may not be a parent itself, and its parent must be included, or the script throws.
+ */
+function resolveMerges(pack, products, excluded) {
+  const pairs = (MERGES[pack] ?? []).map(({ parent, child }) => ({
+    parent: productByName(pack, products, parent),
+    child: productByName(pack, products, child),
+  }));
+  const children = new Set(pairs.map(({ child }) => child.sku));
+  const merged = new Map();
+  for (const { parent, child } of pairs) {
+    if (child.sku === parent.sku) throw new Error(`pack ${pack}: ${child.sku} cannot merge into itself`);
+    if (excluded.includes(child.sku)) throw new Error(`pack ${pack}: merged child ${child.sku} is also in REVIEW_EXCLUDED`);
+    if (children.has(parent.sku)) throw new Error(`pack ${pack}: parent ${parent.sku} is itself a merged child`);
+    if (!parent.included || excluded.includes(parent.sku)) {
+      throw new Error(`pack ${pack}: merge parent ${parent.sku} (${parent.name}) is not included`);
+    }
+    merged.set(child.sku, parent.sku);
+  }
+  return merged;
+}
+
+/** A concept without any earlier `@merge:` suffix, so a re-merge never stacks markers. */
+function baseConcept(concept) {
+  const at = concept.indexOf(MERGE_MARKER);
+  return at === -1 ? concept : concept.slice(0, at);
+}
+
 /** Confirmed price for one product, or a thrown error: nothing is ever inferred. */
 function confirmedPrice(pack, product) {
   if (product.price_hint_idr !== null && product.price_hint_idr > 0) return product.price_hint_idr;
@@ -183,8 +253,16 @@ async function buildPack(pack) {
   for (const sku of excluded) {
     if (!state.products.some((product) => product.sku === sku)) throw new Error(`pack ${pack}: excluded ${sku} is not in the job`);
   }
-  // Included = the pipeline marked it and no reviewer excluded it. Only included products are priced.
+  // Merges come first: a merged child is never included, and it is never priced.
+  const merged = resolveMerges(pack, state.products, excluded);
+  // Included = the pipeline marked it, no reviewer excluded it, and it is not a merged child.
+  // Only included products are priced.
   const confirmed = state.products.map((product) => {
+    const parentSku = merged.get(product.sku);
+    if (parentSku !== undefined) {
+      const concept = `${baseConcept(product.concept)}${MERGE_MARKER}${parentSku}`;
+      return { ...product, concept, included: false, price_idr: null };
+    }
     const included = product.included && !excluded.includes(product.sku);
     return { ...product, included, price_idr: included ? confirmedPrice(pack, product) : null };
   });

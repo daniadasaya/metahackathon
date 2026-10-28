@@ -29,7 +29,7 @@ interface GoldenBundle {
   products: Product[];
 }
 
-const GOLDEN_JOB = /^golden-([abc])$/;
+const GOLDEN_JOB = /^golden-([abcd])$/;
 
 export function goldenJobId(pack: SamplePack): string {
   return `golden-${pack}`;

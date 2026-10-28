@@ -58,6 +58,7 @@ export const id = {
     packA: 'HP di meja',
     packB: 'Rak baju',
     packC: 'Kardus snack',
+    packD: 'Konter aksesoris',
     chosen: 'Dipilih',
     selected: 'Paket {pack} dipilih. Foto unggahan diabaikan.',
     clear: 'Batalkan paket',

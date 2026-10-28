@@ -21,7 +21,7 @@ import type { components } from './types';
 
 export type JobState = components['schemas']['JobState'];
 export type ErrorCode = components['schemas']['ErrorCode'];
-export type SamplePack = 'a' | 'b' | 'c';
+export type SamplePack = 'a' | 'b' | 'c' | 'd';
 
 /** A failed API call, reduced to the closed `code`; `null` when the body was not the envelope. */
 export class ApiError extends Error {

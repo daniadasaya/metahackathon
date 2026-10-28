@@ -57,6 +57,7 @@ export const en = {
     packA: 'Phones on a desk',
     packB: 'Clothing rack',
     packC: 'Snack box',
+    packD: 'Accessory counter',
     chosen: 'Selected',
     selected: 'Pack {pack} selected. Uploaded photos are ignored.',
     clear: 'Clear pack',
