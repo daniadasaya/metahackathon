@@ -585,6 +585,96 @@ def test_build_zip_incomplete_image_map_raises_naming_the_sku() -> None:
 
 
 # ---------------------------------------------------------------------------
+# build_csv crop-source seam: golden regeneration supplies its own map
+# ---------------------------------------------------------------------------
+
+
+def _additional_cell(csv_text: str) -> str:
+    """The ``additional_image_link`` cell of the single data row."""
+    rows = list(csv.reader(io.StringIO(csv_text)))
+    return rows[1][exporter.CSV_COLUMNS.index("additional_image_link")]
+
+
+def test_build_csv_reads_crop_availability_from_the_supplied_map(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    products = [_product("KK-0001", 150000, False, True, "Acme", concept="smartphone")]
+    # No job folder at all: the map alone decides.
+    monkeypatch.setattr(exporter, "JOBS_DIR", tmp_path / "jobs")
+    images = {"KK-0001.jpg": b"\xff\xd8primary", "KK-0001-crop.jpg": b"\xff\xd8crop"}
+
+    csv_text = exporter.build_csv(
+        "job-golden-3", products, seller, "http://example.com", images=images
+    )
+
+    assert _additional_cell(csv_text) == "http://example.com/p/job-golden-3/KK-0001-crop.jpg"
+
+
+def test_build_csv_omits_a_crop_absent_from_the_supplied_map(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    products = [_product("KK-0001", 150000, False, True, "Acme", concept="smartphone")]
+    # The job folder *does* hold the crop; the map does not name it. The map
+    # wins: an absent key is a legal "no crop", never a dangling link.
+    crops = _live_crop_job(tmp_path, monkeypatch, "job-golden-4")
+    Image.new("RGBA", (8, 8), (10, 20, 30, 255)).save(crops / "KK-0001-crop.png", format="PNG")
+
+    csv_text = exporter.build_csv(
+        "job-golden-4",
+        products,
+        seller,
+        "http://example.com",
+        images={"KK-0001.jpg": b"\xff\xd8primary"},
+    )
+
+    assert _additional_cell(csv_text) == ""
+
+
+def test_build_csv_seam_keeps_merged_angle_shot_order(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    products = [
+        _product("KK-0001", 150000, False, True, "Acme", concept="smartphone"),
+        _merged("KK-0002", "KK-0001"),
+        _merged("KK-0003", "KK-0001"),
+    ]
+    monkeypatch.setattr(exporter, "JOBS_DIR", tmp_path / "jobs")  # map only
+    skus = ("KK-0001", "KK-0002", "KK-0003")
+    images = {f"{sku}.jpg": b"\xff\xd8primary" for sku in skus}
+    images |= {f"{sku}-crop.jpg": b"\xff\xd8crop" for sku in skus}
+
+    csv_text = exporter.build_csv(
+        "job-golden-5", products, seller, "http://example.com", images=images
+    )
+
+    # Angle shots first, then the primary's crop, then the children's crops.
+    assert _additional_cell(csv_text) == (
+        "http://example.com/p/job-golden-5/KK-0002.jpg,"
+        "http://example.com/p/job-golden-5/KK-0003.jpg,"
+        "http://example.com/p/job-golden-5/KK-0001-crop.jpg,"
+        "http://example.com/p/job-golden-5/KK-0002-crop.jpg,"
+        "http://example.com/p/job-golden-5/KK-0003-crop.jpg"
+    )
+
+
+def test_build_csv_without_the_seam_still_reads_the_job_folder(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    crops = _live_crop_job(tmp_path, monkeypatch, "job-live-5")
+    Image.new("RGBA", (8, 8), (10, 20, 30, 255)).save(crops / "KK-0001-crop.png", format="PNG")
+    seller = schemas.SellerInfo(store_name="Toko Kilat", wa_number="6281234567890")
+    products = [_product("KK-0001", 150000, False, True, "Acme", concept="smartphone")]
+
+    # No ``images`` keyword at all: ``None`` keeps the job-folder behaviour.
+    csv_text = exporter.build_csv("job-live-5", products, seller, "http://example.com")
+
+    assert _additional_cell(csv_text) == "http://example.com/p/job-live-5/KK-0001-crop.jpg"
+
+
+# ---------------------------------------------------------------------------
 # The regeneration script's own path derivation: scripts/ is one level below
 # the service root in both layouts
 # ---------------------------------------------------------------------------
@@ -604,4 +694,68 @@ def test_regen_script_derives_web_dir_from_the_service_root() -> None:
     service_root = Path(scripts.__file__).resolve().parents[1]
     assert regen.WEB_DIR == service_root.parent / "web"
     assert regen.WEB_DIR.name == "web"
+
+
+# ---------------------------------------------------------------------------
+# The regeneration script's price gate: an excluded record needs no price
+# ---------------------------------------------------------------------------
+
+
+def _bundle_record(
+    sku: str, *, included: bool, concept: str = "smartphone"
+) -> dict[str, object]:
+    """One ``products.json`` record, complete enough for ``ReviewedProduct``."""
+    return {
+        "sku": sku,
+        "job_id": "golden-x",
+        "source_photo_index": 0,
+        "concept": concept,
+        "bbox": [1, 2, 3, 4],
+        "crop_url": f"/samples/x/golden/images/{sku}-crop.jpg",
+        "clean_url": f"/samples/x/golden/images/{sku}.jpg",
+        "cleanup_method": "composite",
+        "fidelity": None,
+        "name": "Tas Batik",
+        "description_id": "Tas batik motif parang.",
+        "description_en": "Batik tote bag.",
+        "category": "Aksesoris HP",
+        "brand": None,
+        "condition": "new",
+        "attributes": {"color": None, "size": None, "variant": None},
+        "price_hint_idr": None,
+        "price_suggestion_idr": 275000,
+        "confidence": "medium",
+        "price_idr": None,
+        "price_via_chat": False,
+        "availability": "in stock",
+        "included": included,
+    }
+
+
+def test_regen_accepts_a_priceless_excluded_record_and_still_refuses_an_included_one() -> None:
+    """Merged/excluded records have no CSV row, so they cannot need a price.
+
+    Packs b/c/d carry such records; before this, ``_reviewed_products`` aborted
+    on the first one and the script could only ever render Pack A.
+    """
+    import scripts.regen_golden_exports as regen
+
+    records = [
+        _bundle_record("KK-0001", included=True),
+        _bundle_record("KK-0002", included=False, concept="smartphone@merge:KK-0001"),
+    ]
+
+    products = regen._reviewed_products(records, {"KK-0001": 150000})
+
+    assert [p.sku for p in products] == ["KK-0001", "KK-0002"]
+    assert products[0].price_idr == 150000  # the seller's confirmed value
+    assert products[1].price_idr is None  # excluded: no row, no price, no guess
+    # ``price_suggestion_idr`` is dropped for both — ReviewedProduct forbids it,
+    # so a leaked suggestion would have raised above.
+    assert all(not hasattr(p, "price_suggestion_idr") for p in products)
+
+    with pytest.raises(SystemExit) as ei:
+        regen._reviewed_products([_bundle_record("KK-0003", included=True)], {})
+    assert "KK-0003" in str(ei.value)
+    assert "no confirmed price" in str(ei.value)
 

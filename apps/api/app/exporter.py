@@ -394,10 +394,31 @@ def build_csv(
     products: list[schemas.ReviewedProduct],
     seller: schemas.SellerInfo,
     base_url: str,
+    *,
+    images: Mapping[str, bytes] | None = None,
 ) -> str:
-    """Render the Commerce Manager CSV (catalog-feed §1–§3)."""
+    """Render the Commerce Manager CSV.
+
+    ``images`` (keyword-only) supplies crop availability from a mapping
+    keyed ``"{sku}.jpg"`` / ``"{sku}-crop.jpg"`` instead of reading the job
+    folder. It exists for golden-bundle regeneration: the Demo Safe Mode bundle
+    keeps its images as static JPEGs under ``apps/web/public/samples/{pack}/
+    golden/images/`` and the job folder that produced them is long wiped, so
+    :func:`crop_available` and :func:`resolve_image_bytes` cannot serve them.
+    When ``images`` is given neither is consulted at all: a SKU has a crop
+    exactly when ``"{sku}-crop.jpg"`` is a key, and an absent key is a legal
+    "no crop", never an incomplete map. ``None`` (the default) keeps the
+    job-folder behaviour byte-identical.
+    """
     base = base_url.rstrip("/")
     children_by_parent = merged_children_map(products)
+
+    def has_crop(sku: str) -> bool:
+        """Whether the crop URL for ``sku`` may be linked."""
+        if images is None:
+            return crop_available(job_id, sku)
+        return f"{sku}-crop.jpg" in images
+
     rows: list[list[str]] = []
     for p in included_products(products):
         if p.price_via_chat:
@@ -414,11 +435,11 @@ def build_csv(
         # Order: merged angle shots first (the reason the seller merged them),
         # then the primary's original crop, then the children's crops.
         additional_urls: list[str] = [f"{base}/p/{job_id}/{photo_sku(c)}.jpg" for c in children]
-        if crop_available(job_id, primary_img_sku):
+        if has_crop(primary_img_sku):
             additional_urls.append(f"{base}/p/{job_id}/{primary_img_sku}-crop.jpg")
         for c in children:
             child_img_sku = photo_sku(c)
-            if crop_available(job_id, child_img_sku):
+            if has_crop(child_img_sku):
                 additional_urls.append(f"{base}/p/{job_id}/{child_img_sku}-crop.jpg")
         additional = ",".join(_unique_capped(additional_urls, MAX_ADDITIONAL_IMAGES))
         rows.append(

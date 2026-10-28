@@ -165,17 +165,25 @@ def _reviewed_products(
     price invariant expressed as a type — and ``price_idr`` comes
     from the reviewed CSV. Every other field is carried verbatim, so the
     rendered text can only change where the record itself changed.
+
+    An excluded record (``included is False``) has no CSV row and is never
+    exported, so it needs no price: it is accepted with ``price_idr = None`` —
+    never a fallback, never a guess. An included record
+    missing from the reviewed CSV still stops the run.
     """
     products: list[schemas.ReviewedProduct] = []
     for record in records:
         sku = record["sku"]
-        if sku not in prices:
+        payload = {k: v for k, v in record.items() if k != "price_suggestion_idr"}
+        if sku in prices:
+            payload["price_idr"] = prices[sku]
+        elif record.get("included", True):
             raise SystemExit(
                 f"{sku}: no confirmed price in the golden catalog.csv — refusing to "
                 "fall back to price_suggestion_idr"
             )
-        payload = {k: v for k, v in record.items() if k != "price_suggestion_idr"}
-        payload["price_idr"] = prices[sku]
+        else:
+            payload["price_idr"] = None
         products.append(schemas.ReviewedProduct.model_validate(payload))
     return products
 
@@ -337,7 +345,9 @@ def main(argv: list[str] | None = None) -> int:
 
     # The bundle's own seller (Toko Contoh / 6281234567890).
     seller = schemas.SellerInfo(**bundle["seller"])
-    csv_text = exporter.build_csv(args.job_id, products, seller, args.base_url)
+    csv_text = exporter.build_csv(
+        args.job_id, products, seller, args.base_url, images=images
+    )
     rendered: dict[str, bytes] = {
         "catalog.csv": csv_text.encode("utf-8"),
         "photos.zip": exporter.build_zip(
