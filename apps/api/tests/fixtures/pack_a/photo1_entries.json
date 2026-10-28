@@ -1,74 +1,74 @@
 {
-  "placeholder": true,
-  "recorded_at": null,
+  "placeholder": false,
+  "recorded_at": "2026-10-26T18:52:17.638846Z",
   "pack": "a",
   "surface": "entries",
-  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
-  "model_id": "muse-spark-1.3",
+  "source": "Live Stage E entries from job-pack-a-v3 (window 2026-10-26T18:46:32Z-18:52:17Z), frozen in apps/web/public/samples/a/golden/products.json; KK-0004, KK-0005, KK-0011, KK-0012 = source_photo_index 0",
+  "model_id": "muse-spark-1.3-contributor",
   "payload": [
     {
-      "name": "Samsung Galaxy A54 8/128",
-      "description_id": "Ponsel bekas kondisi mulus, layar jernih tanpa gores dan baterai masih awet. Dijual lengkap dengan kardus dan kabel bawaan.",
-      "description_en": "Used phone in smooth condition with a clear scratch-free screen and a battery that still lasts. Sold with the original box and cable.",
+      "name": "Samsung Smartphone H6 Biru Second",
+      "description_id": "HP second Samsung H6 warna biru. Kondisi normal, fungsi lancar. Bisa COD. Harga Rp 1.500.000.",
+      "description_en": "Second-hand Samsung H6 smartphone in blue. Normal condition, functions work smoothly. COD available. Price Rp 1,500,000.",
       "category": "Handphone & Tablet",
       "brand": "Samsung",
       "condition": "used",
       "attributes": {
-        "color": "hitam",
+        "color": "blue",
         "size": null,
-        "variant": "8/128"
+        "variant": "H6"
       },
-      "price_hint_idr": 4500000,
-      "price_suggestion_idr": null,
-      "confidence": "high"
+      "price_hint_idr": 1500000,
+      "price_suggestion_idr": 1500000,
+      "confidence": "medium"
     },
     {
-      "name": "Xiaomi Redmi Note 12 6/128",
-      "description_id": "Ponsel bekas pemakaian wajar, ada lecet halus di bodi belakang. Fungsi normal semua, cocok untuk harian.",
-      "description_en": "Lightly used phone with faint scratches on the back cover. Everything works normally, good for daily use.",
+      "name": "Samsung Smartphone Second Hitam",
+      "description_id": "HP second Samsung warna hitam, kondisi normal, fungsi lancar, bisa COD. Harga tertera Rp 1.500.000, terlihat tulisan SAMSUNG dan H6.",
+      "description_en": "Second-hand Samsung smartphone in black, normal condition, functions work smoothly, available for COD. Listed price Rp 1,500,000, with SAMSUNG and H6 text seen.",
       "category": "Handphone & Tablet",
-      "brand": "Xiaomi",
+      "brand": "Samsung",
       "condition": "used",
       "attributes": {
-        "color": "biru",
+        "color": "black",
         "size": null,
-        "variant": "6/128"
+        "variant": null
       },
-      "price_hint_idr": null,
-      "price_suggestion_idr": 2800000,
+      "price_hint_idr": 1500000,
+      "price_suggestion_idr": 1500000,
       "confidence": "medium"
     },
     {
-      "name": "Anker USB-C Charger 20W",
-      "description_id": "Kepala charger 20 watt kondisi baru, masih tersegel dalam kemasan. Mendukung pengisian cepat USB-C.",
-      "description_en": "New 20-watt charger head, still sealed in its packaging. Supports USB-C fast charging.",
-      "category": "Aksesoris HP",
-      "brand": "Anker",
-      "condition": "new",
+      "name": "Samsung Smartphone Hitam Second",
+      "description_id": "HP second Samsung warna hitam. Kondisi normal, fungsi lancar. Bisa COD. Harga tertera Rp 1.500.000.",
+      "description_en": "Second-hand Samsung smartphone in black. Normal condition, functions run smoothly. COD available. Listed price Rp 1,500,000.",
+      "category": "Handphone & Tablet",
+      "brand": "Samsung",
+      "condition": "used",
       "attributes": {
-        "color": "putih",
+        "color": "black",
         "size": null,
         "variant": null
+      },
+      "price_hint_idr": 1500000,
+      "price_suggestion_idr": 1500000,
+      "confidence": "medium"
+    },
+    {
+      "name": "Casing Transparan For 14 Pro",
+      "description_id": "Casing HP transparan untuk 14 Pro. Kondisi normal, bisa COD.",
+      "description_en": "Transparent phone case for 14 Pro. Normal condition, COD available.",
+      "category": "Aksesoris HP",
+      "brand": null,
+      "condition": "used",
+      "attributes": {
+        "color": "transparent",
+        "size": null,
+        "variant": "For 14 Pro"
       },
       "price_hint_idr": null,
       "price_suggestion_idr": null,
       "confidence": "medium"
-    },
-    {
-      "name": "Soft Case Bening Universal",
-      "description_id": "Soft case bening untuk ponsel 6,5 inci, lentur dan tidak menguning. Kondisi baru tanpa kemasan.",
-      "description_en": "Clear soft case for 6.5-inch phones, flexible and non-yellowing. New without packaging.",
-      "category": "Aksesoris HP",
-      "brand": null,
-      "condition": "new",
-      "attributes": {
-        "color": "bening",
-        "size": "6,5 inci",
-        "variant": null
-      },
-      "price_hint_idr": null,
-      "price_suggestion_idr": 35000,
-      "confidence": "low"
     }
   ]
 }

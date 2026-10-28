@@ -9,10 +9,15 @@ is to make three separate failure modes impossible to ship quietly:
   under ``META_MOCK=true``. A fixture whose payload drifts from
   ``schemas.py`` turns every mock run into a test of the fixture, not of the
   pipeline, and mock-green stops meaning anything.
-* **An invention that looks like evidence.** Every file carries
-  ``placeholder: true`` at the envelope level and ``recorded_at: null``
-  . A future recording flips both. The pairing is asserted so
-  a hand-written payload can never be silently indistinguishable from a
+* **An invention that looks like evidence.** The committed set is recorded:
+  every file carries ``placeholder: false`` and the ISO-8601 ``recorded_at`` of
+  the live response it came from, under a ``source`` that names the capture and
+  a ``model_id`` the surface can actually come from.
+  ``test_all_fixtures_are_recorded`` pins that for the whole inventory, so no
+  fixture can quietly revert to ``placeholder: true`` / ``recorded_at: null``.
+  The envelope's shape rule still holds in both directions — a placeholder
+  pairs ``true`` with ``null``, a recording pairs ``false`` with a timestamp —
+  and that is what makes a hand-written payload impossible to confuse with a
   captured Meta response.
 * **A fixture set that would let a wrong pipeline pass.** Masks carry their own
   geometry, so a set where every mask is full-frame would let an
@@ -25,6 +30,7 @@ Nothing here calls Meta, opens a socket, or imports ``meta_client``.
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -71,6 +77,19 @@ SCHEMA_BY_SURFACE: dict[str, tuple[type[BaseModel], bool]] = {
     "health": (HealthResponse, False),
 }
 
+# surface -> the model ids a fixture of that surface may claim to have been
+# recorded from. ``muse-spark-1.3-contributor`` is the same model reached
+# through the hackathon contributor route. ``health`` is a local liveness probe,
+# not a model call, so its only honest ``model_id`` is null — any other value
+# would claim a model was called when nothing was.
+MODEL_IDS_BY_SURFACE: dict[str, frozenset[str | None]] = {
+    "concepts": frozenset({"muse-spark-1.3", "muse-spark-1.3-contributor"}),
+    "masks": frozenset({"sam-3.1"}),
+    "entries": frozenset({"muse-spark-1.3", "muse-spark-1.3-contributor"}),
+    "fidelity": frozenset({"muse-spark-1.3", "muse-spark-1.3-contributor"}),
+    "health": frozenset({None}),
+}
+
 # Fields that belong to the seller's review, not to the model's output.
 # ``ProductEntry`` has ``extra="forbid"``, so their presence already fails
 # validation; asserting it separately exists so a future fixture author reads
@@ -86,6 +105,26 @@ PRODUCT_COUNT_BY_PACK = {
     "b": (6, 10),
     "c": (8, 12),
 }
+
+# The committed inventory, written out rather than inferred from the glob:
+# 3 packs × (2 photos × concepts/masks/entries, 2 fidelity outcomes, 1 health)
+# = 27 files. Spelling it out turns a missing or extra fixture into a named
+# failure instead of a silently shorter loop.
+FIXTURE_NAMES_PER_PACK = (
+    "photo1_concepts.json",
+    "photo2_concepts.json",
+    "photo1_masks.json",
+    "photo2_masks.json",
+    "photo1_entries.json",
+    "photo2_entries.json",
+    "fidelity_pass.json",
+    "fidelity_fail.json",
+    "health.json",
+)
+
+EXPECTED_FIXTURE_NAMES = frozenset(
+    f"pack_{pack}/{name}" for pack in PACKS for name in FIXTURE_NAMES_PER_PACK
+)
 
 
 # --------------------------------------------------------------------------
@@ -396,3 +435,114 @@ def test_fixture_counts_match_the_sample_packs(capsys: pytest.CaptureFixture[str
         )
         for surface in SURFACES:
             assert counts.get(surface, 0) > 0, f"pack_{pack} has no {surface} payload"
+
+
+# --------------------------------------------------------------------------
+# Recorded-set invariant
+# --------------------------------------------------------------------------
+
+
+def _recorded_problems(envelope: dict[str, Any]) -> list[str]:
+    """Every reason one envelope is not a recorded response; empty means good.
+
+    The caller prefixes the file name, so the aggregate failure reads as one
+    line per offending file instead of one line per violation. Judging the
+    envelope alone also keeps this independent of the payload checks: a fixture
+    can be schema-perfect and still be an invention.
+    """
+    problems: list[str] = []
+
+    if envelope.get("placeholder") is not False:
+        problems.append(
+            f"placeholder is {envelope.get('placeholder')!r}, expected false "
+            "(the committed set is recorded)"
+        )
+
+    recorded_at = envelope.get("recorded_at")
+    if not isinstance(recorded_at, str) or not recorded_at.strip():
+        problems.append(
+            f"recorded_at is {recorded_at!r}, expected the ISO-8601 timestamp of the "
+            "response this file was recorded from"
+        )
+    else:
+        # ``fromisoformat`` learned the ``Z`` suffix in 3.11; stripping it keeps
+        # the check honest on any interpreter rather than relying on that.
+        candidate = recorded_at[:-1] if recorded_at.endswith(("Z", "z")) else recorded_at
+        try:
+            datetime.fromisoformat(candidate)
+        except ValueError as exc:
+            problems.append(f"recorded_at {recorded_at!r} is not ISO-8601: {exc}")
+
+    source = envelope.get("source")
+    if not isinstance(source, str) or not source.strip():
+        problems.append(f"source is {source!r}, expected the origin of the recording")
+    elif "hand-written placeholder" in source.lower():
+        problems.append(
+            f"source still says {source!r}; a recorded fixture names the capture it "
+            "came from, not a placeholder"
+        )
+
+    surface = envelope.get("surface")
+    if surface not in SURFACES:
+        problems.append(f"surface is {surface!r}, expected one of {list(SURFACES)}")
+    elif surface not in MODEL_IDS_BY_SURFACE:
+        problems.append(f"no allowed model_id set is defined for surface {surface!r}")
+    else:
+        allowed = MODEL_IDS_BY_SURFACE[surface]
+        model_id = envelope.get("model_id")
+        if model_id is not None and not isinstance(model_id, str):
+            problems.append(f"model_id is {model_id!r}, expected a str or null")
+        elif model_id not in allowed:
+            problems.append(
+                f"model_id is {model_id!r}, expected one of "
+                f"{sorted(str(value) for value in allowed)} for surface {surface!r}"
+            )
+
+    return problems
+
+
+def test_all_fixtures_are_recorded() -> None:
+    """The committed fixture set is recorded, not hand-written.
+
+    ``META_MOCK=true`` replays these files, so a placeholder among them turns
+    every mock-green run into a test of our imagination rather than of Meta's
+    contract. One test pins the whole inventory at once: the
+    file set (3 packs × 9 files), ``placeholder: false``, a parseable ISO-8601
+    ``recorded_at``, a ``source`` that does not admit to being hand-written, and
+    a ``model_id`` the surface can actually come from.
+
+    Violations are collected before the assertion, so a single run names the
+    entire backlog — the point is to see every file that reverted, not the first
+    one alphabetically.
+    """
+    actual = {path.relative_to(FIXTURES_DIR).as_posix() for path in FIXTURE_FILES}
+    missing = sorted(EXPECTED_FIXTURE_NAMES - actual)
+    extra = sorted(actual - EXPECTED_FIXTURE_NAMES)
+    per_pack = {
+        pack: sum(1 for name in actual if name.startswith(f"pack_{pack}/")) for pack in PACKS
+    }
+    assert not missing and not extra, (
+        f"fixture inventory is {len(actual)} files, expected {len(EXPECTED_FIXTURE_NAMES)} "
+        f"(3 packs × {len(FIXTURE_NAMES_PER_PACK)}); per-pack counts {per_pack}, "
+        f"expected {len(FIXTURE_NAMES_PER_PACK)} each\n"
+        f"missing: {missing}\n"
+        f"extra: {extra}"
+    )
+
+    problems: list[str] = []
+    for name in sorted(EXPECTED_FIXTURE_NAMES):
+        path = FIXTURES_DIR / name
+        try:
+            envelope = load_fixture(path)
+        except AssertionError as exc:  # unreadable JSON: reported, not fatal
+            problems.append(str(exc))
+            continue
+        issues = _recorded_problems(envelope)
+        if issues:
+            problems.append(f"{name}: " + "; ".join(issues))
+
+    assert not problems, (
+        f"{len(problems)} of {len(EXPECTED_FIXTURE_NAMES)} fixtures are not recorded "
+        "responses; the committed set must come from live Meta responses:\n"
+        + "\n".join(problems)
+    )

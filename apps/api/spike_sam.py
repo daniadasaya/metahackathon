@@ -157,7 +157,13 @@ def _overlay_png(
     label: str,
     out_path: Path,
 ) -> tuple[int, float]:
-    """Composite the decoded mask over the canvas; return (white_px, frac_in_bbox)."""
+    """Composite the decoded mask over the canvas; return (white_px, frac_in_bbox).
+
+    Box-local convention (matches ``_live_overlay_png``): the raster maps
+    onto its own box, so the canvas is ``(max(width, x2+1), max(height,
+    y2+1))``, the raster is pasted at ``(x0, y0)`` as the alpha channel,
+    and the bbox rectangle is drawn at ``(x0, y0, x1, y1)``.
+    """
     from PIL import Image, ImageDraw
 
     try:
@@ -178,17 +184,16 @@ def _overlay_png(
         for x in range(width):
             if px[x, y]:
                 white_total += 1
-                if x0 <= x < x1 and y0 <= y < y1:
+                if x0 <= x + x0 <= x1 and y0 <= y + y0 <= y1:
                     white_inside += 1
     frac_inside = white_inside / white_total if white_total else 0.0
 
-    canvas = _photo_canvas(width, height, seed_bytes, label).convert("RGBA")
+    canvas_w, canvas_h = max(width, x1 + 1), max(height, y1 + 1)
+    canvas = _photo_canvas(canvas_w, canvas_h, seed_bytes, label).convert("RGBA")
     red = Image.new("RGBA", (width, height), (255, 45, 45, 110))
-    canvas.paste(red, mask=lum)
+    canvas.paste(red, box=(x0, y0), mask=lum)
     draw = ImageDraw.Draw(canvas)
-    draw.rectangle(
-        (x0, y0, max(x1 - 1, x0), max(y1 - 1, y0)), outline=(30, 90, 255, 255), width=2
-    )
+    draw.rectangle((x0, y0, x1, y1), outline=(30, 90, 255, 255), width=2)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     canvas.convert("RGB").save(out_path, format="PNG", optimize=True)
     return white_total, frac_inside

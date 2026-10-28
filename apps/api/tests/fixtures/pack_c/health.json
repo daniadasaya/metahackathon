@@ -1,9 +1,9 @@
 {
-  "placeholder": true,
-  "recorded_at": null,
+  "placeholder": false,
+  "recorded_at": "2026-10-28T00:14:52.475814Z",
   "pack": "c",
   "surface": "health",
-  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
+  "source": "Live health_probe() (client.models.list()) succeeded at 2026-10-28T00:14:52.475814Z during the 2026-10-28 Pack A capture; the payload is the META_MOCK=true contract (ok/mock), not the live body",
   "model_id": null,
   "payload": {
     "ok": true,

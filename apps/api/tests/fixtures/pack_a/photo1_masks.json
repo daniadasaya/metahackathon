@@ -1,46 +1,416 @@
 {
-  "placeholder": true,
-  "recorded_at": null,
+  "placeholder": false,
+  "recorded_at": "2026-10-28T00:13:51.912716Z",
   "pack": "a",
   "surface": "masks",
-  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
+  "source": "Live P2 segment_concept on samples/a/photo1.jpg at 2026-10-28T00:13:51.912716Z (one request per P1 phrase, no retries needed)",
   "model_id": "sam-3.1",
   "payload": [
     {
       "concept": "smartphone",
-      "bbox": [40, 60, 300, 440],
-      "width": 640,
-      "height": 480,
+      "bbox": [
+        256,
+        398,
+        323,
+        511
+      ],
+      "width": 68,
+      "height": 114,
       "revision": 1,
-      "score": 0.94,
-      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAHgAQAAAAAdquFJAAAEhklEQVR42u2dS3KbQBCGBZ5KWLhKPkCqwhF0g3Cs7DxHyJFYZpkjsMgiS6cqCyWF6Sz84jUzYvofCeS/V8Kgj373QMmw21EoFAqFQqFQKBQKhUKhUCjvSO6lgfK+iEgN5H0UEeliv51P//R1t9vtMpzRNyIiIi1Mw0/PXIvSUJ7lIe7r2cTiF1sfDcbk21cyyIeH1081xOTsLQH/FggNe9sYH972wgMBHnqfa2QWRmdi7okRIigfnBuRwMJbRRHAw2Cr1gOrwVaprpRs2KhjaiX36WvUJpvgfFgILALNcjHwMNpba4HVaG+JrOTIas69PtOmzSSqRgk0J6wrFgGL4JBdCLyb7FYuH+7HUY5YJw6Mksnu33cak2c8VigrBSC5H25UQIMwIPc7LFMB5yJqNcC5ZlVpgHNfLjWJLTP7F2d2HghAsabEnmUbBdBALMgD7soUwPl42hUFZT6Hq3jg/FfL+EqR2QOWlkpCHzoSpIgGOnQ160kbgzljHnJWth6TXflmY4GukqhWY7JLkzK2lsVxxMJiTmeyM9+KtQTFSTZr0dCATpkHfZ+txWR3+tqVaOgu2WolGrr1KC+rYRbqXkv7VzIfeuqhWEeUPWCzDg0N6pxJbxFAgcVpF6wX1NBXXnYVGvp6VHWdaeMzq7yohlmwYS9s2ZsJirdei6vMQy/XXKXJBnbSzZhcnHaBeU0m+xuUvUaT/WOjukaT4UC/l8qrMjkLz/llk/7dpk2ghRYsvQsAA1hDH4aBBndWJjYKWJx2/UYfbhoYmruWPiRwCgwtUSv6kMAzAEN5VtKHBBK4iVsEEjhqwT0CBoVAAgkkkEACCSSQwDMAbeCoB/qQQAI3AawDRzX0IYFnAIbyrKYPCezL0820/cMpR9GH2wYe/QcJfXgBYOBpYR19GAYGnNTShxcABtrJkT48AWhRdwi2Y3KNupB6x2nToC4CtvOLcf8S9ip/f3hErea2Y3KLWittx+QOtbTZjsmCWjhsaARY0JxPp2ENGssbCkoDmqLp/iHaN/bW8U+UR9CM2lDatKAZlU7DDjRS0mkooAmQMG0spmEn1LDGNOyEGjaY/prwGUHuDruSR6m460EigS2meyU0ucN0r4QaCqZ7pZx6FtK9esAa0mxSmtxAmk2v8l3dYTUPsnPlm0QDW0hvSGlyB+kNPaBASjnpCtYiSrkPrBGl3Ac2iMpLOOhdxax4Yu0RUXl9YIuovD6wQxRK0sQWROUNNLSAQhkAa0ChDIANoFAGeTuX2ZqnoM8FQDRRnsu5TgXsAHmd9p6DAPJ6qKHV5/VQPk/e/WF1wP0EqPPh1GNaYKtPwyGw06fhECj6rBklttVnTe5tVo22bvbqrBlpeFRnzQjYqrNmBOzUWTMCjmr3lxo4CrM6yOMw7/QaHrVBHgP/OTcigaKs5OmQqnqffyCG1l4Zk8lS4+YtmePeHJm7e3Tc6zfHQHlz4nfM5N/rXHiGl28+vnz4s8MAXx+o8Q21fIK/YvXxqSf+xK3wdK+pnRP0i3Txr/qlUCgUCoVCoVAolEvKf7BNY9BHijrTAAAAAElFTkSuQmCC"
+      "score": 0.719298243522644,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAEQAAAByAQAAAADCS0qvAAAAwElEQVR42rWUvQ2DMBSEPz+QQhc2CGOkZDSyGdkgI1CmpCRSxKWwMAQZ4oK48enu3o+fbAOZ1AJwkjRMQCNgVwDXgDEtqwPyWw1IktR++bZR9dPXbKrlRkS74orEXlJRvqtahHNgXWKNfs01uxE1NqRkrg6ZQZnoK46dODn23lYNG9ecW/gc8uAWq5H5ewv3wNWp/YXMc2x17MkXqIz0/PpbtT7CdfMkA3KTKgz/WEfgIknqMZ4APAA3/Spw9h/NByIeNgMmYtfsAAAAAElFTkSuQmCC"
     },
     {
       "concept": "smartphone",
-      "bbox": [60, 40, 280, 500],
-      "width": 512,
-      "height": 640,
+      "bbox": [
+        266,
+        150,
+        331,
+        279
+      ],
+      "width": 66,
+      "height": 130,
       "revision": 1,
-      "score": 0.89,
-      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAgAAAAKAAQAAAADCs/2PAAAEWElEQVR42u1dO3LbMBCFaBQoMmPdwDyCD5CCNwuKHIxlyhyBR1BmUrCguCliayziQ+wCwpDUe41lWX7cfXi7C9IWpRQAAAAAAAAAuHjxPfl2OfVZpERT8osbz3PflXrJieBERDRmELwSEVFGCu9KKaUyciAiIrrkrAFR+jq4KXyLGCSJ4Pzx1UpT+PE/BRryNExW8eRo+KneVcs00DGTpxCYYGyJBO+3R72MoLs9avMWIXUZmvCqGBFB41kPFoGON6t1AhPxWBLB+ctjKyFovSvKIOgCZAIbJBqhiRSnERA0gSVNJtBrU2uNwESbTQLB+e47KylnLpqwj9Kc1KjIr7R5PkpzUhNr8qa+iDFbJRFofnhNLOlTfQ3Oi59aLkGrFNeKhVPolMrzMhHby2VTOCnFLoYmbb9TKwUtoC8bgVndRT46grPzY8sjcJ3bVU7BPV77+AjuFso91/tzrqqBxzam7ip4yHTdCLSEv2gEJuGs8LER+Fxnq0bgK72uagS+o7VVI8huKL5rR6sdpWQKXtuamiJ6ufT2l3HtekFTMwKzOrk2L6Lf9XZPKfibT1cxAv+x2s2LeIq3xPWmuCUfBOrO7MjKASq9p2rMJdCyI2wpBZNwSrPxFEJ1b5/IiaH+3T2RBqFc28NrcFoZjavD8Ug+CLYu8zy1EGTST9QPcgm08BBH0sCkXKKAkR5MEG7eFiKmEoS3AR1ErEYQ1rqFiPvZaIb/ozG+04SIWyKIDHEDEUGQTBAh0hARBDsi0NJjQEQQgOBwBCZhNwwRQQACEIAABCAAAQhA8IwEkTfKE0QEAQieiyByz4gZIoJgRwQRv04QEQTJBJGN0AgR90Nggy+5QMT9EPTBlwwQsRpBWOseIq7g9leo18vqSyDiwwmCQ5yeR4NJdtYHI30lmGXnG4fSgGRb5WMZyYr2mcfSoBdt0o6lwSDaIh3r/Y2hPc6O3o40irYHm0phEk33Y1XjLBrOm0qBRLN1W8toJaNxWyn0kslWNIJBMle2dU8Y/2DY020s/HVHNSOYJF19WyLOkqZcNAKS9NSyIlpBS9zYdO4FLbFsBIOgJZa99Z+vp9W9Y9soaEhlI5gEDalsBLOgn5SNgAT9pHA5W34/KRxBz28HhSMY+O3gHq/LG3WTqpzCyK/mwhFM/GouHMHMr+Z7AuIXY+nhatnFuCDo2bVUOoUhr5bcaqp//WBk19KCYGKXwoJgZju5tAbELoVlBJbr5CVBz3XykmBgGzFbxKiXBZvtkWvEJcHENeKSYOYacUlAXB85q2CZPnIIeqaPHIIhp6EtjSA66RqZNnAIJqYNHIKZaQOHgJg2cKvR8mzgEvQ8G8TWUXjuPPJW0SWYeKvoElw/H/yVnv5b1iJ48Pahoc3tq+LGnP3hh1eWhr7B0imllPqdO1xyrkmwPgTTkwJ1SqlfOQMy+4NAr636qQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAqIt/fDtphROOp50AAAAASUVORK5CYII="
+      "score": 0.8083832263946533,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAEIAAACCAQAAAADaxyPxAAAA30lEQVR42rWUy3GEMBBEH8O6vDcTwB7IxMrMCmFD0mZCCBw5UPQeEKJQof1gm9OrnukuaSTBF/GzRgu1dJEcl0hQJ6KfUZJ8ohGgEkAV+yAkahM1AD+LxVLqTKuXlTxYyDS309fuaCs1G60r9v0d9cXqGWw4mHz6xapso43LyJ94p+UYHvU5TI9X4A9OssUI/39a8do3h7x9sXrGGF5MGTPtVOibMs2eJuutHVWlqs80/8asQqa5RAH4liRtHd3WoZ3kCYs/pDFpQ6Ie4FOSkuMGQC0NQA3CfcyPimsFcAftNz0BeQOf7gAAAABJRU5ErkJggg=="
     },
     {
-      "concept": "phone charger",
-      "bbox": [15, 20, 220, 180],
-      "width": 800,
-      "height": 600,
+      "concept": "smartphone",
+      "bbox": [
+        143,
+        420,
+        195,
+        520
+      ],
+      "width": 53,
+      "height": 101,
       "revision": 1,
-      "score": 0.91,
-      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAyAAAAJYAQAAAACyDb/dAAACz0lEQVR42u3bMW6cQBTGccIiL0WkULrLHiOd9yh7FI6So3CEHMFFipQULnYjzKRgvQJ2HrKU9401yf9XWYPkT/PezACJKQoAAPDvewqhTZAhT/kSQghh1IaEybN+IuKphKCfyv4WMnj/6vL207fbT7tWXy1hvfazkEFVrsfZ4E4VcpqPdppqfQpzvWYmD4vRz5qQx8XoThNyWg53+pZ4N6Vcb/xJrQhZd/pBEdKsy6cIOa3HFZ0Pa65n5FSX3d2ReKndy1XdjVf+Pak3bmZuIY1RRteQ0/2FTr+4fJdXadWm8Q6Jddl9CcfWa+UdUm8+kDmFNOZR4BhyiF1pnUOOsStH/TZx3ShlkUBp9rjxDYnPpvYNie+7yjekVncrWeObjbu/W8ghfqnNr1zGAXLUnyqe50qqclnLqMluJlZOnd1MrJOwym4mtTw/2bGSIqTZfNPLaSYH61pL4z8qxLwDHinX+2/xjjd5lvB/G2Kf6A3lIoQQQggh5N0hwbzWUy5C/jbEfGvjWTgW0lnXOsr1Ua9zX63XuezKZZ3ogcbHQs7GpTG7mVh//DZkNxOr9ufsZhLUj13pNmMrvsUXpX0H7PIq18YNxbcnvfikT7e6zuJDuCjNk3DwDRnFR1dRmi3uM2x8/Fx5dg7ptKfKxpb3Llev3fBTyFm7F6eQQbsXp5BRuxenkKDdi9fN2Eq3ib2G/Z/qe+kKvoacpSv4GjJIV/A15PVu/JfgTavVL67I8lK8M/bKxfUW8rIa/q0IGYUn1y1k/YHhjxTPw76//O3/S/eLAr1WinKtOv2i+WePZVM0LVk1RfWUl+QDvcts8KcqZP6nMN8Lfb2En39eZNWaS/JJbpKPi9N8Jp3kg+80n64DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgNgf4n/XxiaTRyAAAAAASUVORK5CYII="
+      "score": 0.7264957427978516,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAADUAAABlAQAAAADFE5YqAAAAqklEQVR42p3RsW3DUAyE4U+0kLizR9AYKTVYCo32RvEILhVAMFM4gF6MZylxdfh5BxIk+QQOWcApE+LMjBh4L8SIDwLefhQyM5eVm/ro98S0kd/S0uj3TPsX+l92/GvFQcwP/lJxV9VvrX6TyJrHxtyp4qHhl4rPO/sdG/VLI9c3cteKY2POjO6v957++Z9x5WUnf4Nh5fzlHzDSBQXHcD9EuC/aIfmCLtM3W7slJap8i7IAAAAASUVORK5CYII="
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        634,
+        387,
+        676,
+        489
+      ],
+      "width": 43,
+      "height": 103,
+      "revision": 1,
+      "score": 0.7037037014961243,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAACsAAABnAQAAAACxvIZ6AAAAmklEQVR42qWRuw3CQBBE360REBDQAdcJ7swu7UqgBJdgIYJDsm4IFuQAbGyInmY/o9EuND1ApQLYgZCAk5TBImzBaghgAC1IUnIVHXzCcaa3AP1/61+ytL+ZIUlTySY99/PW6a24mZjsRmWLU4cFk+3aS9Qv1a/bi47OMkBiJ0nee6I4BmwAsqsLBKm4y9UfAUCTATgDVNxvwAP5GS4ztMUqhAAAAABJRU5ErkJggg=="
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        1535,
+        761,
+        2000,
+        1005
+      ],
+      "width": 466,
+      "height": 245,
+      "revision": 1,
+      "score": 0.9452055096626282,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAdIAAAD1AQAAAADMxUmhAAAE30lEQVR42r1bMZLbSAwEQZ6WwVZJ4Wa3T/APVk+5ZzhwlVV+iZ+i0KGfwOCCC7lVF1BblMaBtSuRM0ADmKubTEU2MdNoYAYgRVQYL4lC4yGllFI6BKDpOibDvbz4tf2Y7MPRZ3Ob7obBcHNb6PLuxOY5b9eGGjNbLykbg3HO7ZxfOfW2OX8pXOlsdrejTqNitylC6YjtPkiefN1Bu5+lSz22K8bMGbHFjVHqpRs2BrlKWGVViGj+JF/75IpfH9G8l691FXbbCiwdKrB/AV1pqRiEsGq3q5gzV2CbCiwiOmljqLCrZw5Wp/VYYbfmalOBBUS/xIkGdp8qsBsVO8TJ4jFOFoNzxV7Dzjr2WVtQc1GxWupgcPzrYvsgZLrV6SBqjmFRaqpkGsKqVM4bcPdnAg5utTlfKKpKRj5S3MAwCT9r2GOUaCbkpE6THHCSrEom5CSZDybopL2CRU561vLkIUg047PfRsMOcZ4JpFlxXkxEU5AsJqI3gN0pWOSkXtvLDjGiW8PBsRFyJRN2kpqFt3qaTaOy3ilGFpPBSZ2CRU5iNf3uI0SzqYrSHv1niOjfdscQ0b+xyEkbJbAblO8a2S7sOSk8Ax8J4X/Fomh4UrBjRJVXEto5QNbVLuJZTS1AWMWjEtsqsGKuZGNP4THSADHch1JWqWH5/jzYFtzLWOTfkirfsdDBOxkLI6lX+Dv4Fc3WplH7HzvpfTz4Ff0x5zc/0be4REznh3+29jIKim7tXaNsU7o9bXAr+oYd3Yq+cQXTXVaS3rBwX8k68Gz2Ud6Bb407NBFR81302tFL1h0WOulJ3itQrZOp8s4uTFmtPGeYsjTJf3WGMJOD6J2MhUQ/ylgYDSz/nNyqdKS7FVn3dqGDlSVgB+9ELH4p2MvUQQdvZCx0cCNjxwpFO520sDvHfeR10nL1MFcuUgeba5n89iV2cEUDOzW8F9cLU+XipeHSLnZSL875DLEyz5joVsZCou9jbYXF0fAsYiePKld1D9z871W5sovTDscr8JTkx4wOotfYyUH0Gjs7iF5jzw5Fs6eVscrRGdaRozPsP3aiM+xsJzrDOvJshk12opncRHdy/2A7WpnO7WJVyrHWmjfDfM44/N8Lh3zOmOhOTgPmDa3QpzETXbD7r1XRBezFquhSbykZiWaisCpLdiFZ1+quhIVV5RVVmvP/WrC4NpZJ3ppGG9FF7GRTdBFbwbNhY1FO+C/J0ggvv1iCyjp34hHARlYZayOrjD2bVMnG3k3pBuElHCTr1It2J4sqBayp5yBgTSHcmjtdoLnjCeFBftkJq45TLx5LZwPR4ktWlOATy8fhgyn8g2QdZLsjVrRoGm4OrzvRLlSW7CO8kXZK2XGwpJ0g0RcFPUIHyy7Gr7JkuziEW2Nt77OLu0oK9mcFdqrAvtVwhd5ka8r6XqHKsQILyDpq2LcKu8F/QFiOLPrHhvourPoIkaVi1QhOOvZSYTfpD675HpijR06aAXaosDuqDtSxmoN/AuyscqF/LazU4NqZAY0L4koRx9/wU/KklZPoe38hVZ7+IMu/X+QaNsTVt1Vjxz4+2tfsrr9OO5ueSyVMnzejXCyF7DJFsefGEb/L4D91nthfjh++9d0f7mZfzslK3hj21a3AreHrDYQNQK/YQW1FqUm2odjQpvsLXK7io0EN2S0AAAAASUVORK5CYII="
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        0,
+        641,
+        62,
+        756
+      ],
+      "width": 63,
+      "height": 116,
+      "revision": 1,
+      "score": 0.7264957427978516,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAD8AAAB0AQAAAAAau9fdAAAA0UlEQVR42p2TMQ6CQBBFHyOJFBaUVspBTPQo3kTiyTgKR9iSgvAt2CXqOgatePnvL7tMFgB2ALCVAIM9tGBwhQtAIakD4wA0MVAAm+alGABVAjIofWW+KnxF66sFLis6CzS/lHOofVVlSemXzVfFTwdrV5XrBEOmxjjEb8vjBWj+Gl39raO3pPLL5SZeVH3qdP4x+vn5SYXVXzFlyWjM0xxSEhL0sJUkxbIKjBG4A2ykIb1ngQAYE/Svuwu65wS4paGdxZs6TjEJS5R+Xk4JdgAPwlMzpf0kzbEAAAAASUVORK5CYII="
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        469,
+        164,
+        526,
+        276
+      ],
+      "width": 58,
+      "height": 113,
+      "revision": 1,
+      "score": 0.8128654956817627,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAADoAAABxAQAAAACsX40qAAAAs0lEQVR42q2TMQ6DMBAExwcSKSKFMiU/CU/z0/wUypSULhCXAhzZwoCD0q1mx6eTLdOoegB5QjMC0gF3QACqEHAgPUAXSBvCLYSvXEfEKIDKSsxGToLNV5qVXUIMyLA/edyvLgS7X/UR8b9Mnlju9z8bHoS2wLnlqjkldc7RlEjs2Os7m5i4glNDgTMWr2Ej4s/k/nDgdHbcQaWqqptqS+aYzAATggK8AV6qy4M81o8O6oEPUKUq6E8N3g8AAAAASUVORK5CYII="
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        370,
+        159,
+        431,
+        279
+      ],
+      "width": 62,
+      "height": 121,
+      "revision": 1,
+      "score": 0.8202247023582458,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAD4AAAB5AQAAAABJ5689AAAAxElEQVR42q2UQQqDMBBFX0ahLj1B603q0bxCb+RRcoQspYi/ixiqhIiCWT3en0wSBgKeuB4KEV4SANaBPGA98AQMwI2AJMmvhjZBk6BOkHZhCVwWMWSmz0y3McM+2sKYGZ+ZsF76b6ZywxI0V4rB5utH1NhSrlECt4/sRGd35hrD0aFZVEEP4DbReOKlcTzdYU0oR9PetNeGcgTz3jT3dV6ne3fDHOZyNBlLMnGooSKO8AO8JS0YeOAbvwfJAzhp3fkW8AOeazFWGxmSTAAAAABJRU5ErkJggg=="
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        155,
+        149,
+        226,
+        281
+      ],
+      "width": 72,
+      "height": 133,
+      "revision": 1,
+      "score": 0.8358974456787109,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAEgAAACFAQAAAADQ4IOAAAAA8UlEQVR42p2UQW6EMAxFXwJS2ZVlF6MRNylHy7LH4igcgWU0YvAsDGmIMB2aDU//21Zih/Axo8t/VeNKHfeVepyKHripKCIyJIqJJABOAJ71RjjNBUKiPhHgAwDdTtNPm6gBPxTunnSbteH+0mS63siIp/XeIfduRsi1uXT73F3sKl2uiR3X7rRw6WzNhR4Mp+42uKvd9YY7FZoz4uK1WYYDrT/OWAfXHbhtri2l2/z7hkGda1K683mVSn9KeB7X+4N0wN5wx9NcHZdLmhhx0ayy7LS5OG9MNCUaHbgFkLTnBx5t2w8A39sbx6dsN6USgBc/Zj6mDxednwAAAABJRU5ErkJggg=="
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        1841,
+        762,
+        2311,
+        999
+      ],
+      "width": 471,
+      "height": 238,
+      "revision": 1,
+      "score": 0.949367105960846,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAdcAAADuAQAAAABD/XC9AAAEv0lEQVR42rWbMXbbSgxFMaCOzCLnWGU6awneQbSUv4zfRUvxUrSELIFlSuZXdA6lSSGJIqkB8IDJZ2WbvsbMewBmhpSJ6HvOOXcUuV7z/erp2/WLC8p+z6XrCJApSUGSyfJWupNtthVvjSa7E2815pzfsnj1Vty9fO+LxSr3Gos9KDdP8bj0buSGZuNnG2czx8dspGVDmljpFI6r/l2Lfa9g2wp2W8GmCpbUMuRTXGgj7nsFqwrNelPfVMRVb3MfN8mIq7YOHnR2r7FGB9+F1qPrdVaU5hwXmvWUVYVmqwmfNLYLC83Uh4VmMgz+orFjWGgmY1OTNNbaVxz9m6Tp6sJ1pAnN5grdaqyRHNuKMSeN7aOtw44rZ3QiejGyUtx1sL1v3ChjtnbarNywkjIdtX3fwYA/5AGdgkIDHokZzWQmpdg6mOzEahR2oFj5M3KoOMjsOZjRbLYkIvqqsKdYRiP+Sr/EBBgsZDQTYLAgNBNi8F5mx1hGM5Fd/UKPTtBZt3zYgTwSenSDHEiEww4jh0bhb1/ZLmTSle1DJl3ZIWQSY48Utor6OeIS5m+5PTQEGvwhxj1FTLqxpsFfK+a7kVkzOVj+2VDhkZkcJTXR+ZaEvrH2072dyNoP2Fp5zMeASUxgYrH8IzOxCuvKnTWTo1Atd89fzOz4tZPijgGh4dwoCD3lqenw87rChBqclH3XPyZ8kuJ2fpNwrZ4raWJ7fyVNrJkbz9vZibWTgyvmm0QWeC8gepT9QjPBifW0NjD0tKlcDQ8BXntvNTy+tQ0WD2jUZPPqpLiASTuJBUxqxbw6eoVmcpjUiOwP725nxtomrVrHrDjs9r7q77O4o1foGQsYvInW/tNvz77L3tbB9jEXOEWrr86K1eCbL0keAe19adKcHZwmzdnRaZJzvou2M2eR174Hwe0EwPNqmMcFEmshNENZUxaajf21JvQiu197Vzks4gLJMR+b09/FQrpgR181LNiLzyT3mLcCiyRHEpcJoO08tpXuMc/2rEzOxJoJvWQ7l9BLtncJvWQHl9BLFkmsR6X6dX74uGQvrmpYbWyRzJqe+zO4VpXaDpM7OVhgO49JK7Z3mbS8XnLGF+GVzs3oEHo1ZsjgTXm+iL8Tw+RuHNM812xXIfSrQ+h1XKSC721nfciDTLq9BA/U7wStWcjgVGYhg29CN8Bzm0Lgj+iG9G7Sk1Y9btLTQdxh0vOTFkSt62mW8a25+mzHIdaxHBcS61BmoWrYl9nfsEmFWWfUJKaQ0CzEfUMXh0JceG0osANqUoH9jZpUyi50AWeKCb0R4qJCl+KiQpdYVOgSO4JCh3r7rRpKWiHnQjpv4nG5PGZobUjHeFw6lNkjJnQ87q7MIrtKaiviCh51mEnxuEn4bMa/EByPK9TCgCVHRdx9BbsrsmPFfLGrLbKX/z2usOuAqv9cE7cxzqnmJutv5iRW/ALbVbB9BTtUsFBCc5mFkvLSUNjgLOyEkW3DWWCBdw1iPo8VNXgG0LGhsFhn8dRgi/Up1RGQlYPE/mezvcRme76dWPs/KvqkPWilQXwzjmYX5RO71oH0s5V73Xmnsz+1deFXSkn5RP4H3sdzfltN13nNntickP9eK69WiYj+APmPUlENAl54AAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        342,
+        394,
+        408,
+        496
+      ],
+      "width": 67,
+      "height": 103,
+      "revision": 1,
+      "score": 0.7815700173377991,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAEMAAABnAQAAAABzjML+AAAAtElEQVR42q2SuxWCQBRE7z4IyMQKpAQ7kM7c0raUDSyA0EAYgwUkAJVPtHNm5n3OzgO4KQDAXeoGIHngJEmKYFcASrAagAKcAGhzLNUbA2IHcmB+axf/yxeW1fqI7QlY3NGlWbdL9VUtseeyWky514wvHQP5lNPH52c6h/414sg1o55JkrrV/+L2JOPn1Xy5op5yxT8zqiMuZxvqA45GH2FwZAk6I0XYYqTgHmRADToDXBQB3pveMmOMCNRzAAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        317,
+        169,
+        355,
+        266
+      ],
+      "width": 39,
+      "height": 98,
+      "revision": 1,
+      "score": 0.7815700173377991,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAACcAAABiAQAAAAD7TfdHAAAAh0lEQVR42o2Pyw2DMBAFxw8fOFICpbi0lOZ0QglEufiA7BzQKhFrCJL1NJr9aE1rBQQRZC/AQCJkASAg8eU9Z2emHx5dFZSdOWRES8/LeHXVAqG3bXOmHszj6hLLQIPnnU4BzN4PkHhdTk3G+d/+0Xg56Vkh3r4WUUA9v51PVeO6/470BkLjA9ULFyTVNEG8AAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        209,
+        166,
+        250,
+        267
+      ],
+      "width": 42,
+      "height": 102,
+      "revision": 1,
+      "score": 0.7887788414955139,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAACoAAABmAQAAAACVIj7hAAAAl0lEQVR42pWSMQ6DMAxFHy5SGRnZytZr5Gg5Wo5Cb8CYAeEOlrCgCUqnn/e/HUV2mACQt2ZAAk8AVU0gwGwymgwmgETonVykZFYlQVfLlpK53lyWneI129qeFJC9ls2VPnUaSyWDUzzM3s10bZC2CS4nWksl+UTbQZ2be+uq0B8zCt1ffaFY8gACn7Zvk+z0Uhu72rqY+AJWUx4RpZH1EgAAAABJRU5ErkJggg=="
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        180,
+        423,
+        234,
+        519
+      ],
+      "width": 55,
+      "height": 97,
+      "revision": 1,
+      "score": 0.7460317611694336,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAADcAAABhAQAAAABadwQBAAAApElEQVR42oWQyw2DMBBEnzdI8SlyB6GElODSXBqlOB1w5IDYHAIG4d9pNDMP1hrgrQBGVSPIC3AgH8CCAAwgHmD3h8rpjQIqZx8K/KGmkicNle99zrfuMHbu3NXl+dTiLRI7/53/Aya/lLjLbmupN6ffindC8lrs/f1dD/DAt77HBDDW+wjg+rvOrd7m+dLihzxfS5zsugnbnivAeuE8sABPVY0/9QohDGjfbYAAAAAASUVORK5CYII="
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        41,
+        428,
+        109,
+        548
+      ],
+      "width": 69,
+      "height": 121,
+      "revision": 1,
+      "score": 0.8048780560493469,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAEUAAAB5AQAAAABHTtFSAAAA50lEQVR42pWUy22FMBREjy9IYUkHYZE+QikphdKIlEIowUsivTBZmM8zsYlhNTrDmMtgw4tGwvUqDUG9SwLAesADOAEywAAcm2LcVQcgSZp3Vm9ZcBs7sgwJdqgebMi6KdVl3DGbaAtXbsCmW7MA5m8l6ojNl4nHiVnkLrcnTan8dwOM4Q+r4APAjWXP6CM2FSS6iPmCRPvv+85Ztynsqo7Y4+Ra5C5rqYn1hoM5CO1/Xk9QhWMC7vK+1sJBTbuNsZVfuDfmjOtPzEduKHra2dMuASpJEkao6AdbO/iiCpvl+239US3AL+fBOE43r4fTAAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        259,
+        0,
+        316,
+        53
+      ],
+      "width": 58,
+      "height": 54,
+      "revision": 1,
+      "score": 0.7229437232017517,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAADoAAAA2AQAAAAC+Arf+AAAAgElEQVR42o2QsQ3DMAwET3KKdMkGQTbxZlGZsTyKRnCpwvClkG0EsS2EzRP3TxIgL1UzkaV+m/uBhaqO51PXc6vdpB0ZdiQDcDkaH/++Fc+tsJG0y/StzaXq0MiEbqq6EFdr/grPAEwrKUQB2B6e6aAHnsBDLQA3rblQQcTEG/gABmAoi3aTb4EAAAAASUVORK5CYII="
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        949,
+        817,
+        1409,
+        1130
+      ],
+      "width": 461,
+      "height": 314,
+      "revision": 1,
+      "score": 0.9375000596046448,
+      "mask_png_base64": "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"
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        589,
+        871,
+        1195,
+        1262
+      ],
+      "width": 607,
+      "height": 392,
+      "revision": 1,
+      "score": 0.949367105960846,
+      "mask_png_base64": "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"
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        597,
+        177,
+        648,
+        277
+      ],
+      "width": 52,
+      "height": 101,
+      "revision": 1,
+      "score": 0.8128654956817627,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAADQAAABlAQAAAAAq0f0UAAAAhUlEQVR42rWSQQ7CMBADp5tK5cgPyFPytD4tT9kn5FgkVHMg4gC0JCqcLHvX9h4WJgdgkpSBiySBRYCMJYAIkqSCAXCqSCOOjXvWmTu863OPvxnnJ88/yUvmf7kzdvvKwd5ld37+6r919q0buj7rARJwfdGLkSt3ADdK5cvj8QmSVoAgOXeJTibh0s74dQAAAABJRU5ErkJggg=="
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        1239,
+        772,
+        1773,
+        1050
+      ],
+      "width": 535,
+      "height": 279,
+      "revision": 1,
+      "score": 0.9452055096626282,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAhcAAAEXAQAAAAA2Slt4AAAF10lEQVR42t1cMZIaSRDsruEExsaBuR48gR/sGOfcL/YlB8YZ590X7imzinvAPoGNkCFDBlJgsBGwfQYsw8xUVWd3tRToxloxkFRnVlVX1bRwjr9Wb856PYSwMULMQwi4IRX34viLc877xmCFDyEE42JWJ4yDjc/TVQAiZPMxvkCELfgR6vO5b/+eoBr0/n1NQqAsO1Yd/LVBVQupPQiY1F6UdK59Mqd+EGUgqVfv+jUqWhyDWX2TiLFi7i5smiSQ6iU+E0j1QxdPZvX0RXPpdpMT771rg9oxl6mbgXxMlbA4jiAMr20kkDDEuHhqCiG3VO/X0Fr0LeArwCpV+n0kL1OE+A8IRuSLkI2bYusFwp9i75ml5CDhugMwauuXAG8BPDX+NY9A3RR7R9xT43ZMCtgRD/+4HXFS43bECQEwovkQwIhuMki+XBfAiIYDkHSXBeyYFMAYFcCgAhhRbZHqoLHbEROGNnZhIDs+FMCIkEpQXR9x5mkALp00gsrYmZ2PyGZHUCdMBezQhSFsvKB6OwWoeVzoa4FK8nsdAyrJxzrGZzMh3lWQutpmRw4TZqKuBRuVjHQfQ0pyV+kY2OxondmJgeHvHSiMUkF4pTFFS6oKbnTk6p/gJrZW8wcmzFLFwEY2dyoGNl0g9Q42XPQqBjhtXWsY4ICyVlcJpVQ5pxI+5bhXmZpuTd4OjibVBoIc7CAiqd45NPrFvHzyHExdKYWQw8Ul1YPnG4u7n7CxyJX86IQBCrPQzAOFeZ0odhwxO1RdQGH02dEc2qeEYfnZjq2F1LPk472B1LMdBwup+iwY89SzHegzn7UqV43Z8Y8Si1hK5TfM9wViKZVPIQn5VHz7+4s7Q15+x0CfTtaa4KC6XF5O5IOtlwkd2CjtcpsSHjFSmdLuYsdzPqkXDDAtcynkoguYlrkUcsFAo5+pICjRP/QR5ApLy+r8AEztzEPMdnVgameetbQYu2xCWgz4XEGtJGpUmUHoEjz0kRuI1NiPfAQVdzDtuAL9nEuq+iwaJPV6A0WF6W8y5NKFIbsuaujCwjQyH+N9HqnXa4EPr0xkPuCoGynFEXwCxpt16XtBBc4WgJIqUdytvDJY3K63d/iAxa1kTvGjWo2IgZ9uWsjaopHbHXR3vQXsL3u7fxcDFqaz+3fXcshKIV074JTqXhaSHbgwMznm1jkphKBuXE8hveYKbEG6H+zZscvx9p4duDBXeVk7C4eGP7lMYUgZAzyinMpz3SmaDq/q1P5adhme2ucUF6YllXJ1ufokuVxhfIECoq0gBmhwKms9dYCRQeqAj5Duqcy4qoCnSqT+ndBRCd7eeKCjuqwuCKcVV9IJxmEddJRycCP1/oSNOL465hHL+0bFYDBUhRnbNNYiBkPVR34isBRJHQsijqVjoUz0Dbz9XCgMI+m8+1fxRin8cv7jjwRPfeBjvErp/ee8N1ZSncrV2lu59GJbXQ6jw92TVnmSmBWvhYn0nV6yI7S6vKTUunz4d2o8LxX/bP9y2ew+QSUVv0sELmNzfAQS+6iaYyPkbFR9L0RmEL3QHdxOnHQ9cMe9pVPh4DF3kZBAub1pl9Qq5QNctvaN2Q5X29filgUw7gpgVImcslWFb8x2uNq+FrcogHFfAGOUhLERSju7HQX8w/kSdqxTMIQ6sL4NPtyiAMYsBUPoSiY/mg9hSjO6EV2SMN6+nx30M/IRbsSO74mRtM8Jc+//Ex8/JUZz02t5uxE7Djdix/5G7HhOwtgk9rjxYcLlv7Xb11IC460AxiENY8tXNnY7npN6U/apSEistbmC7JvdT4+zRAymIPs3eVPk5zBJnA7OEJ1G2zY+Rumx3y/qXqLDGKbdeRvMLaxr+ebMdlyenRrs+JiZb9gJvU/D6LuGbS1/5tZ0bVH3+pt9f5nY96gn+z73UpsxnhYG735gf/Qlx45dAYytKefM2d+eybDjtQDGX7bdZMr+ngf9aDPc1P4TSW7MPhtMi/2j+5159T9SPqviChF9HgAAAABJRU5ErkJggg=="
+    },
+    {
+      "concept": "smartphone",
+      "bbox": [
+        80,
+        1000,
+        941,
+        1546
+      ],
+      "width": 862,
+      "height": 547,
+      "revision": 1,
+      "score": 0.9532163739204407,
+      "mask_png_base64": "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"
+    },
+    {
+      "concept": "charging case",
+      "bbox": [
+        1444,
+        1064,
+        1777,
+        1293
+      ],
+      "width": 334,
+      "height": 230,
+      "revision": 1,
+      "score": 0.7387754917144775,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAU4AAADmAQAAAACSEFHzAAADyUlEQVR42sVau27bQBBcLgmZhQExnStbn5AyRRAr+aoUBsIyZT4hn8IiRb4iYIAU6UIHKWiD4qaQSPGOt7ej4uCrJGg0mp3Ze4gkUWhciTSEjExERHoEuhURwXg/CUp7IpURVIooOCOlcz9hH3p7fnntfpL7pH8WNFlUwp2IpiDzSJ2yn8qI1lvn3SbCeuXZnumsHz3ljZlTuC7nJ8T/rlPXUsB29TMbhTUL9EcWZn0XUF8Ha8olMNog60Po+5UZ/jyGgO58CKoSXgt4qzT6ul/zH9qkaHzWBy3rfWA1UUbra32jdtCNr1tU6KFwWXN9rvlmXUeWBQ/6OjKFvYaRyHB9zWMLw86BFjHojQMtY1DXrFhVC7c4lLM6pTMRyAIOLLGKBWwYsJhebBiw+JiVWRlYYXiZR9wCNrxyG0aM0WqbkW4B+xuHbgHbvBtcQDZDCxNbT9DShO4naGVCd7DWiYytXM9uIaybCbpH3UJY54YRezQncrFZHytYQHk6ygDQAi/ruP4xbgGEPHrPBQLd4ay4WUe3uCS0YTDWDIdSTURcwW6BrDscWuHQkoh4B0ELnJVxaIZDqSbiPaHGoqw7HFrh0BKHFkSZYFBhmDXDBVCNQy9g3ePQXRIBVRLWkriGk00hAO8BypIIoJqbBKz7JFqJW7gLEwno4IZNIqDkPklZaaBDAtaCx5cuS15YQE7AsXjaY5okWlsc2iUR0OPQIYmAEYdKmh4Am0CY4Ca4rF9bHNrh0D6J1gGHgskOTHCyOaFxHZjguJjgDJjgDJjQDHom2NgLV8IRh2IZdDmhGTwywRkwoRm0THAGTHAGTGgGDRNsLBNsbE6ose+PPdDg7QIYKydoh7MCxo4n6ICzAsYOl58HgAz6ibXGp6GdQTdBW5zVzqCdoHYGzXRhLzdDmP8ZjXa3TFCxW2BOqzZznaGWsb/P0Nb0aoZ2plfzNeOrHr6UYPh6WKzao2nADBXTgPMsqC0DzuM+erH2VNlxbDvjNHQWEDXr2dm3BquqMzTq1ldHa8yu4z1JJsCtv94eG2nDL977O9XUAd+5f83NZWawulz/T92HyWfNxjjpglXz9ae3b+mbl7wKnF2aiP0eNDy/qxA0aNZT8PAUdOvz2gnFg+VTActgA731XXFwPRNH7aDXhudUCNrFivJOHNGnIqKPRQjrh9K9lul6bNerj8baa5muoc/R8r173Au1hw/RuXkXvG1u1TUYJ/hFH35Tp6MfwqGw/hfUOqlWVx9ZD8g9QiC33bahSCNTAfwDlsOkRPcoqfOAiTv+AxiQTDDRHLj5AAAAAElFTkSuQmCC"
     },
     {
       "concept": "phone case",
-      "bbox": [30, 50, 210, 330],
-      "width": 480,
-      "height": 640,
+      "bbox": [
+        1714,
+        1003,
+        2316,
+        1283
+      ],
+      "width": 603,
+      "height": 281,
       "revision": 1,
-      "score": 0.87,
-      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAeAAAAKAAQAAAABss5b/AAADMUlEQVR42u2cTbLSQBDHO5hSVsrSHRxlvIlH8Ag5gkfwJnIEj5ClO1OWC8rCjAuKRz6aZ7ozb4D4+20Ij/lPf0xPJ6lHEAEAAAAAgMUTo2X0qvduK3IwiF913xQ/RMpi73P6XYwxNk63P4mIvPW5XXwVESl8fr+JMcYYa1fI25P44Ir54+nl9WRx0a0Q5W9TLT/lbu9dZdNKdyxvzgdrh3h3PigdCYtqFqdZ7igqs7gTQDCLSyX6yeL3oh1OFHfMlWZxuNabpixVvFLxUyz3xldGcc/VYBT3krQzinu7YWMU98av7W3IzEoNszSKg8OfQquRqVWy0kdXJvHA0ZAv24P87kziQVlsTOLB6HW+mAdBliZx8Dg0y+1Crc6J9bm6MrbKle3RHCGX5dG67nJZHtXyxiAejV3ncnuUnzKX5eCaNMWuis9eDr9gzIqZKo9lZYqQaZ3niJVi3OWxrGzATR7Lipn1AyyVsi7lA7gdfLMmaEPxH7fl95kw1cPq/td5jlidIdy92+r22y17qdROuVl2zGp462XHrJZxueyYZ4mDc9r/NmGzTu7x2Zt6ErYQ8ZUFrUgY4jTiKxMEEoYYMWLEiBG3+kd7EoaYOzrEBrF67xZJ2MuI1Q7dkrCr4lr75LjsmBvtk8OyY1bDa5Yds1rG9d273fouPR/6auhB/3mtnd1jHst713nu5gmrXWebm7vduE4YKSwfXG07heWjq3nefKlaV/N87O8BjvtQzJTtcW7bXJZrTyNJYrnx9IKz+ODZzkncPnq2cxLLrWdH3v4L78NtFSVXwoYJak3i2rEv0rjdOPbFk/jg2BdP4qOjtNPE3DpKO83jQv36jDa3+462RnFtL7BEVwaNvcAu4oO9wC7io73ALuLWXiOJHjzsVkm0ZrvramsW1+Ya6Yi/i3Y4UXw0r1RH3JpXKtXjvJcvYvxxXDLX1mR3xY1xT/XEv84H38SesFkPjJ+rO7q6ivkh+S7mx/O7bv8+vXyZLO79GIIEEYkffK101o8h/BQR+ezt4ltvrk9rHAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABuxF9Goq+Eh1fgWQAAAABJRU5ErkJggg=="
+      "score": 0.9139785170555115,
+      "mask_png_base64": "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"
+    },
+    {
+      "concept": "phone case",
+      "bbox": [
+        1535,
+        761,
+        2000,
+        1006
+      ],
+      "width": 466,
+      "height": 246,
+      "revision": 1,
+      "score": 0.859649121761322,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAdIAAAD2AQAAAABKUTsPAAAE30lEQVR42r1bO3LbMBBdLjmWCs9YpbvoCCnThUfJMdJF6XKMHIXuUuYILFPKMynsjESksBzxg31vsUyCzqaeFnhvfwAokcxIqZPIuEsppRj40ws0PRUj6/RnFBqu0mgcI7O9jCGMTCkdvND3C2jq+Rovii6fPG8ZVkVEZJN50ogP+y6nl2et97JJudHx9W4sF3rc0Tl/tB5tud1kPToztrQiNCLsDZMeYMGqGNH61n721uUb+XHLsK2EyVIeJ7HvPqzAfmA5CjwkIQztNivmrCuw1QosIRpj2zjPJHVgLA5/PcRXpBInmkh4KK1E3qKkLO/HsTcQ28fJ0mOcLCUNDfJKPWHsHi2owk0JSh0sjyKiNUmY6JoGaRd2SuSVKn3YK0G/cem8FNg9hclSYU3nAWCJSEAGpdVuj7BdlGgVJlKDaCQi2UyrMJFsPlSoSC2aEFHJLErKW5Itiv0uGP4qVCTEs7AtWAewbN+4B9hfBIt4ZpG0RTn2ECNaHQ16hbB9jGgVh0h7gH2KEV2JiJB6ZrVZKg6R1KxHjsYxX5TUtYtqwXT6ENEvWCbSPfCZ+hQh+gXLRMq7Ze3q0GH1J8U/X/0vsvcRr7xgGdG3gARGdLZzuPyP8oxSSwqQpb6tbpYsdZ4p3EYOQMDnXv/XB5zyFcsERoTUAaJf7dIjxZ2NZekuV5TUeZaRK0rqPTRCzf8dI+tg26WHxq09FZqylm3WH7sBolXiRKvEib5iWTQsv/yKpdGwt2fCWvDllvSKpSItcuX1byrSIlfW7lMjkeqrmYe6UrJG2L40/EdYKtKt7S2sJi1ca2SX34J0JpaKNCdLCzSakzXG9oUhPMZSom9itSznlWMsvyNrTeypkOgxlgu8M7Fc4K3NFRW4sbFU4NrGUoFBEqf1bFr9J3YLL0En2FOZSBPsuUwk9TZCmWiY3QJ+YNFgN/9vioiezvlYRNYU+7OIrCmWE93YeaMt8egZlkbDOEfPUv0dZWvUKs3sPpWQNcOeSsiadz4074w6B5VCoqsV7Sy4998UeLRK6TA1oudgY5HmWP4aA7gGoyE82OulTln9FaIXdgvy7AI7+IleYP8T0Uu/+rGC6NpN9DKkeEv6unFYztmfZ9V7OJfJrZk0wHNlZdrludImuvISnUtdyUm0lh2D0EG98mTPme4qL/k9N+dfKzw68yJXlmh17bDn497G9j6PzpYmJ1lZu86NYRbLw7BbQfRxrWfla+jRFf75FsC3jc7bPbvCX70HXf4PULKe7JaHeta5MedMuart9Q4esgws35K2dn9Fid7b7SEtDs9bE0s969yYcx4cHm1hadtRoTc76fauizfSnd2GU7Ied2b/TMna2r039awG9O0HT9oJhvAA0EcqsL3doURXtl0ewnUsnxG7vAoD7PcV2J8rsMMarthNNvKsryu88rgCS8jqEHZYwxUm6wFC8W00ftkQFweoEds5QCyM4ISxwwq7CX/xv3sfuINkYGy/wu4RCoixSODv5I1flKMrYneA+pWfQV03YBgLnOMbfZU8oV0O+xWKEf3nWqLr/dyQw5nIWQEbD5Xvc+/z3X7U7jaMHU+4EPu59R2C2QQH7D5XJbE/TRxf4sckp7KcM/H+Jox9VIliH3bFTnSHfvPl0vdxF4m2je+XdQa7YST+7dNvLoJs37x9cSsAAAAASUVORK5CYII="
+    },
+    {
+      "concept": "phone case",
+      "bbox": [
+        1841,
+        762,
+        2310,
+        999
+      ],
+      "width": 470,
+      "height": 238,
+      "revision": 1,
+      "score": 0.7064220309257507,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAdYAAADuAQAAAACsPxuDAAAE2klEQVR42rWbTXLjRgyF0aDK1mIq1nJ2wyPMDaKj+Caj3GSOwhskR6B3yY6umgWTooQs9EM22Wg8dNvcSfJHNPEe0N0kTUQiInKikuNFRESkJyJqJHQe9ofEx5/4KBpJHwAeXgblF2GL5YN61ovJZoZkpY1b/bfv5XHpi8UeMxJUxKWugm0NfSXz47/78ri7ijFzBRsqWDr5SjA6+oq4XyvYXQVb82s+0Q29ZuGuXP5jhXWy5c95Cb98lmV5KE+01YRzjuaxPNGhmbLs+yHDGu0/N7OwUPHBRn2HrJ/zhs45mqkvTrQ5ybY5Nm+sXNthMsyxy7FTcTUwGUuDkGOlohry3T3X39mcob+W65tJNJNlrKYirp4sJstYuqOBuG1G+mfDleqKBYj7lIlrLliDHleowpWGKVVXAtdLhwxrrbF/y7C9lauTzlrG0pzFRFbHUp3FRFbHUpPFRGRuZvY6K4Xlz8ByVSv/69evlkqdGrcvE4kJEbjV2bFMJKQWNJGYEHM86axpjqCz9lrnlJH9aAX+qeaqKxLpyvZFIl3ZoUikKzsWVRLmjXQlXdmpSKQre6aSSro5xnRHag3O0EY3nWgmzBw7nTXNwfp3pjmCflUvIv6J9BbXNBbpeZ5K2g7oyWSib+yZCg4m0BycKRBzWtE3St8KRLoPZSgQCc5zQqQ7OxaIdGcn8if6/o05rSTmlTsL3Pft1JGY1b+dGx5s7xcJ12gr0oMd/CI92NEvkmPMestqxF0ND8Xt2+ubjdJjzOJvO4ztr5O5YcKNFVTWNtb69PO5Xmx3rCbSOe7oduXMTu5Ez6yt7zrR80eg+oO++Hm14a64va8cvbgEWyPSNPKLtGDdIjlqf/PXi0+AwEFjkTukp9L7DWuRfNcbi8S5CccQacn2TpGW7OAUafkBMFbU35csYKxo7b9UuwHgZctaxgWMFSXaqW+U6CUrzmpokJs+yrKSyWes5ekjFjDW8olSxA6+REfs6Eu0V6MlELGIKYPCIsZaiBF1r4DAs6OjuNDzoL2Sq5Mr0UxeY7HC9q5ExyxirPnCYhYx1lwN8QzzPHpEiuNOLpFi9uJqOzErrmpogHsvWtthcpvjcf4Vi5jj0XZW7OBJ9IodPYlesZMn0SsWEvg+ka5Y7GnwsbBPLnazjC6gEqud9b7lG6LweZdkoSq8PUBfjxkSKaSvFxLplpXNnQdIpbc2qZEn0QU7DpExPWYo0VeRNiw0n11F2lwv9E5fSPYraHt226Bta6GHK2nL/g1X0pb9DxY48aREUJHYsQdat6zUzX8g0SF0ybhwohMsnOgEO6GJTrDQ/eS90mORRD8pbAdWQ4rtwZaVYgdQpBQ7giKlWFSkFHsBRUo+cUQqSbhsDr1N4I25y1Xhn8VxqS0fMx3SbIclujzuLs1Chm4q4lINe0qyUCHRMcmOnz7mNslOnx738OEaYQu0/YfHlU/P1a6h4sYhH18LXQXbV7BYIaXfJkHuGNI5HfdSMWbMHA0VCyzKe3fIFuussMjKX8kVtJidFFZqcgUkS7teJFnvGgs4610bs9iD/kd93dce9Jta+3Yp9Sr7y2QzDeJ3azOaeb3ZyvR5p/e6c5tnf+X689uR/sgs4f+yTfvcP8sl9WzJ041fiejH/B7PZP6rj1pkgYj+B7P9g4D5M2YAAAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "phone case",
+      "bbox": [
+        949,
+        816,
+        1408,
+        1130
+      ],
+      "width": 460,
+      "height": 315,
+      "revision": 1,
+      "score": 0.8518518805503845,
+      "mask_png_base64": "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"
+    },
+    {
+      "concept": "phone case",
+      "bbox": [
+        589,
+        871,
+        1195,
+        1262
+      ],
+      "width": 607,
+      "height": 392,
+      "revision": 1,
+      "score": 0.8987342119216919,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAl8AAAGIAQAAAABXF7i6AAAIxElEQVR42s1dO47bSBCtLgqSgoGlcIKFR0dw6GCB0VF8BIcODIx2T+AjzE1MLDbY0DdYGnAwIW14Ac1CYm8giSLZv/oNsIxmNNTT63qvqqtJqgcge1R+D1ZH5b33tRHYnfeewc1l/+oBADxSwbInLk6fZzNOfzpas4h57w8GMXMdLbCkmL3uf6r1YO/6n97YGPZ07NXMPl5/nGuJrfzgUGK5IZY2Pe9GYK3KZ1ePAQDA81IjwKvxrzMVs0nIiYUjftb99CN3RrZgyOkIgwSA72vpMFfhS3I134cvzaTDXOzZc0Wa2YfYecKEWvjY0cqYxYvXUgS2ip83F4G9l0zWiZMm5YKHhvlywZMTaaME2PCHWSVnb0p9nDD7JXninM0sGX6aAkgLPwCw6+ODTx8Nc5iLXB9AUGA4zIdsTzEzG6P3vuMMc7FnZl5umG9LpzLkdL501HRmr4qnbuhg74un3pIFWJRbzXLDgbkpiatmdT7xM0WjmvZxFWUV8nVDG+YNxT23xECQ+unjjMSs0i8nryf8arDQvXByfxNTri4zcx0xf7eEYb6mFoM35TiQiRXlRM6arSoP85YMVqqPSOsigsVxKmaM1WRhOYBE95OaUaTlOK17QVgzwFwJjBH/kpwOWKv5fH1Ex8EqxASRBZaXE3nNTV5OXLLA8utr3igLJQ3XPLBsScMN2CnAHebcEixrS9wy0WpDZtlUZoOtLcFuLMFyb6i4FyxcpkdgM8sllGNf6czMUHxmS0tmmQ6ez8wZWiOXUAKwjWHMMutrAbOZ5TAx0wxuwSyhBMzSH481H+yNYczSJU0ClnwPNnywZI8gYZZUwK1aPliqpImYpfIJJfd855Yxc5ZgqZKGBwlYoqRhJwFbm6wD8qtY5F8yTa9iq+IiknEdAaGxSyiZNRJyIrR2ciKInqG4SYCJXIuJVzu77ESQ3Yrepey3lVB7jA++NvMGgsy16wRYa+YNBJnRMPGiyGjRuRNBZrSoBRCERtskxr61khNB6I2bBFhrJSeC0BsxOYWVNh5pBKHRYnIiABzBSE5MFieBnA4A4E5ijshSEUHqjYicDoB00ylyhNcf5daIKIAg9sYyDiYrQrPEBCirQi4eM1ERCqe1E1hjk1AnsNZGzhOY7GnSmziYzBtVHEzmjUABVFgjUABB4Y3bOFhjkgNnMJk3MP67zBvTksa5wVwsaWcwJzPH5IKVojiGCpzBhEbD+K87mQKJ/HonQ6tjzL5YNByMRyzK114uzGQ+g7g1OgtvXMBMvIFg6A0sXJFhFdseTOiNTZSn0BujVO+ZHQzk1FWNyfv7X4RGGxXbq7ZCpw2LLYLOaKPp7spM1HKPL6VdmbV6BbRqjhLqCib9ks4uBiycOodyXsGEU+cwodQxG16bRq1phwromQ0UqArXPSjUHiPMhLV2cLNnMOKVMAeuCTVgJnUtWgrgYmAHtZwDsE4Kto0lvdS2ffdiAdbLifFiIpMTQe9aFwNrtHIOwVqtnEMBpLW2l3MIJq21vZyjbs0rMwrBwBsXHyAYeOPS8o3AxN5YR8DE3riJgIm/eVtFwMQV7RztEZi4op0VQBOfnRUwmAOuCzIEE9fOI2C1Lp/GYI1OzjHYk07OMdhBJ+cYrNPJOQaTG20W8dlOlZ1Gpo3SuPfSowmZNSo5J2CtSk7yV+FKh8eAmdxobhde05c77esmsMZOowDmrqBwZ6gpmNwboQAKb7hdAKbYtGIbgMkrGoRqyo0G6wBM8d3/ZViC5EabhWC1whsBmNxoLvIg0wc5WsBMsztKAKYw2jYAUxhtEz7gI3fa9yqzsOUez2bzZnwSri3B5K5dvvAw5bV2FlpDPg8fQ2ad5TAV5bECO9fGHvYXGy32RazGMGamPpMbrYs8Yyg2WsRncqMdImD+/yFABXau/QfBzrVtDEzq2sYyZtsYmNC1PqqmsEP4I/qUrSwFPEaZyVLgd/J+QbTCWIGJa4/pZTXbtb/Nrqt+pWv72h9lxjPaM2arBstox8LtNY7P/KxQzzpBvABSz5nTjebKlZa85vlOKNtko30inEO9inOgTChU137LBLA/iPcAjzMKM6Jr/wQKM2J5dKRJmObaZ9qMTjPtE7E9oFRHvyGCUbzxw7JxWVPBCD47klsqgtF+ksEIPvtS9t3l5Y7t2DQzLwlZUs2dIGRJsFoQsuRxV6qLnG67FYQsCbYXhCwJVjLaJ6JbKEaLf38QQWS0K/FqsP1YsmrsiHXxI2WDzHvaJmHVcAO4JLN8eezBaFuarGi7tN0NaSaZZY32bx+MhlS2D5T4n57NLTPL+uzC5xU11XMxO5vBkbfCfSiXjLuJGlhWP10y3llUtP0oEhRmbVFMR5/R90Ux51PdRe3BOZxv6e+oimI+0PdvdsUeO9g1Mj1Mvytk2iX+j5Rx3hc2sHTBPo9YTsDUHzBIYpSLOeOsJ1cFMRfBNrgZZvvCxHVaAX9dk8AOhTJ7QtnQGuSuUGY3yZ6DUdHqoWdbauteZ192YW1BEBhtUDMeqcNcZZ1RhUmeY7bPOqMDAPiL1FKlV539A8w+6KxyzLoi32/ahVg7aLoeGe97yO6gex/sMovANVqTXnEie+FQX1HXHLD8VPH0zIp1lV+a1NTWPdm/5/aCzQ6Te70277Od6qpfuRPai5k98RRG4qrGIGYdbyGaB/M7Q2aR7GzkYF8smf1gXVYogDGDxrWtYpi8WwMlsL0l2IFTSEpgnSWzqZydBmzqq4PKGyvGP3J46Zvy2ctROmadJbOJnI0uZo+GzCZRqnVgjOwsb+k77hGcjpm3jJn8qa9SQnXKmI06+Pzm+oRhdpYx82RgStXYvZACezWzn9R0oIB1hgIMFWjVYOQcIIE1xJU2CeybJbOjJRh1h3Ua2BOpahPBDpbMjpbZ2Xej2gllVCCdwTDh+AJdd2cDtqCAUfuzA6UYUcGOdj67lKGDkQIrwn9SIjP7QejV6P/YwAPhHzgwgmaXogtvufgsb3PxH0R47UPC+AKYAAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "phone case",
+      "bbox": [
+        1239,
+        772,
+        1773,
+        1050
+      ],
+      "width": 535,
+      "height": 279,
+      "revision": 1,
+      "score": 0.8827838897705078,
+      "mask_png_base64": "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"
+    },
+    {
+      "concept": "phone case",
+      "bbox": [
+        80,
+        1000,
+        941,
+        1546
+      ],
+      "width": 862,
+      "height": 547,
+      "revision": 1,
+      "score": 0.8827838897705078,
+      "mask_png_base64": "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"
     }
   ]
 }

@@ -1,58 +1,42 @@
 {
-  "placeholder": true,
-  "recorded_at": null,
+  "placeholder": false,
+  "recorded_at": "2026-10-27T21:39:31.530291Z",
   "pack": "b",
   "surface": "entries",
-  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
-  "model_id": "muse-spark-1.3",
+  "source": "Live Stage E entries from job-f6dce0c0ee01/entries.json (KK-0004, KK-0001 = source_photo_index 1); subset of the 15-product live run (job 2026-10-27T21:34:17.952843Z-2026-10-27T21:39:31.530291Z)",
+  "model_id": "muse-spark-1.3-contributor",
   "payload": [
     {
-      "name": "Dress Floral Midi",
-      "description_id": "Dress motif bunga panjang selutut, bahan ringan jatuh mengikuti badan. Kondisi baru, resleting belakang lancar.",
-      "description_en": "Knee-length floral dress in light fabric that drapes well. New, with a smooth back zipper.",
-      "category": "Pakaian",
-      "brand": null,
-      "condition": "new",
-      "attributes": {
-        "color": "merah muda",
-        "size": "M",
-        "variant": null
-      },
-      "price_hint_idr": null,
-      "price_suggestion_idr": 190000,
-      "confidence": "high"
-    },
-    {
-      "name": "Dress Linen Cokelat",
-      "description_id": "Dress linen polos warna cokelat, potongan longgar nyaman untuk harian. Bekas pakai sekali, masih seperti baru.",
-      "description_en": "Plain brown linen dress in a loose comfortable cut for daily wear. Worn once, still like new.",
+      "name": "Kemeja Floral Thrift Motif Bunga Kondisi Bagus Sudah Dicuci",
+      "description_id": "Kemeja thrift motif floral pilihan untuk tampil fresh dan stylish setiap hari! Kondisi masih bagus dan sudah dicuci bersih, siap langsung pakai. Motif bunga yang manis bikin penampilan makin ceria, cocok untuk hangout, jalan santai, maupun outfit harian. Stok terbatas dengan pilihan campur, siapa cepat dia dapat! Yuk amankan favoritmu sekarang sebelum kehabisan!",
+      "description_en": "Curated thrift floral shirt with a sweet and cheerful flower pattern, perfect to freshen up your daily look! Good pre-loved condition and freshly washed, ready to wear right away. Comfortable to style for hangouts, casual outings, and everyday outfits. Limited stock with mixed assortment, grab your favorite before it's gone!",
       "category": "Pakaian",
       "brand": null,
       "condition": "used",
       "attributes": {
-        "color": "cokelat",
-        "size": "L",
+        "color": null,
+        "size": null,
         "variant": null
       },
-      "price_hint_idr": null,
-      "price_suggestion_idr": 140000,
+      "price_hint_idr": 25000,
+      "price_suggestion_idr": null,
       "confidence": "medium"
     },
     {
-      "name": "Rok Plisket Hitam",
-      "description_id": "Rok plisket hitam selutut dengan karet pinggang elastis. Kondisi baru, lipatan plisket masih tegas.",
-      "description_en": "Black knee-length pleated skirt with an elastic waistband. New, with crisp pleats.",
+      "name": "Jaket Denim Thrift Pilihan - Kondisi Bagus Sudah Dicuci",
+      "description_id": "Jaket Denim Thrift Pilihan untuk gaya kasual yang timeless dan gampang dipadukan! Kondisi bagus, sudah dicuci bersih dan siap langsung pakai. Bahan denim awet dan nyaman untuk harian, nongkrong, atau jadi outer andalan. Stok terbatas, ukuran campur dengan sistem pilih sendiri — siapa cepat dia dapat! Obral mulai Rp 25.000 sampai Rp 50.000. Yuk amankan favoritmu sebelum kehabisan!",
+      "description_en": "Curated thrift denim jacket for a timeless casual look that's easy to style! Good condition, freshly washed and ready to wear. Durable and comfortable denim for daily wear, hangouts, or as your go-to outer. Limited stock with mixed sizes on a pick-your-own basis — first come, first served! Special sale from IDR 25,000 to IDR 50,000. Grab your favorite before it's gone!",
       "category": "Pakaian",
       "brand": null,
-      "condition": "new",
+      "condition": "used",
       "attributes": {
-        "color": "hitam",
-        "size": "S",
+        "color": null,
+        "size": null,
         "variant": null
       },
-      "price_hint_idr": null,
-      "price_suggestion_idr": null,
-      "confidence": "low"
+      "price_hint_idr": 25000,
+      "price_suggestion_idr": 50000,
+      "confidence": "medium"
     }
   ]
 }

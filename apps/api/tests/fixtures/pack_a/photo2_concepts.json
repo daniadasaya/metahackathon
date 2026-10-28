@@ -1,30 +1,30 @@
 {
   "placeholder": false,
-  "recorded_at": "2026-10-27T08:55:21+07:00",
+  "recorded_at": "2026-10-28T00:14:07.960890Z",
   "pack": "a",
   "surface": "concepts",
-  "source": "live muse-spark-1.3 chat.completions P1 (temp 0.4) on Smartphones_on_shop_countertop photo 2026-10-27; Seeded from live Meta Model API responses captured 2026-10-27 (live probe).",
-  "model_id": "muse-spark-1.3",
+  "source": "Live P1 discover_concepts on apps/web/public/samples/a/photo2.jpg (captions.txt) at 2026-10-28T00:14:07.960890Z, captured 2026-10-28",
+  "model_id": "muse-spark-1.3-contributor",
   "payload": [
     {
       "phrase": "smartphone",
-      "scene_note": "smartphones and accessories arranged on glass counter inside phone shop",
-      "visible_text": "H6, 5, SAMSUNG, Rp 1.500.000"
+      "scene_note": "Four smartphones on stands with stacked smartphone boxes, a power bank and charging cable displayed on a glass counter in a secondhand phone shop.",
+      "visible_text": "iPhones, vivo, PRICE LIST, Rp 5.000.000, Rp 1.000.000, Rp 600.000, Rp 2.500.000, Rp 2.000.000, Canon"
+    },
+    {
+      "phrase": "smartphone box",
+      "scene_note": "Four smartphones on stands with stacked smartphone boxes, a power bank and charging cable displayed on a glass counter in a secondhand phone shop.",
+      "visible_text": "iPhones, vivo, PRICE LIST, Rp 5.000.000, Rp 1.000.000, Rp 600.000, Rp 2.500.000, Rp 2.000.000, Canon"
+    },
+    {
+      "phrase": "power bank",
+      "scene_note": "Four smartphones on stands with stacked smartphone boxes, a power bank and charging cable displayed on a glass counter in a secondhand phone shop.",
+      "visible_text": "iPhones, vivo, PRICE LIST, Rp 5.000.000, Rp 1.000.000, Rp 600.000, Rp 2.500.000, Rp 2.000.000, Canon"
     },
     {
       "phrase": "charging cable",
-      "scene_note": "smartphones and accessories arranged on glass counter inside phone shop",
-      "visible_text": "H6, 5, SAMSUNG, Rp 1.500.000"
-    },
-    {
-      "phrase": "earbuds charging case",
-      "scene_note": "smartphones and accessories arranged on glass counter inside phone shop",
-      "visible_text": "H6, 5, SAMSUNG, Rp 1.500.000"
-    },
-    {
-      "phrase": "phone case",
-      "scene_note": "smartphones and accessories arranged on glass counter inside phone shop",
-      "visible_text": "H6, 5, SAMSUNG, Rp 1.500.000"
+      "scene_note": "Four smartphones on stands with stacked smartphone boxes, a power bank and charging cable displayed on a glass counter in a secondhand phone shop.",
+      "visible_text": "iPhones, vivo, PRICE LIST, Rp 5.000.000, Rp 1.000.000, Rp 600.000, Rp 2.500.000, Rp 2.000.000, Canon"
     }
   ]
 }

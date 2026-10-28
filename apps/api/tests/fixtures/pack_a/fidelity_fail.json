@@ -1,14 +1,14 @@
 {
-  "placeholder": true,
-  "recorded_at": null,
+  "placeholder": false,
+  "recorded_at": "2026-10-26T18:52:17.638846Z",
   "pack": "a",
   "surface": "fidelity",
-  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
-  "model_id": "muse-spark-1.3",
+  "source": "Live P4 fidelity verdict for KK-0006 (concept 'smartphone', photo1) from job-pack-a-v3, frozen in the golden products bundle",
+  "model_id": "muse-spark-1.3-contributor",
   "payload": {
     "same_product": false,
     "color_match": false,
     "logo_text_match": false,
-    "reason": "logo text redrawn; colour shifted toward blue"
+    "reason": "Price card cuts a large angular wedge from the phone body."
   }
 }

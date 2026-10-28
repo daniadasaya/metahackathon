@@ -1,74 +1,122 @@
 {
-  "placeholder": true,
-  "recorded_at": null,
+  "placeholder": false,
+  "recorded_at": "2026-10-27T21:39:31.530291Z",
   "pack": "b",
   "surface": "entries",
-  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
-  "model_id": "muse-spark-1.3",
+  "source": "Live Stage E entries from job-f6dce0c0ee01/entries.json (KK-0009, KK-0010, KK-0011, KK-0012, KK-0013, KK-0014, KK-0015 = source_photo_index 0); subset of the 15-product live run (job 2026-10-27T21:34:17.952843Z-2026-10-27T21:39:31.530291Z)",
+  "model_id": "muse-spark-1.3-contributor",
   "payload": [
     {
-      "name": "Kaos Polos Katun Hitam",
-      "description_id": "Kaos polos bahan katun adem, jahitan rapi dan tidak terawang. Kondisi baru dengan label masih menempel.",
-      "description_en": "Plain cotton t-shirt in breathable fabric with neat stitching and no transparency. New with tags attached.",
+      "name": "Kemeja Denim Thrift Biru - Kondisi Bagus Sudah Dicuci",
+      "description_id": "Kemeja denim thrift pilihan dengan bahan denim yang nyaman dipakai, jahitan rapi, kancing depan dan saku dada yang klasik. Kondisi bagus, sudah dicuci bersih dan siap pakai. Gampang dipadukan untuk gaya kasual harian, kerja, atau hangout. Stok terbatas dengan pilihan ukuran campur, harga hemat Rp 35.000. Chat sekarang untuk tanya ukuran yang tersedia dan amankan favoritmu!",
+      "description_en": "Curated thrift denim shirt in classic blue, made from comfortable denim with neat stitching and front button closure with chest pockets. Good pre-loved condition, freshly washed and ready to wear. Easy to pair with t-shirts, pants or skirts for casual daily looks. Limited stock with mixed sizes available — chat now to check your size before it runs out!",
       "category": "Pakaian",
       "brand": null,
-      "condition": "new",
-      "attributes": {
-        "color": "hitam",
-        "size": "L",
-        "variant": null
-      },
-      "price_hint_idr": null,
-      "price_suggestion_idr": 85000,
-      "confidence": "high"
-    },
-    {
-      "name": "Kaos Sablon Putih",
-      "description_id": "Kaos putih dengan sablon depan, bahan lembut dan nyaman dipakai. Kondisi baru, lipatan toko masih terlihat.",
-      "description_en": "White t-shirt with a front print in soft comfortable fabric. New, with shop folds still visible.",
-      "category": "Pakaian",
-      "brand": null,
-      "condition": "new",
-      "attributes": {
-        "color": "putih",
-        "size": "M",
-        "variant": null
-      },
-      "price_hint_idr": null,
-      "price_suggestion_idr": 75000,
-      "confidence": "medium"
-    },
-    {
-      "name": "Jaket Denim Biru",
-      "description_id": "Jaket denim bekas pemakaian ringan, warna masih rata dan kancing lengkap. Ada sedikit pudar wajar di siku.",
-      "description_en": "Lightly worn denim jacket with even colour and all buttons intact. Slight natural fading at the elbows.",
-      "category": "Pakaian",
-      "brand": "Levi's",
       "condition": "used",
       "attributes": {
-        "color": "biru",
-        "size": "L",
+        "color": "Biru Denim",
+        "size": null,
         "variant": null
       },
-      "price_hint_idr": null,
-      "price_suggestion_idr": 250000,
-      "confidence": "medium"
+      "price_hint_idr": 35000,
+      "price_suggestion_idr": 35000,
+      "confidence": "high"
     },
     {
-      "name": "Hoodie Fleece Abu",
-      "description_id": "Hoodie fleece tebal dan hangat, saku depan model kanguru. Kondisi baru, tali serut masih bersegel plastik.",
-      "description_en": "Thick warm fleece hoodie with a kangaroo front pocket. New, with the drawstrings still sealed in plastic.",
+      "name": "Kaos Thrift Abu-abu Pilihan Kondisi Bagus Sudah Dicuci",
+      "description_id": "Kaos thrift pilihan warna abu-abu, kondisi bagus dan sudah dicuci, siap langsung pakai! Bahan lembut dan nyaman untuk dipakai harian, santai, maupun hangout. Warna netral yang mudah dipadukan dengan jeans, celana pendek, atau rok. Stok terbatas dengan ukuran campur, siapa cepat dia dapat. Harga hemat hanya Rp 35.000, buruan amankan sebelum kehabisan!",
+      "description_en": "Selected thrift t-shirt in neutral grey, in good condition and freshly washed, ready to wear right away! Soft, comfortable fabric perfect for daily wear, relaxing at home, or casual hangouts. Easy to pair with jeans, shorts, or skirts. Limited stock with assorted sizes, first come first served. Affordable price at only Rp 35,000, grab yours before it runs out!",
       "category": "Pakaian",
       "brand": null,
-      "condition": "new",
+      "condition": "used",
       "attributes": {
-        "color": "abu-abu",
-        "size": "XL",
+        "color": "Abu-abu",
+        "size": null,
         "variant": null
       },
-      "price_hint_idr": 175000,
+      "price_hint_idr": 35000,
+      "price_suggestion_idr": 35000,
+      "confidence": "high"
+    },
+    {
+      "name": "Kaos Thrift Garis Hitam Putih Kondisi Bagus Sudah Dicuci",
+      "description_id": "Kaos thrift pilihan dengan motif garis hitam putih yang klasik dan mudah dipadukan untuk gaya harian. Kondisi bagus dan sudah dicuci, bersih dan siap pakai. Nyaman dipakai seharian, cocok untuk jalan santai, nongkrong, maupun sebagai dalaman layering. Stok terbatas, siapa cepat dia dapat. Pilihan hemat untuk tampil simpel tapi tetap stylish!",
+      "description_en": "Selected thrift t-shirt with a classic black and white striped design that is easy to style for everyday looks. Good condition and freshly washed, clean and ready to wear. Comfortable to wear all day, perfect for casual outings, relaxing at home, or layering. Limited stock, grab yours before it runs out. A simple yet stylish essential at a budget-friendly price!",
+      "category": "Pakaian",
+      "brand": null,
+      "condition": "used",
+      "attributes": {
+        "color": "Hitam Putih",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": 35000,
+      "price_suggestion_idr": 35000,
+      "confidence": "high"
+    },
+    {
+      "name": "Kemeja Thrift Hijau Olive Kondisi Bagus - Sudah Dicuci Stok Terbatas",
+      "description_id": "Kemeja thrift pilihan warna hijau olive yang mudah dipadukan untuk gaya kasual maupun rapi. Kondisi bagus dan sudah dicuci, siap langsung pakai. Nyaman dipakai seharian, cocok untuk kerja, kuliah, atau hangout. Stok terbatas dengan harga Rp 35.000, segera amankan sebelum kehabisan!",
+      "description_en": "Curated thrift shirt in olive green that is easy to style for casual or neat looks. Good condition and freshly washed, ready to wear right away. Comfortable to wear all day, perfect for work, campus, or hangouts. Limited stock at Rp 35,000 — grab yours before it runs out!",
+      "category": "Pakaian",
+      "brand": null,
+      "condition": "used",
+      "attributes": {
+        "color": "Hijau Olive",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": 35000,
       "price_suggestion_idr": null,
       "confidence": "high"
+    },
+    {
+      "name": "Kaos Thrift Putih Pilihan Kondisi Bagus Sudah Dicuci",
+      "description_id": "Kaos thrift putih pilihan dengan kondisi bagus dan sudah dicuci bersih, siap langsung pakai. Bahan nyaman untuk pemakaian harian, santai maupun layering. Model basic putih yang timeless dan mudah dipadukan dengan celana apa pun. Stok terbatas dengan ukuran campur, buruan amankan sebelum kehabisan!",
+      "description_en": "Curated white thrift t-shirt in good condition, freshly washed and ready to wear. Comfortable basic tee perfect for daily wear, casual outings and easy layering. Timeless white color that pairs effortlessly with any outfit. Limited stock with assorted sizes, grab yours now!",
+      "category": "Pakaian",
+      "brand": null,
+      "condition": "used",
+      "attributes": {
+        "color": "Putih",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": 35000,
+      "price_suggestion_idr": null,
+      "confidence": "high"
+    },
+    {
+      "name": "Kaos Thrift Marun Pilihan Kondisi Bagus - Nyaman untuk Harian",
+      "description_id": "Kaos thrift pilihan warna marun yang elegan, kondisi bagus dan sudah dicuci bersih, siap langsung pakai. Bahan adem dan nyaman untuk aktivitas harian, mudah dipadukan dengan jeans, celana santai, atau outer favoritmu. Stok terbatas dengan ukuran campur, siapa cepat dia dapat! Harga hanya Rp 35.000. Yuk chat sekarang untuk tanya ketersediaan ukuran sebelum kehabisan!",
+      "description_en": "Curated thrift t-shirt in elegant maroon, in good condition and freshly washed, ready to wear right away. Soft and comfortable fabric for daily activities, easy to pair with jeans, casual pants, or your favorite outer. Limited stock with assorted sizes available. Only Rp 35,000. Message us now to check size availability before it runs out!",
+      "category": "Pakaian",
+      "brand": null,
+      "condition": "used",
+      "attributes": {
+        "color": "Maroon",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": 35000,
+      "price_suggestion_idr": null,
+      "confidence": "high"
+    },
+    {
+      "name": "Baju Thrift Pilihan Navy Kondisi Bagus Sudah Dicuci",
+      "description_id": "Baju thrift pilihan dengan kondisi bagus dan sudah dicuci, siap langsung pakai! Bahan rajut lembut dan nyaman untuk pemakaian harian, warna navy yang mudah dipadukan dengan bawahan apa pun. Stok terbatas dengan ukuran campur, cocok untuk gaya kasual santai maupun layering. Harga Rp 35.000 saja, buruan amankan sebelum kehabisan!",
+      "description_en": "Selected thrift top in good condition, freshly washed and ready to wear! Soft and comfortable knit fabric for everyday use in a versatile navy shade that pairs easily with any bottoms. Limited stock with mixed sizes, perfect for relaxed casual outfits and layering. Only Rp 35,000 — grab yours before it's gone!",
+      "category": "Pakaian",
+      "brand": null,
+      "condition": "used",
+      "attributes": {
+        "color": "Navy",
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": 35000,
+      "price_suggestion_idr": null,
+      "confidence": "medium"
     }
   ]
 }

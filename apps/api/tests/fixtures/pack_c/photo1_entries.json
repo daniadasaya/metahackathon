@@ -1,121 +1,89 @@
 {
   "placeholder": false,
-  "recorded_at": "2026-10-27T08:55:21+07:00",
+  "recorded_at": "2026-10-27T21:46:42.662017Z",
   "pack": "c",
   "surface": "entries",
-  "source": "live muse-spark-1.3 chat.completions P5 (temp 0.2) on cleaned-wafer PNG with priced captions ('Harga 15000 per pcs') 2026-10-27; category normalized from raw 'snack' to schema enum 'Lainnya'; Seeded from live Meta Model API responses captured 2026-10-27 (live probe). | REVIEW-FIX 2026-10-27: reviewed raw live value 'snack' against the P5 Stage E schema categories; mapped to the only valid bucket, no invented fields.",
-  "model_id": "muse-spark-1.3",
+  "source": "Live Stage E entries from job-3d538290960c/entries.json (KK-0008, KK-0013, KK-0014, KK-0016, KK-0018 = source_photo_index 0); subset of the 19-product live run (job 2026-10-27T21:39:52.508882Z-2026-10-27T21:46:42.662017Z)",
+  "model_id": "muse-spark-1.3-contributor",
   "payload": [
     {
-      "name": "Mie Instan Cup Ayam Bawang",
-      "description_id": "Mie instan cup rasa ayam bawang, siap seduh dengan air panas. Kemasan utuh tersegel, cocok untuk stok.",
-      "description_en": "Chicken onion instant noodle cup, just add hot water. Sealed intact packaging, good for stocking up.",
+      "name": "Keripik Chips Kentang Renyah - Stok Baru",
+      "description_id": "Camilan gurih favorit untuk di rumah dan stok warung! Keripik kentang Chips yang renyah dengan rasa gurih yang bikin nagih, cocok untuk teman santai, bekal anak, atau suguhan tamu. Dikemas praktis dan tersegel higienis, bisa dibeli satuan untuk ngemil atau langsung satu kardus untuk kebutuhan jualan. Stok baru minggu ini, yuk amankan sekarang! Order cepat via chat, siap kirim dan siap jual lagi.",
+      "description_en": "Your favorite savory snack, ready to enjoy and ready to resell! These crispy Chips potato crisps offer a delicious savory crunch that everyone loves, perfect for relaxing at home, kids' snacks, or serving guests. Practically packed and hygienically sealed for freshness, available for single purchase or by the carton for shop stock. Fresh new stock, order quickly via chat!",
       "category": "Makanan & Minuman",
-      "brand": "Indomie",
+      "brand": null,
       "condition": "new",
       "attributes": {
         "color": null,
         "size": null,
-        "variant": "Ayam Bawang"
-      },
-      "price_hint_idr": null,
-      "price_suggestion_idr": 12000,
-      "confidence": "high"
-    },
-    {
-      "name": "Mie Instan Cup Goreng",
-      "description_id": "Mie instan cup goreng dengan bumbu lengkap dan minyak bawang. Kemasan utuh, belum kedaluwarsa.",
-      "description_en": "Fried instant noodle cup with full seasoning and onion oil. Intact packaging, not expired.",
-      "category": "Makanan & Minuman",
-      "brand": "Indomie",
-      "condition": "new",
-      "attributes": {
-        "color": null,
-        "size": null,
-        "variant": "Goreng"
-      },
-      "price_hint_idr": null,
-      "price_suggestion_idr": 13000,
-      "confidence": "high"
-    },
-    {
-      "name": "Mie Instan Cup Soto",
-      "description_id": "Mie instan cup rasa soto dengan kuah gurih. Kemasan sedikit penyok di sisi, isi tetap tersegel.",
-      "description_en": "Soto-flavoured instant noodle cup with savoury broth. Slightly dented packaging on one side, contents still sealed.",
-      "category": "Makanan & Minuman",
-      "brand": "Indomie",
-      "condition": "new",
-      "attributes": {
-        "color": null,
-        "size": null,
-        "variant": "Soto"
-      },
-      "price_hint_idr": null,
-      "price_suggestion_idr": 12000,
-      "confidence": "medium"
-    },
-    {
-      "name": "Biskuit Cokelat Kemasan",
-      "description_id": "Biskuit lapis cokelat kemasan keluarga, renyah dan manis. Kemasan utuh belum dibuka.",
-      "description_en": "Family-pack chocolate layered biscuits, crunchy and sweet. Unopened intact packaging.",
-      "category": "Makanan & Minuman",
-      "brand": "Roma",
-      "condition": "new",
-      "attributes": {
-        "color": null,
-        "size": null,
-        "variant": "Cokelat"
-      },
-      "price_hint_idr": null,
-      "price_suggestion_idr": 18000,
-      "confidence": "medium"
-    },
-    {
-      "name": "Biskuit Kelapa Kemasan",
-      "description_id": "Biskuit kelapa kemasan keluarga untuk camilan atau suguhan. Kemasan utuh, rasa gurih manis.",
-      "description_en": "Family-pack coconut biscuits for snacking or serving guests. Intact packaging, sweet and savoury taste.",
-      "category": "Makanan & Minuman",
-      "brand": "Roma",
-      "condition": "new",
-      "attributes": {
-        "color": null,
-        "size": null,
-        "variant": "Kelapa"
+        "variant": null
       },
       "price_hint_idr": null,
       "price_suggestion_idr": null,
-      "confidence": "low"
+      "confidence": "high"
     },
     {
-      "name": "Biskuit Susu Kemasan",
-      "description_id": "Biskuit susu kemasan keluarga, tekstur lembut dengan aroma susu. Kemasan utuh belum dibuka.",
-      "description_en": "Family-pack milk biscuits with a soft texture and milky aroma. Unopened intact packaging.",
+      "name": "Snack Keripik Renyah Kemasan - Stok Baru Warung",
+      "description_id": "Camilan keripik renyah favorit untuk stok warung dan teman ngemil di rumah! Stok baru minggu ini, kemasan tersegel, renyah dan siap jual. Bisa beli satuan untuk coba-coba atau langsung satu kardus untuk kulakan warung. Stok laris, amankan sekarang sebelum kehabisan!",
+      "description_en": "Crispy savory snack pack, perfect for restocking your small shop or for everyday snacking at home! Fresh new stock this week, sealed and ready to enjoy. Available for single purchase or by the full carton for reselling. Grab yours now while stock lasts!",
       "category": "Makanan & Minuman",
-      "brand": "Roma",
+      "brand": null,
       "condition": "new",
       "attributes": {
         "color": null,
         "size": null,
-        "variant": "Susu"
+        "variant": null
       },
       "price_hint_idr": null,
-      "price_suggestion_idr": 17000,
-      "confidence": "low"
+      "price_suggestion_idr": null,
+      "confidence": "medium"
     },
     {
-      "name": "Koomuak Wafer Coklat Rasa Kacang",
-      "description_id": "Jual snack wafer coklat rasa kacang merek Koomuak, kondisi baru. Harga 15000 per pcs. Stok banyak.",
-      "description_en": "Selling Koomuak brand chocolate wafer snack with peanut flavor, new condition. Price 15000 per pcs. Plenty of stock.",
+      "name": "Wafer Camilan Renyah Stok Baru - Bisa Satuan atau Satu Kardus",
+      "description_id": "Camilan wafer renyah favorit untuk warung dan stok camilan di rumah! Rasa manis gurih dengan tekstur renyah yang bikin nagih, cocok untuk teman ngopi atau ngeteh, bekal anak, dan isian toples. Stok baru minggu ini, masih fresh dan tersegel rapi. Bisa dibeli satuan untuk coba-coba atau langsung satu kardus untuk stok jualan biar lebih hemat dan praktis. Yuk amankan stoknya sekarang, cocok untuk dinikmati sendiri atau dijual lagi!",
+      "description_en": "Crispy wafer snack, a favorite for kiosks and home snack time! Sweet savory taste with a light crunchy bite, perfect with coffee or tea, for lunch boxes, or for sharing with family. Fresh new stock this week, neatly sealed and ready to sell. Available per piece or by full carton for stocking up and reselling. Order now for everyday snacking and extra shop supplies!",
       "category": "Makanan & Minuman",
-      "brand": "Koomuak",
+      "brand": null,
       "condition": "new",
       "attributes": {
-        "color": "coklat",
+        "color": null,
         "size": null,
-        "variant": "kacang"
+        "variant": null
       },
-      "price_hint_idr": 15000,
-      "price_suggestion_idr": 15000,
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium"
+    },
+    {
+      "name": "Kripik Chips Renyah Stok Baru - Bisa Satuan atau Sekardus",
+      "description_id": "Kripik chips renyah favorit untuk camilan harian dan stok warung! Tekstur garing dengan rasa gurih yang bikin nagih, cocok untuk teman santai, bekal, atau suguhan kumpul keluarga. Stok baru minggu ini, masih fresh dan tersegel rapi. Bisa beli satuan untuk coba-coba atau langsung satu kardus untuk stok jualan. Yuk amankan stoknya sekarang!",
+      "description_en": "Crispy savory chips perfect for everyday snacking and warung stock! Crunchy texture with a tasty savory flavor that is loved for relaxing at home, lunch boxes, and family gatherings. Fresh new stock this week, neatly sealed. Available for single purchase or by the full carton for resale and stock up. Order now while stock lasts!",
+      "category": "Makanan & Minuman",
+      "brand": null,
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": null,
+      "confidence": "medium"
+    },
+    {
+      "name": "Wafer Cokelat Koomuk Renyah - Camilan Manis Stok Baru",
+      "description_id": "Wafer cokelat renyah dengan lapisan krim manis dan tekstur garing, cocok untuk camilan sehari-hari, bekal anak, atau teman minum teh dan kopi. Stok baru minggu ini, tersegel rapi dan terjamin kesegarannya. Bisa dibeli satuan untuk coba-coba atau langsung satu kardus untuk stok warung dan keluarga. Yuk order sekarang, siap dikirim cepat!",
+      "description_en": "Crispy chocolate wafer with sweet creamy layers and a crunchy bite, perfect for everyday snacking, lunch boxes, or as a companion to tea and coffee. Fresh new weekly stock, neatly sealed for freshness. Available for single purchase or by the carton for family stock and small shops. Order now while stock lasts!",
+      "category": "Makanan & Minuman",
+      "brand": "Koomuk",
+      "condition": "new",
+      "attributes": {
+        "color": null,
+        "size": null,
+        "variant": null
+      },
+      "price_hint_idr": null,
+      "price_suggestion_idr": 3000,
       "confidence": "high"
     }
   ]

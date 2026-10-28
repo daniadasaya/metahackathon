@@ -1,14 +1,14 @@
 {
-  "placeholder": true,
-  "recorded_at": null,
+  "placeholder": false,
+  "recorded_at": "2026-10-27T21:39:31.530291Z",
   "pack": "b",
   "surface": "fidelity",
-  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
-  "model_id": "muse-spark-1.3",
+  "source": "Live P4 fidelity verdict for KK-0001 (concept 'denim jacket', photo2) from job-f6dce0c0ee01/job.json (window 2026-10-27T21:34:17.952843Z-2026-10-27T21:39:31.530291Z)",
+  "model_id": "muse-spark-1.3-contributor",
   "payload": {
-    "same_product": true,
-    "color_match": false,
-    "logo_text_match": true,
-    "reason": "print text intact but fabric colour shifted from black toward navy"
+    "same_product": false,
+    "color_match": true,
+    "logo_text_match": false,
+    "reason": "Reference shows only side-only sandwiched view while studio invents full front with pockets, red tab and neck label."
   }
 }

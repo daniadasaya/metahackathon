@@ -14,8 +14,8 @@ public functions below and nothing else::
 MOCK MODE (``META_MOCK=true``, the default) is the only verified path today
 (2026-10-26). Every function serves the recorded
 fixtures under ``apps/api/tests/fixtures/pack_{a,b,c}/`` (see that
-directory's README for the envelope). All fixtures are hand-written
-placeholders (``placeholder: true``, ``recorded_at: null``); mock-green
+directory's README for the envelope). All fixtures are recorded live
+responses (``placeholder: false``, ``recorded_at`` set); mock-green
 proves nothing about the live API (a green mock run proves wiring, not the contract).
 
 Deterministic input → fixture mapping (same input bytes → same output;

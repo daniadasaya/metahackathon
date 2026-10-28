@@ -1,60 +1,50 @@
 {
   "placeholder": false,
-  "recorded_at": "2026-10-27T08:55:14+07:00",
+  "recorded_at": "2026-10-27T21:46:42.662017Z",
   "pack": "c",
   "surface": "concepts",
-  "source": "live muse-spark-1.3 chat.completions P1 (temp 0.4) on Snacks_on_counter photo 2026-10-27; Seeded from live Meta Model API responses captured 2026-10-27 (live probe).",
-  "model_id": "muse-spark-1.3",
+  "source": "Live Stage A concepts for photo 2 (photo index 1) from job-3d538290960c/concepts.json (job window 2026-10-27T21:39:52.508882Z-2026-10-27T21:46:42.662017Z, status done, 0 errors)",
+  "model_id": "muse-spark-1.3-contributor",
   "payload": [
     {
-      "phrase": "potato chips sachet",
-      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
-      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+      "phrase": "milk carton",
+      "scene_note": "An open cardboard box filled with assorted milk cartons and snack packs sits on a floor with a plastic bag of snacks below.",
+      "visible_text": "ULTRA MILK, INDOMILK, STRAWBERRY, Taro Net, SEAWEED SNACK, CHITATO, Roma, Kelapa, nabati, Cheese Wafer, beng-beng, KuSuka, Cassava Chip, garuda, Tan"
     },
     {
-      "phrase": "kripik cassava chips sachet",
-      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
-      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+      "phrase": "seaweed snack bag",
+      "scene_note": "An open cardboard box filled with assorted milk cartons and snack packs sits on a floor with a plastic bag of snacks below.",
+      "visible_text": "ULTRA MILK, INDOMILK, STRAWBERRY, Taro Net, SEAWEED SNACK, CHITATO, Roma, Kelapa, nabati, Cheese Wafer, beng-beng, KuSuka, Cassava Chip, garuda, Tan"
     },
     {
-      "phrase": "wafer snack pack",
-      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
-      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+      "phrase": "potato chip bag",
+      "scene_note": "An open cardboard box filled with assorted milk cartons and snack packs sits on a floor with a plastic bag of snacks below.",
+      "visible_text": "ULTRA MILK, INDOMILK, STRAWBERRY, Taro Net, SEAWEED SNACK, CHITATO, Roma, Kelapa, nabati, Cheese Wafer, beng-beng, KuSuka, Cassava Chip, garuda, Tan"
     },
     {
-      "phrase": "chocolate wafer bar",
-      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
-      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+      "phrase": "cassava chip bag",
+      "scene_note": "An open cardboard box filled with assorted milk cartons and snack packs sits on a floor with a plastic bag of snacks below.",
+      "visible_text": "ULTRA MILK, INDOMILK, STRAWBERRY, Taro Net, SEAWEED SNACK, CHITATO, Roma, Kelapa, nabati, Cheese Wafer, beng-beng, KuSuka, Cassava Chip, garuda, Tan"
     },
     {
-      "phrase": "carton boxed milk drink",
-      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
-      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+      "phrase": "biscuit pack",
+      "scene_note": "An open cardboard box filled with assorted milk cartons and snack packs sits on a floor with a plastic bag of snacks below.",
+      "visible_text": "ULTRA MILK, INDOMILK, STRAWBERRY, Taro Net, SEAWEED SNACK, CHITATO, Roma, Kelapa, nabati, Cheese Wafer, beng-beng, KuSuka, Cassava Chip, garuda, Tan"
     },
     {
-      "phrase": "instant noodle pack",
-      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
-      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+      "phrase": "wafer pack",
+      "scene_note": "An open cardboard box filled with assorted milk cartons and snack packs sits on a floor with a plastic bag of snacks below.",
+      "visible_text": "ULTRA MILK, INDOMILK, STRAWBERRY, Taro Net, SEAWEED SNACK, CHITATO, Roma, Kelapa, nabati, Cheese Wafer, beng-beng, KuSuka, Cassava Chip, garuda, Tan"
     },
     {
-      "phrase": "bottled soda",
-      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
-      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+      "phrase": "chocolate bar",
+      "scene_note": "An open cardboard box filled with assorted milk cartons and snack packs sits on a floor with a plastic bag of snacks below.",
+      "visible_text": "ULTRA MILK, INDOMILK, STRAWBERRY, Taro Net, SEAWEED SNACK, CHITATO, Roma, Kelapa, nabati, Cheese Wafer, beng-beng, KuSuka, Cassava Chip, garuda, Tan"
     },
     {
-      "phrase": "bottled mineral water",
-      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
-      "visible_text": "Chips, Kripik, KitKat, Koomuak"
-    },
-    {
-      "phrase": "bottled juice drink",
-      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
-      "visible_text": "Chips, Kripik, KitKat, Koomuak"
-    },
-    {
-      "phrase": "hanging sachet snacks",
-      "scene_note": "Assorted chips, wafers and boxed drinks on wooden table in small toko with shelves of noodles and bottled drinks behind",
-      "visible_text": "Chips, Kripik, KitKat, Koomuak"
+      "phrase": "peanut snack bag",
+      "scene_note": "An open cardboard box filled with assorted milk cartons and snack packs sits on a floor with a plastic bag of snacks below.",
+      "visible_text": "ULTRA MILK, INDOMILK, STRAWBERRY, Taro Net, SEAWEED SNACK, CHITATO, Roma, Kelapa, nabati, Cheese Wafer, beng-beng, KuSuka, Cassava Chip, garuda, Tan"
     }
   ]
 }

@@ -1,46 +1,234 @@
 {
-  "placeholder": true,
-  "recorded_at": null,
+  "placeholder": false,
+  "recorded_at": "2026-10-27T21:46:42.662017Z",
   "pack": "c",
   "surface": "masks",
-  "source": "hand-written placeholder; replace with a recorded response once the API key exists ",
+  "source": "Live Stage B masks for photo 1 (photo index 0) from job-3d538290960c/masks/photo_0.json, filtered to records whose concept matches a paired concepts phrase (22 raw, 6 retry-phrase records dropped as unreachable in mock mode); bbox/width/height/revision/score/mask_png_base64 unchanged",
   "model_id": "sam-3.1",
   "payload": [
     {
-      "concept": "instant noodle cup",
-      "bbox": [30, 40, 180, 240],
-      "width": 640,
-      "height": 480,
+      "concept": "snack bag",
+      "bbox": [
+        315,
+        200,
+        481,
+        277
+      ],
+      "width": 167,
+      "height": 78,
       "revision": 1,
-      "score": 0.94,
-      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAHgAQAAAAAdquFJAAACnklEQVR42u2bMZKbQBBFB0zZZEvobDmCbyAdxUeZo/goG27oIxA6JMQuTDvQgoAhUc2fqhF+L1nVBE/dPT09rEpyDgAAAAAAIGMupvW9mI1SoZnZm9D3xcxsiLWU95dfnXPus1D43TnnCi/LuDAzM+u0JYwvYrktYXwRy20JlUW0D1Sd+GkW9qKUq/lFLRLWgTlS+G3JXSS8Lkteu8mx2zxHWNyXWolwNSQaiXC1t7VEuLJUEmFzOCIjhKudKCTC62rNa9swshHLgzRbgXCzEY1AuGmVWjIcVJQHQVUCYSOLujzY2CLHGl43i157UOKOSqKUd9vQ5hfhTttEC3dno84v5V1IVX4RNrp3SRThrpOL/CK87lZ9RhEeTa+o+ZWmhsGuttntsloYWJvcIgzGVX36TQkyrE6fciN8mydJWS4MplVBDR8VXoNlTw0j7/mYm/5/7cPshQezpaWGCJ9eeCBtqCFChAgRIjyncAqXe2qI8OmFB9/26qjh6YQ+WOYzh0e5BJ/b0IePCoPZQg0fFgYPHtPpUw6+WTqePuUgwyG3CCfdE/GzbIrpnpVSpexl93yq7zlcZLdoqhp2sjsqVYS97AZIFeEgG9ipIhxl8/VDOMnGYaqUTTa9kk1sr5pex+Mmx+fDTjVsZmGvmg2zcFAd5WQ1HFVHeRZOqqM8C0118pYaeu1B2R4VydNXJ+rrRdiL+noRDqK+XoSjqA0X4SRqw0Vooja8n2WvbcN1I4qmxMvsG50m5UHTNXfhqOmau/Dv/OKn6j8pr91k515vezKpfPofov65/fklE9qtiD90F+CrtoQJfhD92znn3pWXvvxH5fKfvQMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAln9EACzFCyGsIAAAAABJRU5ErkJggg=="
+      "score": 0.7229437232017517,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAKcAAABOAQAAAABtJjsLAAABUElEQVR42qWVQW6EMAxFf5xIsEAqPcFwkErDzUpvBlIP0rnBdEclwLNIBhLblYrq5dPPT/JNDHDUhb+g6oWZFfTMrMXvzMyzgBdmZt60qbKoEkwWLtJ9cyYAoGi6L3LDYcBHjWL/WPenr1+yfX/q5PuWnyYkbSGNqwloyvuMkbYl7SLtStpG2pe0id4iaiaAnkkUd6aURFY9NAM6wKGSXVmDpfVD3oYsNkKtxI3lAG9SDCTDAYDe1HYkIwOA1tTWJIPE8ZWICg76S8ZqavELdSalPzsQBRPXJm1PnKw7oe1PaE3qjCDTA/2Xr7e6udFoOhjDCgvdTe1swNmJtx2vRquGN3joo72CoI72LYcOM/MCgCCO9hHKsZcNriAfa8ps0RAObivGU9IeLZqyfPdrTL3Ri6m841XM0myiztZ/gs0e31ScVUxEaBfg02jTVXX0AU3vq+ScQLo8AAAAAElFTkSuQmCC"
     },
     {
-      "concept": "instant noodle cup",
-      "bbox": [40, 50, 200, 260],
-      "width": 520,
-      "height": 660,
+      "concept": "snack bag",
+      "bbox": [
+        1449,
+        690,
+        1682,
+        1030
+      ],
+      "width": 234,
+      "height": 341,
       "revision": 1,
-      "score": 0.9,
-      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAggAAAKUAQAAAABJI/32AAAC1klEQVR42u3b0XGbQBSF4UVhJjx4IjqwSnAJm45SgkpICekklEIHYfzEZDSsHxSZBVaJ9rABI/3fi2VpdHzvZRckj2QMAAAAANwt56Kfshv89mxMG5vwyf8l+2VMnlUzetg751wzp4tvxhjzZUYX2U9jjMlmtLF3TmjD7+Ll/ONJT7ChAxwzh/MY5gzis/ujVrsoLjdKNeHlcuNJTbDhvfIvmbcvQ3fG1OAdlUpLyPs7D1pC0d9ZagmlCYXFJHil51qCvXbqu/louvAxvr2GwZOOSsKgcqskDKZ3UBIGR7BUEgZPKpSEQeG5kmCvXwtjrpuKLLSgopbULvyUY3zCqBu75Bx24eN3iE8YraEyPmH0lGKNOYwaz9eowcrBWXBRxyzrZF1M/uRx+RomQXb5GiYr6LB8DZOdVC5fw+RPFsvXMBl9vnwNVk9Od4aZfd10f3vB/fG72F0r+bi9LgI5dntdBHbiYXtdBM5p5fa6mJ8QaLp4xDnMTwhsgpxJrpNgZ0QzyXtKyK68CLr9ZRCTJIEEEkh4nITAm0vHJB83oZo+0DHJdRLq6QMnJqkkNNMH2kecQ6DpZntdBDZBvb0uAqfVanvvN+/jv+7Tl0Fug7t7un665Wuo5UtWuhoa+WSfroZWPtGmq+EknybT1dDJJ7mEn6j5AJ89GJ9iXHxCpW7uhF3U6uZOWEOjbu73hFbdmu8JJ3VjJZxDp26shJ80Gy5rZ9aYw7DzTkmoxUXdJzTikuwTWnFJ9gkncUn2CZ24oFJ+GtZfUk5aD37lnZZQa8vBS2i05eAltNpy8BJO2nJI+kn1/nA6IyZU0sH07S/fO2jUGlrpUPgJvy83fkQlDL5NY8+D/Cq/v6hmDjLFN1lezz++G30OxsaPIdBGZBPDa9ar0MTIs3OtmUf4hhcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/DG7Q1l4Ge4iNlAAAAAElFTkSuQmCC"
+      "score": 0.9101123809814453,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAOoAAAFVAQAAAADJBE73AAACvklEQVR42t1aS27bMBQcyQaqRQBr2V19hNygOkpuYhXowbjsskcgigLNkggChAlovi6oD2WRtCJGphQuDEeDmTfv8WdGBKy2I1LwtR0REenBs7z7djLEjNtw1lI71fPeAdP4kSVuoWAjV9/JarJ52AbJaNBa74faWKaLVjeSHMAXGrUmtZMA8G0MN8FJAPlxXL59n1/uqG7efBZAXo3hjHUaLjbuAeCrMeBo2pRKetgZAFRecavsJ5e6AEBecdy13eqGd33ynuB3IfgepYGZJ/iDY6D07UfTcx74xcA5dwcvELIGAJBhGEAuwnAAK66LX4FlFDsOVlFsndA5zWbLeGt1urzBlhTnCRMTCWPLJcXVkuJ6SXFK2CWRcJ0ktkieN5vJ5smd85lslty5mM/OgIPwY9djy/VOQbWIOKVPTG92VaQVO6+3WtTA3P4AcbbCvOv0NeeLiFcfYU2kKMtxEltudo6pRcTLKHZz9tfz2PtJsWnFPVavz1o+jc0+2VbTwfyzJhbzG3nVsJjHrhM6ryax5fa65Lhea+Uktlqh82ISW0fFpkUTq30b+OqXHraEeL75vYRvznm2hPjPi7+Hr1RV9x7TyVbmdaVP/BG/QjDH6xXnxwDMgD9hNpVm5ubu0yuew1U72/Bgh6b2nOhma2t8ebvk0Qcr69PLPvtg2Z1pQsPhCUDlh6l2s0Vf+tBY+93BctjdvcUA+9UNs9Eht3DS/4KZ19yDf6n2FxpOzdeDPcyt4R+eRP8csMV+u/XqoKPYKootx3A5nS2iYvMoNrvZej5eUxPuJSljX4F1wtjq1rHFZLZc0ppwwHIym0fFZu9hmxW7v702uJ727tjkgnWYTZ6B2opXYQuH/ueUi/3sHoktfC7DiT2F4fY+na9rd/3tMVfVzlV4zBo6C659wfsJJwpfQLp0dtGhxSX8H5G6jQfEDToNAAAAAElFTkSuQmCC"
     },
     {
-      "concept": "instant noodle cup",
-      "bbox": [25, 35, 170, 220],
-      "width": 760,
-      "height": 570,
+      "concept": "snack bag",
+      "bbox": [
+        1083,
+        487,
+        1229,
+        556
+      ],
+      "width": 147,
+      "height": 70,
       "revision": 1,
-      "score": 0.87,
-      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAvgAAAI6AQAAAAB6eQHxAAACrUlEQVR42u3cPW7bQBCG4SElxCxSqEwRQLyJeZQcI+UexUdhmTJH0BFYpCAMRuMi/F8BdrHfIoTfp7GxxcfFcHeWMmiZAQAAAADMzE6r359vRSu81JP7kDy0XH79aXYSzv/k7t7r5v/dzOxJl//DzMxkBSrc3d074epxT7+C5vp8i/dD0vx6/BlE9fHRTTP/Yhq4aPK/TANfNfnVg4aRMn8uS6HJr+eRIF0+qRdQGVXloshf3dVKkX9eRs6K/OrhiZYuf1X0QpFfr4aCIL9ZDTWi5wcld9EGK+N7ekmfv6lSlT5/s6fOR7q/ZVySMn3+5pYW6fPrzVg4XP23LaGRbt+0GzhLfXYr5nK0+e8uUh1t/ruOdj7a/CvdNbPMf7fgi6PNv94NhoPNf9+Qm4PNP+fTYeIDJkd9ov104f6u86NrVNRnnR+dh2fqkzO/El6U+r+fH7XLgvqQ//H8OhoN1If8T5Mff5xoqA/55JNPPvnkHzy/jUZb6kP+p8g3M7vu/z7s1If8j+d3+0HWT9b86KXhO/XJmR+9MzxQn3V+tBx76rPOj9pld7D6hN3gjfu7yW9lHy/yvD9wlT0e5ql/J3s8yTP/Xna855n/IDse88z/Lju+8szfZcdLpv4cVMfLmN+q2nOm9/+vqvY8zr9Ttc8xv1e1t0zrc1C1tzH/rmo/Y76r2sNU/yDavrmeD1tRe3i0gRXz70Tbd8rvRdt3yh9E22vKv4u215Tvou01r/9mHnkRnzCaz1+dZnnO+b1mec75r9PAH02+a5bP0j8b6fJZFpCqUav/f/9VcnuXfP93RP4WPyPqTkr191f8DWb2S3jUS74/ZO3ZgwEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/kzfWGQI55djT7QAAAABJRU5ErkJggg=="
+      "score": 0.7968254089355469,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAJMAAABGAQAAAADgbZskAAAAvElEQVR42s2UQQ6CMBREh0KCO7iB3ARupkfwSD0K7FzqDpOG54IYgZaIKNEuunj5M9Pf/lSarsojMQQQ1oxQ5iQpHqL9WZIiI6mE+rFLUqTYTTwbI+dlm0g+MwGmhSwJMPeB3z+xZPOM+k1tM5gmqxQApdAdAOikDMBJqe2nivbJPD+3MLdd128+V3dZ51ds8R71mFW/mTUBYBdqiy+fJX9dd5zT7gJ9jO80ov+hPO01kHHyM27T7BLvh7kDcAdK645riTEAAAAASUVORK5CYII="
     },
     {
-      "concept": "biscuit pack",
-      "bbox": [60, 90, 300, 210],
-      "width": 600,
-      "height": 450,
+      "concept": "snack bag",
+      "bbox": [
+        1564,
+        942,
+        1903,
+        1236
+      ],
+      "width": 340,
+      "height": 295,
       "revision": 1,
-      "score": 0.91,
-      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAlgAAAHCAQAAAAAbCIrJAAACc0lEQVR42u3aQXLaMBTGcYOZCYtOw5JdOUJvEPdGvUFzlN6kPkKP4O5YsujCybh+XWQ62EESeu+JwjD/3y6D8iHJT7KxXVUAAAAAAAAAAADAjXoQka5M1DcRERlLRD3Jm8Ef9Sj/HLxRtRy1hUZYYJTTbnk79jTLGsp1y9exT++yes0/L+Z/ypnPk5bzxXPyeWfO2p58vjWPUc5OQna/6kCD1r0UxbIoZ/36GmjwUVGc06n5EZrQhWmUDxLSmca4DrbYmLI+B1t8MNWXZC2zrH7VkSatIWsVabIzZMWW3taQFfv+lSGrydpKsuo+WPWqyl9mfH2jHmN8WnbqrHW0zUadFf+PtTorPpKVOqvJPL/krG3JPome/c5U+2dlVmogjTIrNcE7ZVbqwG+UWan2a/U+4bbMmZOVMqvxd77kGBcZZZ9b+JeY+/Q3P1+tX+nM5nq1WjArXdq7uxhjyaz0FrVhvsi6y6z0jYgD8/UuK31HqbuLMabvgLb/vV+3fp2TvJSRK9Z96lCNyqxUaQ9XHGNqi+qVWb17KzxmDe5t4pg1upfjZX4jJwpftMcxMZBRndV5S3WSdfCW1ySr95bXJGvwltcka/SW1+xGaOQXlHzRn9NaZ0lMszpnSUyz9pEme0PW4DyMl7q3HTmOf0z79WPwucKhsvSrd62gedZrsMX37Kz63L2D7KrPmLD8Ic7Ptb8DDX4arr9iFWZ9Nhe4D/Fivvbd2xdjdclnrCeDfKnsSj6TLvmsvOgz/JLvFhR956HkuxiOd0QCDx1/vW09Uhe5uC74Tg0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALfuL7ldaBpHO1w5AAAAAElFTkSuQmCC"
+      "score": 0.7229437232017517,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAVQAAAEnAQAAAADeX4Z3AAAEgElEQVR42rWaPW7bQBCFZ5cCycKIWaoIYB5BZbrskXIEHcVHkbuUyg0YIIVK2nBBCaI2hSSbP7O77wWMKlv+/PA4MzszpCQiIiJbgV9mh7NZi7PFGaGsiIisM9zwd9/Auk7WsK73F1TXiBjUsPHetwR7Bj1YEUGjlnncROEhE/ZTnGAFq7VH7733HaFbEKw0CFtdf14TugXBpkxYEZH69stXgHVYOkYeEukwIiL+/tuxTLHmMv5XzEMyHdfy9emamOjmBJs8zsWnh2j/mejeywhiywQ7/PuK0M0SbIWXhDwN4hDLxtRDzLAdlLr+z5E/GYKNXNyc/RZl3bg6CN2wCYWtCXYdO5seDJsW+iasa6Yzs1/huhnhIbLRGD99NUG/2WyyBdqa6iEn/IbXqmzmNzCbrXpqHnAP1LuGYPUaNiKF0hLUCFu93eWEB0OwavnYQHt2hO6GYB90Vj3j2moXbIuOYGuVdSq7JnTzwFKtvhotmV7APNtw09/BfpVIGKU9hGo4opsTHpS9o/AejFpEd5a6GJsT7NRwjJ1WlVHbw+31WuG6XwgPkz5so1tWjesSMZtmI87mBDu+OCOPsZu8UQ0nri0n4mCYmO1GbBVlN4TuA8EOe2syx45ga4JdE2xOsKMD+uTjr2agWyeEK+JclAS7IthswDpBSw04xxuCLT8L36fYj3XYEi3EGoGzjPSoe6RMln6uc2/DiG5JeCDi8BmQFR40RNcwHrbJcTw7RpBu9Q9xKJeaQ+PELTffxkm2hCDE3qv9ycPJwK7tK8HepsZ3xMP1ASoY32xH5GIjItZh7BdC1+yIetiIGA+yxxLXXREeLFm/24Vr/c7u0ACTug3BtgTbEeyZYPsVSG7FSl8SuTgyeXME2xBsu3jtOLEi0v2PmhSRM8FeCBY79vXV75a4tmeCbQm2I9gzwfZM3hzBIlVZ3dgDoXsm2J6pyZpg/xBsz5wLR7B7gn0n2B6o94/V/jFVxK/Vx5l/I/qDJwZdcqFqB33nQPSoI8GmUze4HSo6NGZAwQ/YnmCThofsnmDfCDaVZht66JJi9wT7TrA9M9/q6M3L+PY4dlN7LMe6PTNjFzpI3VT3QHg4EexCJ3/mN2p4yp4IdhnD3fzTgMhj/Nke1YdvRmzwSQqynzVIP7u/cwk9PprreofrhqaMphvalKy2e56W2lOXL4mL+ulQYHAYjQ1kw2jX5pk4bAl2B+c4lGXVbyjLqq4eCF03kDm9HvSLC3wf4AfsIdCpdPbEeNBO/kug1p+Jc9ESbEewR+Zs1gR7IFilC7sQ2zO9xBHsT4I9Mv3MEeyeYN8Jtmf6bw2def3k/47ozgZS7OOLSR+O6c5OaJZ4njK8ESAGRxOdWQdivp0IdhK1+NzcE+w7wV4IdmS4SnxENdzAXhM7QV+DtTMZuK/JXaNMFNhY+HJ7uA88XSra25eUWwNpZ2fI7yAnGOtFRNoMvEIHe7gOaJDdE2xHsCeC9czu6Qh2T7AdwZ4E+eb8h+NfcBnviB38J/h9fBER4wm//gXf4tfyF+YthQzmu24mAAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "snack bag",
+      "bbox": [
+        371,
+        447,
+        533,
+        502
+      ],
+      "width": 163,
+      "height": 56,
+      "revision": 1,
+      "score": 0.7037037014961243,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAKMAAAA4AQAAAAC5tnWtAAABC0lEQVR42o2UO07DUBBF78wzpAMWgESWQEmB4iyMIgUFJUuyd8ASXhALiKgcyXgoYr+P5yIxjUdH1/O3gdoeRngzM4sr1pqZmQGhfPvj8pSugMFmi9BMnxfnjkltKLRJimvI4sqUy9OkvcmxJEd4LAtP9ZYdyaK9rZqcaXuqqKzyAwB6JfASYQdCQ8foix++YDM42CueyKKURAX0nsCtbgmNCma6p5RqxQjsqbb7I9s/445N3ls+hqv9fLGFRSBM6wimLNsnyzZLa23qqfHCSltAKO0y+UfasbDpHNl0fpp6kgcAwCub7/nA6BvId+6vOgL4dvQE4N0tbmPmfyo6Al9syRPbfTswGqJnvwUtZO0v9NX1AAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "snack bag",
+      "bbox": [
+        1125,
+        517,
+        1266,
+        552
+      ],
+      "width": 142,
+      "height": 36,
+      "revision": 1,
+      "score": 0.719298243522644,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAI4AAAAkAQAAAAB3AT8tAAAAm0lEQVR42q3SsQ3DIBCF4R+M4hSRTJkubBKPkk3i0cgmeANnAOtS2FIMr0mRa0CfjrsTAE/a6KzAadv3GYDBrJjZAnCzaadDLICPVZkB8E3pAj7VdNWsXomslPBjQ1GzLkpeySkxKY1KyVlLs2ZFpbNSUOKf1NFemP1y8N3ONbsI9/r164Ov/S8EbeTLtq7f9PAAWEM1mVmuu34AeTg2TNdoO1YAAAAASUVORK5CYII="
+    },
+    {
+      "concept": "snack bag",
+      "bbox": [
+        1261,
+        418,
+        1398,
+        540
+      ],
+      "width": 138,
+      "height": 123,
+      "revision": 1,
+      "score": 0.8827838897705078,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAIoAAAB7AQAAAACDMiV1AAABdUlEQVR42q2WQW7CMBBFvydRyQIJL7vDR+gRfDN8tPQm9AYsi0SZLoiJZ34QEa0XwXr8P/6MkWMAu2+YIcDHGyGEEW7s9eTRTq9kRDg61Ub1Qip0jDCS0a/ZqS0m5qOdh0JGV6xTW0xAxerUFtuoquqR0aU1Du5nzmULo2y6qiasAPE2G9jYM5Jmkqb8rLqnaFBmlGZUv31nVU0RAJ2mylsT7sbgU7QbmBmlimYYWbV9+GeQuU917VY1pRDQkLnnNZhRpQlFNia4rMa4ZSTTM/uO2VzlYVT4Jlo0BdJmnFg13NbVBqmQKiyEKIwyowRAgkERQAjmKPnpycghEBY6UQDhFF6VGEVGAyPOBQGkp2BPdwhAWaXKkOG5ah1Ka43xv1YEJD1XxT+UX4EGSH7J2DOSVcawLmpZUHX06v18tRP55RZ28A37YtW4VGtktlc3IO69rgFiLyZnAcTcG84DgP7qziWTvmacz6/mpDmouvsKcHCXlV8kQXHcSAkZkAAAAABJRU5ErkJggg=="
+    },
+    {
+      "concept": "snack bag",
+      "bbox": [
+        1044,
+        1227,
+        1418,
+        1499
+      ],
+      "width": 375,
+      "height": 273,
+      "revision": 1,
+      "score": 0.8947368264198303,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAXcAAAERAQAAAACoFtoUAAAFbElEQVR42p2aPXL0RBCGe3q37A22sMMNKLxHcOgIlptQnICQCHQEjsBJQNzARxAUgYlYVznQ95VWQ6DVSiP1z9soca38uD399s/0jE2kPT83FHnucyu9Zo1/oW3EfMq5j9j/iihJ7zeK+X+JKNWw/S8o9uScc67h9Q+rPML8noiIHmH+h9jqNznnnMUAi/a/HL5IAZaCkq6RvWwx+3fG96R3B+N3S/x3lhTCq99ujtSImg95fBpoPVOwHgPByjnnM2J/JvoO4V/EH1Xjm2Zlm9m3/7WdLMtX962dXUv7PxafqoCYcgWzVIi35+jx/68QjQCzVIhGgNlZr61/Xnx3XcFsFo+TD8AOwVKho/mwLvTK7+J2QrCdvkeLv1vzjxYvlOvO4p8ppueJrGax8jEJG/Sq4tl0dy0ZG9GVAsZOGz9ZE4bwNKr9O9HKQeVfRH6rCpCRApzsJ8WtSp3XMuIwm+qv3ydn+csWMdq/hwp8+nhQw1iJ/JGwh908OUn+pl7l3x8F+6yvYCetZ6/zop7PYMccP53Qjn9t4dagI0xBKRtPs17PnRWiw5o/WPzdmj/iW5zS+LVNgK1a1KLBNnNc8nubPyx5p/Fvl85n5zDDpX3P3bRYD3uiVCW/9/hTybv73HPJnzx+X+R/+t0N6lQC7CTz0gEWt3XdAYa29f08Fhk5bk/2N0gaVxO/R/jTxCNTyVQCCVr+1HQZq8Wb5swQfysZhtydRORHrC+MgjK4cY2C8gnjj979jDKIovwuyG9vOwV4ocIx++NYgNofM4grkL/mAdcgf80IfkV3isFwum9B/tMuos84gXEH/0BFRMQ9zJ+IiDjD/HFYPxqAIUWZ0AAMKZoIFpQSETHhAtVExNSHHGbKsMOHYU0P54ADTPQecYADszM9DxrBimYmJsIVTRU0n0zPn0cmZIOfUigRBRS9bDdERN1P6LSXEoUc+GPjzuelQuyO56XDw3pgh98HfoOG7NOwHrgGthsKOZyv2/tTE+PRFB23mS7SIwIRzhzz99bPm+B6QIcvo33Q4W7kLxjfboCbmNnzD5fbH35/hQnU3HisAurbOIkJmpJ1OyakA1MkgfrZ/o7o2c14RKB2xp9j+tMHQJ9nPKJPMz9LZiT78flnsMjiKVR5Phd8Dcg555uYnkAAzgXvJ+ivxdncb+qpsO+W/GUxf1ZudpZ87ctZ8I0vT8Gf3WwreU/QenHX4QmaFvYvvpxlPleunCVfu3KWfOPKWfJvrpwl3/kHnuL4bvbQvL5Ky3bvXJ+PKk/OxfPkXmvyWjK9GJf+mptMEux3Zm9b873Z29a8cTZpxfO4nnG/iG9VQXv5PkEV9C+Z/7DVX91lahl3m9tYVFlJNuE8rgj6t8bX9vJRQUmzf7aSR+Bb290V3zm1xaol+bcyIQF4VXl5bDIa5ZMpJzZvWPzZlHPNt/D8oAfgw+B7rfMrfNY6v6ZPFZKf6BtLfsF+Y8kv8GdLfoFvzZ2CgX3kzeQvpkdCvlWWnKF5GAwA2fYbK0OY3AD0FFt/5/CtIb/Ed5Y/bFbrOpvFv6YUPSh/6/lbo3v49XkootWSZ781Pvn6v7p8Z3hj/X+gRLDdXlflI66/0qPN3vbQUkyfV4BvAoegZYApth6Ib/VsY6cCu+B63hC+15uL+Oe+WQIlxH7Wm6+8/ipy6TEfIuogT9h6zupmzOY89RnkO3Xv40jya/G6BSyB9rM6e7BzfwPylTZrsXF2lWY5Ns7G8KXuWPEU8zfAt9rOwsETMhtoi/O9Nhqze6JG8m3QJsXsZwrwlbJRs3750UX4RjkJsH558xoZ+u5zJgrpE+M7qRgNvlcOPqyuRnZX/e+Wy/fi6/8ANWqTkDSmyUYAAAAASUVORK5CYII="
+    },
+    {
+      "concept": "snack bag",
+      "bbox": [
+        1267,
+        1004,
+        1638,
+        1214
+      ],
+      "width": 372,
+      "height": 211,
+      "revision": 1,
+      "score": 0.8987342119216919,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAXQAAADTAQAAAAC5dtUcAAAEM0lEQVR42pVZO27bQBAdLoWIhRCxdBHAOkJOEPMoOoIPEMDMzVikSOkjMIAKlVLgghQkTQqLn13O7L7ZxhL99DT/mR0RSecnmc6WWxP+ja8WeMbMjQG/ZuZO+Z8TnhVEtDbgvxMRNTi+Gj8Eq8uahZz2KK9xbzEz8wnlLz//fEXx+4caqMuYIwJlyyd3/X+SPNOTDsJvpjhqEXw5vfyG4HfTyxyOhsdp0vxO+S7tPM/5r2n+/fxNWoGcOa5ATBwhJkKfc/DWxeV/CemaKH++MEhfxPiXAbBuIvxTKKsaeO9+SPHRqvy5WENuK41/I3tQledVdmGryJNrRT+T+TdajHQy/lXtB7X0Xbneg86lwL/Rg7aQ5CkjDUrCx3K1FeTnCH6KUgel6mopzyaGd8tXZbSILfF7sBki6s5gbmliQjQpjHi0nWeQ+Av5s0TLDOX5Qjb5CyM+oe49xFdkso9UCOWa5dQpa36ugTwbsulbJlBdgN+TTd9ENMwKkIPa7MmXZ0U2fQsjPhn8rY+vyHY4dRqPPyOb/Olk8fkLI39pxO+M5nlL2sePN4arFJGzmZNcOhlD/MqIL4z40ohPm589fGXkN50McRfP+6/JXeSMEjmbu8jRkxG/M+Iroz0Zs/rAbzMnOajzTgOog6J50tFB0TzZ0EHmLI3xWRjxk1Ec5K5svOih0bmt0V7htwxXG/2LbjEednetkf8IAktLPE8jE5xf+WD/AyhQ/cDfwISshkzLseXf390jHm4WAzl43CjGzN+eoKHEDXhQgWyQB1SgMc5LuxGPxdzTKNS6gxV2/jgd1beG59vJw85wXXga+XGPffL/wxSYcv0Fqind2DkwgSgb6tsHFhLtgL/VoIWG9vXcYkUiS29DPAXA+/hwfrllS4sWiZEfU+A88oN1dMRfjHiGFDhN/evdOB92RvzViIeqUOsIWkiNNWs2LgFVhd2MH/DAfT4PQB5w4i1U3xPM8ekQ6jx8nw4H4zq+9af5ZFJmPn+qSnB4uUu47LYK5rGLyf5EvEutaYJ575BauwT4+PBxWs6TfxJrixDfY2sCgjqHtKuI+Jily3XExxdxF6L7+FxK83Zfp7dM3nnW1G3lef4Y2xpl8ev3YsBy0dvTkkbiVyzUFwp/r0ancn+pjPuBd938Iv5DX8JlqYWGMK/G7pchh8wv7XM/f5OQ+blWzKle/+RoU++PH4p5NLyQZfGL4EKgO0XsI7jg8ZONS1/xPfOo+IOcvCr+Zt1fVZI5I/jfFnMuKumdEvYM0nj4xSCyT+iDVpTcP9g2T35MIPuNs1BrHbb2wfYzh+VsFMXfjPwzCzUQ/j2yiYtnTYbtiwrTbWUKuisoz1Dpxh+oUvsrLvzhPbnv6jOD/cdFSGfAn+etHdm/7Wzy0HE2iiP4y6w6IHg25iW9GD+x7Uz6Une08c9c/B8YeysADaVYaAAAAABJRU5ErkJggg=="
+    },
+    {
+      "concept": "snack bag",
+      "bbox": [
+        342,
+        330,
+        496,
+        377
+      ],
+      "width": 155,
+      "height": 48,
+      "revision": 1,
+      "score": 0.7104072570800781,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAJsAAAAwAQAAAAAuwTUMAAAAz0lEQVR42s2SvW0CQRSEv509SwSWoAAHV4ZDSnEJdGDJlZ0lCoEOcObAME7uDH7vBYRstPtptDPvB+LZJkLzJaJ3254Ylrcvmm8jgrVtm4WxQbALf6xo4ADPg+jRTehq9ZcKscphO69vSaqyrJbK4lPKQvRcwU0FxwoW5mPlQ3Nmx1L5gLAXTf6qlAdNdxsd7laeMpta/8k9Vh77GeXO75c9vzmA+JferQHiGvTY5iUamDNZ3Gx6t22f4uRtf4d+whY/xdon+Ehh1y7q5yWCX4abRjJ9dhNnAAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "snack bag",
+      "bbox": [
+        383,
+        478,
+        533,
+        533
+      ],
+      "width": 151,
+      "height": 56,
+      "revision": 1,
+      "score": 0.7037037014961243,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAJcAAAA4AQAAAADYrlfvAAAA8UlEQVR42o2TvW3DQAxG31EC1MWtKydjpLI9SsZImdHkTYQMENidAkj6UujPPF4RVsLDI49HniCLKyFeh5wkSW1uSZpITpsAbvbMTgC81Tup1vLVXutnreDKz3Ff0WFD6tPziXP8Lue+uJaCxjh7Z4LX9ATv02mWgoYMOOYTA0TwmnyyBu9h2r7fJfdEzP0ILIVURjvHHVvc+2BRIymgR8G7F1hXYG2hXiqdG5n4nzcV2FBgPfYVrlHwugK7RvYALnLRAnV8Kj53+VvqXHLeuH1at1p1mIFbzGFrYY9GkjrfdyUpezI2Ad/5BS8aKAw7iz929GnS2moN2AAAAABJRU5ErkJggg=="
+    },
+    {
+      "concept": "snack bag",
+      "bbox": [
+        985,
+        412,
+        1088,
+        557
+      ],
+      "width": 104,
+      "height": 146,
+      "revision": 1,
+      "score": 0.8202247023582458,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAGgAAACSAQAAAACBbrJzAAABpUlEQVR42n2UPZabQBCEv2l4bwkUKHTIEXwEjuIjOHTI0TiCj0DoEGXsPi3tgAG6BCMS9Kmmu2p+GIDfhKea9p8GtybSnUjUQqqZUOplZCfUBmoPDwO4CZnQ3nT9+9dB3RF11W5CW5sKBkhp2Nq6u48bJHf3easzjgnby6sGSButKzZk+skxxc33R6Z1GWrR1nfCcwiZdg9g2SmXJ1+fCcC2oY3U1efFs23z1IEesH3TO9FawPb9uQO2710jI+vzmeiuT0fqr07PYR+ozTu0PqNod0i+03dd7mlC6Y07vVAn1L7W9aUud6HmjV+NDVEpj0zYKB8tf4Joc6mOzp5FDVviBFXbTyTAQ7UqfNF8itYYQ8mvNsaSZsYk2lxOzbOkJWMRzYtdqngtnVd+KLvHSRgxthFi+6nuKbS8cXDN+XJ/St1w3WUxYtBzndz6IbYRgxoxqHR5GjFoFa4ovi9O8hZ0vtDGcs4X+pdhMoAv0Vyz5DCPq57DlcN4NXJ8k2wSmoW+hFyTrdFS7jmIw1/J8mjE/bOTLf9wD0cluS9HTu/lW/hY4D8R1GpVOaQKhwAAAABJRU5ErkJggg=="
+    },
+    {
+      "concept": "snack bag",
+      "bbox": [
+        1361,
+        436,
+        1530,
+        531
+      ],
+      "width": 170,
+      "height": 96,
+      "revision": 1,
+      "score": 0.7815700173377991,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAKoAAABgAQAAAAClftT9AAABh0lEQVR42pWVO27DMBBERysBMlLELtPFN4mOkpuER+MRfASWKZXABQPQ2hT6mOSOYVvlw2C4n6EIfIJ9rXqG96rRUjkAfbL4CKAdDZ6dXM2/VFU1UTXaSDH6QDHePcX44BiJ4za31+wbOdZN32h+kor1BtB4qt7kpRpNYEeqrruqsTriDeDSWW8Arbuuoe7VqvHKceMAIeEZqBpHQAKNoIyWHQCJXE3YDpDE1ZNlHTcRQJS0CQgcvTogd6rxglO5hOMa4WLYEarqIagLd3MxlwJG+KXGqpSw4GoR44LLUhAXHHn/VSlpwRNXV8Oa+HbUFdd+S9peAwSm8PNiEmrzN8jaV2Y+9HSXAU5A2xSYNjHaundzlAU3M1gPJfJU3Uhs4nh6ykRnrI+p4Z7xvoX9o+pu3oNskc6+b09NEveeOFYnsPkhleT/2HBX3WR4vD8Td8Xxvnq4HtHH+kyx691wFtlf7n3KrNpUvABWfQZTr+JZvQb8ryvnU7xEFbb/SfPSt8skfl4K/A++MuA9BBtq1QAAAABJRU5ErkJggg=="
+    },
+    {
+      "concept": "snack bag",
+      "bbox": [
+        1186,
+        723,
+        1467,
+        1071
+      ],
+      "width": 282,
+      "height": 349,
+      "revision": 1,
+      "score": 0.9064327478408813,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAARoAAAFdAQAAAAD0lZ/DAAADuklEQVR42t2aMXLbMBBFAZATsfCMWbqKdASX6cKj5CgoUuQYOQrLlDoCJpVLOKOC8lBECks0aGIXnyaE2GEj2Xzz93N3sQQlCUEeG3N5p2ioE3GoEAB0I+o4dC+AwzkbVdoIwNMdAn3DLMU9FQIIVyLQF9BS1NPEEgWVCFQh0D3qO2Z86puAbqbGwlCNKCEtIJ1zzrmOVfokgHB3CPTakgxZGp5fTyWjpAQQ7gaBZtWVtCXWkwL+M7fEDbGXcyraAmFo3gKBq3PjG0UqFcj1lghUiUUpYKAagXYCSIET8RTIhV0o111diUCVSJXMOpnSDoGat4aTdOleTiqgdDNIEdB5Qvbzk3qENuf5UDhDlE4ob0uy7cOlE8pfZoWZVuWSMzWZIZ+DCRflZKxJswVSsA0XuGHKsVu3gv8n6HkHQBzmHxnX7zCZLQIZBLII1CUz3jMnLytVDYiSgzxpBGoRyCCQRaAOgfqVGa9GaEjWmS7zQtDrlMqF4dpkxk0yJbtOyduJdXlr1ydTGvIad+nC6azG6f6VVwlnEMgmC9flTWafN9yQN5xLF05f37j2oDZrnqJNzis1HmTzGu8ijxu4Up/M0xDZ+eFKLm8yySavFiu17+NBovQh8z48Kf/FJgvX8XfFFFenPai/fjKbpUoDPwyyPb3WHuQ+0scT1WIlvSZcmffq1GKl9uqe5GIlc/1W0R5kk4Xr2HV+hvr14c4DT1LT4LFeaNyt8lT5kL567UofatcoqbzzSfqQWRVOL/VkudaMKu08qFtl3O/MnmuoqFLpQcMqTypZF0gPcuv6SSfrzMaDNFPhROFqBKqWhmuZNkhkXCVTkummin6BDFNhQGmXzFONQBUClQikkhmXmTejOplSM0L2w2y1E0Pt+MX1LZ0DCSg5JNxvADoCS+qETLrv/h+34S9Np5N7E2Raf3coxKZ76378hJTlgEAWgX6KuHGnXimFdg9PSD91CDRrsYIpyWi8mJk6VkCP/xCAkpyvloGoGx/ugED7QODZ84YElByyzJ9CkCPqxirtEagNXoMjL85T0lS+6XAHBNojUBOGJnujIzJYHxBoB0BHZI7/AiDXANAf8rZh6JWrmIkTOLbj8rbIXaoGoCNyv3tAIINA3CPx18vFIffgEwL1CNRxULNkX2ARyJAfmXjLXAJKDvH0xEGSLG9AyQjG+GX6Ij+9PCHJPCDQHoFaARjnf3fomGdmxU+B4IjeI0pNBGrpx/ip0hCDDJVvH7Kkbz+twcU7X+fIL73ID2D+AntAOeKvtzZeAAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "snack bag",
+      "bbox": [
+        862,
+        927,
+        1178,
+        1118
+      ],
+      "width": 317,
+      "height": 192,
+      "revision": 1,
+      "score": 0.8709677457809448,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAT0AAADAAQAAAABem4lDAAADXklEQVR42q1Yu27bMBS9vBJgD0GsDygaIV/QsUNRq3/VqdWQwWM+SYOHjP2DykWHjHKQwS4k3Q4SrRfJewyYSxzr+JA85z4oErnGVk6EjI2IiOQ6UEREpAIJpZ58yQ7gJ9ejaIkzv/u/pggz3tsPWXiFRuwow2v8evmUBAkfLoRT0c1Cw+FjEwem3viezeUZTzfRZ8b4MPnPr08kk1H61rGZ2jvRhx0mu30YTzwjpPPazfiFMMbVIvzHjMbpicMadnriGBzaMrvWaFpHkrHjRx+VjDMBQifjD80N4zFlgewZP7gXtqwqP8U5yjlu5caNy0839XePJnOvV75qODLbuMNhKSQT0cpvRz4BfvYbN+Rh7DbPjnTEeA+VdWIKluohYTkK8gxC8l0QOOjICZgpTODglLC0Z6X057N25h0lusbk+s0oz9coMEaBjAINvBnbalg7OaSOJhlMba5AffgE6sM1qA+3oD4smj65ZVYC0j5nKjEhmV6xiGSq0XhsMcX1CI8tUDDFWT+rzc+V3lFY/EqJi2PST11D274mr1tIHyZQH3b2UA+8QIRkIjXQcguskNDl2SnUG7qIjtYZzBqEMbbAFlEcYTQWCNUAKHoy9fAxCl0mICrW6NSxBRaAPkxA+BgLrAB9mIDwoayXJ6p1fbB0veunboHMwhhND1SjgnK0pGQ9UC0BaQ8s9PzqgJqHtEbXGPfASheSCTLb9ECge6GlOe+Ara44XOyN7+VxNg4RdidBR3TqhAkz28pTokDVwzUT5qFlrFFgiwL19IrAW6Dm6gN7AQYFbRQlz5bxHZ26RYECy6PoM8hT3CgLB6ASkacLUNGxYtc9WHBqJSLLC7C90a6L4H3P+HqBCfLwDZ36eXR4luDMIOO/8a5DTekVlScFgUdU8GcQKOjZ7A31+hcKzEDgGQ2zHQhschD4F43wFASe0ZzZgcBjfuPbmTOa1y8gsMlA4BNYUo65C1gEtqwwHsBq1qQg8Mnz/Va77PXcENVoxd0TxnhCa/jOv8lNaIVexn3Ah5X7ejvIKEkIOFrWn+CVyvA+JRxsce20HvoZhx5nwKZ5UEu1xzwf444wxhPa2F/Uk1RX1JtHkHEPdIltYIWLEIdOKVXXRnXge9dGgXcgqdW7rk7w7FsA+B8Um71MP99orQAAAABJRU5ErkJggg=="
+    },
+    {
+      "concept": "snack bag",
+      "bbox": [
+        1517,
+        422,
+        1643,
+        521
+      ],
+      "width": 127,
+      "height": 100,
+      "revision": 1,
+      "score": 0.7142857313156128,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAH8AAABkAQAAAACH19LmAAABQUlEQVR42oWUO3KDQBBEewdKVkBZhAo5gg7ggKP4Jib0sXQUOXOoEFchjQIM7DxksxmPnu6d/elNcVjRgXxcAXxAiYwgEQiu7heCniVlAMkVbU1wNUltnLr7lYqKwAhWKSHGhBiTpBNBRVAQ5K4jeCeoCSqCgkCXsGKSbiXA0uDUepdtg7tnmzOVuKFk5TEHTyVzsFFaTOuX0jkqph8LOBG8EiSC33bsDNdM0RAcR7As3o6KRDDGWHbAWirGmBefR0/FTpJsQEw4kh1BS9AQ1AQVQUGgM8FK0RDUkt1zsKdiJ5nntydJ0sGz0cnUx/Ywj4aglmmIuVCU6ycJIK267Tbal1qChqDe9NhvKkoCe1JS/u9xf1JyDN8DFd/YlztMf0xlvlEpxn6lcd3/uJW+PKqFez+/EZLpJn16eHQP4UA8AFjCZT1n+d9zAAAAAElFTkSuQmCC"
     }
   ]
 }

@@ -1,14 +1,14 @@
 {
   "placeholder": false,
-  "recorded_at": "2026-10-27T09:12:00+07:00",
+  "recorded_at": "2026-10-27T21:46:42.662017Z",
   "pack": "c",
   "surface": "fidelity",
-  "source": "verbatim live capture 2026-10-27 (stage fix): muse-spark-1.3 chat.completions P4 temp 0.0 on identical-image pair (wafer crop in both slots); same_product true, all three true.",
-  "model_id": "muse-spark-1.3",
+  "source": "Live P4 fidelity verdict for KK-0013 (concept 'snack bag', photo1) from job-3d538290960c/job.json (window 2026-10-27T21:39:52.508882Z-2026-10-27T21:46:42.662017Z)",
+  "model_id": "muse-spark-1.3-contributor",
   "payload": {
     "same_product": true,
     "color_match": true,
     "logo_text_match": true,
-    "reason": "Both images are identical with no alterations."
+    "reason": "Studio image preserves single red snack pack with matching color and label layout."
   }
 }
