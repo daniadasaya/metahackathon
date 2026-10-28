@@ -539,9 +539,7 @@ def build_whatsapp(
 
     encoded = urllib.parse.quote(text, safe="")
     share_url = f"https://wa.me/?text={encoded}"
-
     return text + f"\n\n{share_url}"
-
 
 
 # ---------------------------------------------------------------------------

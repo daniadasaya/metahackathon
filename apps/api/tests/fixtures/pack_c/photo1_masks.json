@@ -3,7 +3,7 @@
   "recorded_at": "2026-10-27T21:46:42.662017Z",
   "pack": "c",
   "surface": "masks",
-  "source": "Live Stage B masks for photo 1 (photo index 0) from job-3d538290960c/masks/photo_0.json, filtered to records whose concept matches a paired concepts phrase (22 raw, 6 retry-phrase records dropped as unreachable in mock mode); bbox/width/height/revision/score/mask_png_base64 unchanged",
+  "source": "Full live Stage B mask set for photo 1 (photo index 0) from job-3d538290960c/masks/photo_0.json, 22 records including the 6 foreground-labelled retry records, restored verbatim; bbox/width/height/revision/score/mask_png_base64 unchanged",
   "model_id": "sam-3.1",
   "payload": [
     {
@@ -229,6 +229,90 @@
       "revision": 1,
       "score": 0.7142857313156128,
       "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAH8AAABkAQAAAACH19LmAAABQUlEQVR42oWUO3KDQBBEewdKVkBZhAo5gg7ggKP4Jib0sXQUOXOoEFchjQIM7DxksxmPnu6d/elNcVjRgXxcAXxAiYwgEQiu7heCniVlAMkVbU1wNUltnLr7lYqKwAhWKSHGhBiTpBNBRVAQ5K4jeCeoCSqCgkCXsGKSbiXA0uDUepdtg7tnmzOVuKFk5TEHTyVzsFFaTOuX0jkqph8LOBG8EiSC33bsDNdM0RAcR7As3o6KRDDGWHbAWirGmBefR0/FTpJsQEw4kh1BS9AQ1AQVQUGgM8FK0RDUkt1zsKdiJ5nntydJ0sGz0cnUx/Ywj4aglmmIuVCU6ycJIK267Tbal1qChqDe9NhvKkoCe1JS/u9xf1JyDN8DFd/YlztMf0xlvlEpxn6lcd3/uJW+PKqFez+/EZLpJn16eHQP4UA8AFjCZT1n+d9zAAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "foreground wafer packet",
+      "bbox": [
+        1564,
+        943,
+        1903,
+        1236
+      ],
+      "width": 340,
+      "height": 294,
+      "revision": 1,
+      "score": 0.8439024686813354,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAVQAAAEmAQAAAAAVA1XSAAAEmElEQVR42rWZO27bTBSFzwwFiUUQq3QRIFxCSnfhUrKELIEB/oX434nSpcwSGMCFSspwIQmibgpbMh/zOAexWVnyh6Mz99658yAAAG4D+ll1PPv5zFAeAFAJJsw6VtcBJSvrzM6srgdcQ+oWxhkGgJWZndiYASgaXtdajr0xM9vzHrAUWDJqN0aZ8ACwfh4h7wHYCOwXhq2e//4o6OYKfsjijmBrLh0j3YwJBwB2+XQoedZ8zoMTaqKw69PlPBSv8ydpYvK/pAkPYDH4XDPTjTDsMe5PJe83mWZ/nRaD3JC6aAX2Ns1Wwy8Wgq4XWCewiZnvZ3m9E3RXAhs3EWArgf2UmhdGhi0U+k7Q7RdR3dlPFoIHNKmVe/K0Ub9utsZH2poP2VgKfuMdpTDSsBu1s7RhH5xhS95vpCIiU3ETUVgFFu2g4YjuMuKhZA3HWkeT2mkQ2YjprsNs6Gt8EHRDW7toW6wFtgqy4T5zK+gug2x4qXR7XherJngICD8bYSmpAgVlEXZWwy7QSmL7joSHQJcoYmOb1aULtYdIHxb2Qkl2aji50aunflfxPf0kwkndleBh0qrSbCWwa4Gdjq2kB5fWHQ/O4Sa13RxFOKO7EDwUAjsynGO/COxHgR3X8GdLPi2vOyyJLFsK7FJgR4PLjG0wOB/fas4Gl/UwGFyeXQqsG7C5U9hrqeV1X0uNYMtXN5Zjr22Y0PWCh2uWvcvDl0g5l7/h2r2k2QuBIFAIcbgyfgH6YXQvQWPYS9AothLYS3zLtx3bJRkeb6y7eCfdF8iv+cRxHr4J7K3AvuxDvxrz7IWYrRohvt8A+JpjPwm6RSPk+DvgjGQPJa+7eIc6u7ANL/puHjYk6DRdl9z2jYX9XvB74tnCfoArS7fxwH9CfHshddgIbCuwXIRruXb2Ant6j5oEcBZYbtpX43cSjN9WYDuB3QvsSWB7JRdMINYvbCvodgL7JLC9UmeVwD4IbK/Uei2wvwX2SWCZRnXdrmd79m59ncePwpy3Rpj9ufNhN+glW6HvHAXWajpmSF0gTWJGmBiwJrDZWhseydKGR36zhofs26W5G68XnbC2PAps0nA5ucxPTY5DOV7fnoS1sFfWzVpgW7YegMSl7WxsacMevOEp2/J+E4ZnfpN7iSmbKonZtUa0JOYeUnU5Y99kIp0CL6NiM79fzPdnB2UvV9Mxi0atXwTYSJotdBV0Fvyask/992ycgy8Gw9mw4PVZ5JrMhfyasgdvBHZD5ziWZRdkw1kOs+HRufD5Ijy4InVJQ+m2whlnK7BHgQ3vUSLnrFZgtwJ7FOIb6hI/Y+fCe7bOwvMoqntU/M4N/4meY++FM+9WYA/KWboS2K3AHpTzfC2wv9gcB2b+H5887fP3Dw8C2yv3GrXAtgL7ILC9cg9T07mYzLpdWvckeOiVe6OK9ztaQjN+YWvh7mqn3HOtgZ8l5RcoTuafq36X1e3xeAlH/hWVu85/7l7uJLBngbVM/51V54G8R9wIW7YbM2tJ3Sd+bM+FzI4NNZHjweBY9rfA7gE2DjgqY0P9P33/ey9kbmU8686C8B3+AlUfRRXO9JIKAAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "foreground wafer packet",
+      "bbox": [
+        1045,
+        1227,
+        1419,
+        1499
+      ],
+      "width": 375,
+      "height": 273,
+      "revision": 1,
+      "score": 0.9179486632347107,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAXcAAAERAQAAAACoFtoUAAAFXklEQVR42qVaO44bRxCtLhJeBguLoQIDyyMwdGCAPMoeYQ9gQOOb7E08oUMdYZw58wjYYCgMpx2QM+yers9rqxNpV0+PVa++3btE2vnSUs35FHvp26zh32hXQ7+Jcazh/834aJk+ThX8vxBREIlEePiXiCi0KP9PRER0hu35XBUqCjHGGGOH8t/MoT2K//V/mRMHkP9ng0vCz3Zvpc8WvhfnPxnif7K42ApWA8kTlwPlz9PjrwcEvyuFMvFv4n9VNdgkZXvd+vy/U2XbSc7k2xOd6LMqphww/qFCpJif1uFfmSMEmE1z9g7+1a/V7Iu14JedyV8E28mHZ1/ADH/0szf7ztnvBmk/D3+WcrQGv1D7Z8sewd2Dhd9TnT6vemsUFYglvggw26Nva9jzjLRLtt0NBl5M5sadQl5Fip1nOb1qz1Fk2WkOhUluGKzwM1CvKUyrrVbBHxX8Qf48xfwigzhfMdwMYm/FUPQ5Qw3tkcR63POSZ330i598Bz4NKv7bXuA35oqo50HHbyX8Gd2ogtoaZEXZk2cldfDkWQnE/th9Lu15hUdKcN3NvWPX3bwHsXlJKoPDwFw8rPFvNv7z2hfb3WyNY/XOo8/EbcWOwfKaaTb1U3ROl39W9PiTnsW+u1kzY2SLCZkDLzHiDjCytCURDoC7aYQZcDeNMCNLW+Iwe8m5KoGAmE/091wDjJiferKFYIugjL1iPPQ8Yu8RC/6M2d0oNwrttN77jNJTUPy+Er9btjDw4sR1/HPGofxzzXMD4u8RZvTV7B5h7tDMvBGHT32VAzyg/LemxSP8alOl/5yiPMH4MxERRxh/uNlzppoUDQQLGpmImD6oJuWY6hxmimjG0fEWhSc0xNctERNdmroURQbSMpYCVRh02RET0ViRokxEV6os+i+4A4GI6KWDHQhU43DkYF6OivPHxt3Pc4/Zub2sa+aG/0p1Vb9BQ/btxg/7u9tQlcPhviuiEZvHBlrz050fdfh654dTlOv8XfCgv+O8S4Mpepn5QX+HGQ9GuGfyL5DJ6ZiqBGoXfFeTz3AGhQUPCRp5sQcSdHrMUyiDxmT+Il19qLtmxC7hR0omxSP6tMldDymxkPADGRfT/QTIuO/ZPtMgcrL6ciZlf90PJanL8B0gZ3p39jM0ZPyu/td835v87MzwEclOJjwA/Qrf+nJm+M6XM3uL8DbFsMI7GX3druyZfDkzfASKnQkWtPTuxb9CZk9dtkChwJsCxfJpbLJ7Z4E3BfoQ7i9NlTy2QA2VT4GWQNJ9arCLscCPnrsr/OS6ywQKKheT/hQnvw+oJXmR8aqef63nu9MTg8z/3Va/wEdb/bL/KxmnLuQnU82Sv7PNL/DelGdjo5DykNV/kVlYtVSWhwkR1JgMJ1POkr+T9wwV36utCn8/GQ38YK95TEAAegMvtYh3YX+2SiBY/jYmAwOxnEx8V5XPUsBGEz+Y32HyA/DVxE+mAoH8AASTvwhAtPUpAjA5+M4SAMj/wcH31tdMbsA6Bz9a/gv6r153Ijv8qwe/iTx9WsM8dkfz4OJ7YxSxF6CVddKPQvO1L7j8kzEQmJwCGH18dv4B8I2e3eyNH+Rp7iSOIp2/0+clO6vsiOAHvXg8PXsEP4qjRc2fNIECwj/p6wSTmUAfEP6REMgjSRpgwvg7dbYy+XciH99r7ir4QV1T5V99mAMW6uy/Eoif1N2GyQjwgOLvAe6pzv6O0HOSs0Hl77TLBhtlOFGd/SOOH7RVlCtv1GyY8o6/nIXK3+dXL8MKPmpXmar3PQPfFJPIxrc12XZ7uaiyp6c6/KBcnRlb81z8qLRaVoP7XhcYpZP/ByiGEkdWXfqVAAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "foreground wafer packet",
+      "bbox": [
+        862,
+        926,
+        1179,
+        1118
+      ],
+      "width": 318,
+      "height": 193,
+      "revision": 1,
+      "score": 0.8241757750511169,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAT4AAADBAQAAAAB+8OHlAAADY0lEQVR42q1ZMW7bQBBcrohIhQGzTGHIfEaqmE/xQ4KARQqVeUIekuIQpEiZJ8hBClcBFbggDYmbQjzySN3tjoBcY9oaz93Nzu7eUUSxkRE2MhF52APAexERcSZuJSIi0s7+yBHg3fnHGxP4OKy0BrZyucgI49Y/lDrh2hNKozNOm92owIfpMdeClfXTs7DCuE2RrBZB+TOjd0nGD7PfqqQ0tzIbe901EhcyHKIAwzWul/+4SQBbLbIB8P7iwzwqahiTYZzyGONWnS54fjTsPAbvGJGLI4x3Rh3IFMIZkqNuiCX7EJSv8R24JeO7OE2VTGVJ+oxTYhMRUbHYVyR659Ft5ozvU1vN54xxDRdCciIow6jVDAhGqGMmSjzKALjVAlcEq9UIA314pVph0odvCMs9LsAmxSWWKdH2EVWcKx1YIWGZOdKaukCBGxSYo0BYHkaBYy82p/ZCstW9fYjZgUJmt40O9NblFhSSj6A+3Fv6eKAQ5kimChOSaY8JyfSMCcl0xBzJ1GNCMmpEJqkhIVdAu3Txo0mimGZEa8MXh2JYKqYPkIW5B/ZougokJF80k4SQKwKFZCLTaJWfukEcydaZzDvyqmoGhQZhzD2wRxRHGDMPhGoAtOvK01qUh2JgrAF9oKlzD3SAPhBjRmDCjjViLXYzZgJcQQVqs5sB2ANmxBizAWi6gmp/vLZaQ/YFzJlyWKN5i387APe2Lc7AxtbnylNKaws5yPPRRF45tV2dK5SxPAPtYI83divYB3TqYgA6cNd2sH3KWo2TumtPpEcU2KNAgQW3FD+hm8k90IE6knmC9Ywv6Mm+R4ECy2PoM8njwKkto7UjsEEZDUM2IxA94VtjPwL7/8ToplusGhthkPEVnXpH2NSC1vDXcNfaCeQZlacEgQdU8M8g8ISezV7QWP9EgRUI7FCb/QCBpwoE/kYdXoLADs2ZHQjs0PcUOzBduxoE7sACMBEGQKe9FjIYD2jtKUDgE1jNuhIEbsD6+JT6YPGlwhGtuN8JY2zTNbxJBPli3KqEAWOblia9mSflOhW+mhYGG9IvwhhjhAHj1Az/qle+6X18lDC2xm/6JXJsXaccbMOfzLKVCt4FY626gdMpnwQ6w17jeFBWuLR4D51SmrgbIidEEcKGNCBQ/c7iH7lU1ZS8y6h6AAAAAElFTkSuQmCC"
+    },
+    {
+      "concept": "foreground wafer packet",
+      "bbox": [
+        1604,
+        1227,
+        1975,
+        1519
+      ],
+      "width": 372,
+      "height": 293,
+      "revision": 1,
+      "score": 0.7815700173377991,
+      "mask_png_base64": "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"
+    },
+    {
+      "concept": "foreground wafer packet",
+      "bbox": [
+        1267,
+        1004,
+        1638,
+        1214
+      ],
+      "width": 372,
+      "height": 211,
+      "revision": 1,
+      "score": 0.8439024686813354,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAXQAAADTAQAAAAC5dtUcAAAERUlEQVR42pVaS47aQBCtLhCwQMJLFlHwEWaZ3ZCbzBFyg3CUHIVIOcDcII40C5YQjRQ8wnQW+Nftqu5XvcHAo1z/n5mRcJx3RzKcZ3+2wMn7u/YVC5/NiFxlIL/x3t8M9IvHPWD8CxFRZRHXe3+Vv3PCR3ciIs8oP4vHr44W9agMCfSfHi9LFL9vXytMXtf5gigx65+IPjGlv7ymlD2lvx0uzwi+HC7XCD8++S0Lzj+cA2zdx6ny9J/Gbz5l+Z/d0uLF9COKWSf97oNztUjrhbwSxrX7F4uXDpuYvJ8kupD+lN1VdINAYRvBwaIoCN59kxy+UukvRe2FN2DZ88cUD8m8Nj2Vws9SM6aT+fmi3fcq6t/91vBz0chLr55K4melu8lWwhc6fiHhX3T8iH+nBGJ4LsWE/jrl5+spP0UKz9OrMoV30ytP0A9YjLM8Z3MjfmvEv4B4B4k7kTcjro/5QcXt8Fsjvkyj7rEgGXGbeUjfkY2fRQZ1i/ArI/2nDOoa4fcwfRe0PGD8co7qOeRnTTZ5CyO+zKGqEI+rpx0/cucY0M+qh0K8QT3ENvUQI+qJ8Hsj/mDRJeBt4/hjm6mIjT9hQ65q8SsjvjDiSyM+by4faNbn8WzTvxvz44z2YiN+bcQXRnxpxNuSySw/cgQNFjuj/y8Q1MAzQ9486IQhdQ7lnCF1Lozx7nofZlD9Z2M+2WSGCq0EwN7c6oUPRvuiwM5OO5D/toVgdHM270LfY/g2p8Dx1Y55TG8gQ/sW3+wtBnCZySXugZioweivjPV03qfSzRlXKItTvq5QB3TD7flT2vqlovfPCsKvezzmc7Me/45Z4NiXJg9b2NI/r3v6mMXIdfT/YgJUHd5jDH3u88Mrxs+xq9ZwDIDzYz9XMTKOC93DEnRqcH7vzk+elsBkkuDpCJGMgR5/MubzD8KDAJegHtqHHSLBZagvJxv/dDPioTR6Zpu8P5D9nug/0FziecSPz5fukOIOKMLj+n4y6ZOozqJPYf8AzM0BPluKj+GiyOds9jWaFjJ51MfTRcZkzTzqlzJ59DbZ/KTz4qWI+7HmgK1FBifN9JRxv1dja4XhPCfoS5uuRNR4abiuD0nvTz7/ikmtpP62Tm69ODWsCOpnKSgSWyP1eagyBgv0NafzJNPXNNTMlf6/Vr1ZmRdKVZ0y/qx7s4h/15dwLregiLYKTKgAnnT6ksnqlU5fSu3JarLTHtqwlohl9Wj4Ggv2BEN3SuhHMEG7Euf8SgAr/zP5waVKv5F9kIGdxrhf0/G/LOqcZlLK6DMK426llpjfP6TOIYEP8grSfW2E58apfcLFun8ojfuWt4m50vjGug/ZT8ybxr/KSShhgxjH2FYGXJr0TncH+eko9w+0svsi0zb7sXsb/w8iv4/yxTh5Avury7jiIPuuvXE/9jqa5hD8u5F+Q9CSdzjfvc0Eu5sNv6yMJh4u/wPuQXP9kHm58gAAAABJRU5ErkJggg=="
+    },
+    {
+      "concept": "foreground wafer packet",
+      "bbox": [
+        1449,
+        690,
+        1683,
+        1034
+      ],
+      "width": 235,
+      "height": 345,
+      "revision": 1,
+      "score": 0.7968254089355469,
+      "mask_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAOsAAAFZAQAAAABRBOWyAAACtUlEQVR42u2aTY7iMBCFX5wWzQ6WjDQSOUTvJ0fhKD6aj8ARopk+gHs0CyOF1CwSQkJcRejg/EyPFyD0Ua/KZbuMiYFG2xORBtM2REREfhhT1ZyP/qC6eej+SslwbstmWb8t5ysACsAmb335tXr/ZgCFTUetcn5Ibt221MkCatvtxgsAIAIAlXSxql7XgEq7ONK1hvKl8AAA6zIAT8vLRDrGOgaAhBWHBpCy4pQBIFYcu6rbDF7VnffOrUhXqfNb44CdhHdlvzi8qkZVGS+OfkGyxncZX8Y2kzEGYRtSfBh2IcXzkOLFhFmjKQdUT+jbBBJ3gEIWMnI7YdbchL7zkOLFbOsaaL6h8SvYTh4a27I+1maOkZs+1tl8Z4tUuSJgY3k22Lebb1ru4HyxkQfFXMWmEXzT8rIW9bPWX20y6V7WZnkdS0uczTdy+znrZPrI3WKXQf456+0g32sZv5S4CNlvWm7h0iHE1RiRmwmyFn3pH0WhsB7BdxZEPH1GaDZIaMlip8P2GeJuisjXI2QtZ/e5uY93MciaWDhCx/SESTX/N4v2FjyC7+wh66OM30R8Pov4T/W4ksH26tyHM3xI2ABbOS0frU/71sNS4PLAW3NJPTbF7e0fKfgtDwmxuLgcQqUBzWRsOVxWWAcAKWt9apSEjefh+SsRGY91hU93pmIq46Mf26uTRHEJAU5A9vgZuK5D7zCS9Tn1paWRLXkJfngwhawtRUjxfJC1G2RtH7beeiZLkLSY0faSbuEaex9LeluPHlr/XbD4V39a5B5s5xGa82D3LHHrwTmz+vuJF8zyrq5MNWZ35BPXcuRGDqHeawr4fMeXrpHyiZ91P3XmBBM376Z1s3ZPHd4LhapxqhQH9JTK5934crHNP6D1di3UTiNMpp93xmYvX0CKbwOP26l5P7bxXysWaNaJDx/jAAAAAElFTkSuQmCC"
     }
   ]
 }

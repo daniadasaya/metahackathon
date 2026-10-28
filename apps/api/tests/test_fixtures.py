@@ -546,3 +546,53 @@ def test_all_fixtures_are_recorded() -> None:
         "responses; the committed set must come from live Meta responses:\n"
         + "\n".join(problems)
     )
+
+
+# --------------------------------------------------------------------------
+# Mock-mode reachability
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("pack", "photo"),
+    [(pack, photo) for pack in PACKS for photo in (1, 2)],
+    ids=[f"pack_{pack}/photo{photo}" for pack in PACKS for photo in (1, 2)],
+)
+def test_every_mask_record_is_reachable_by_a_pipeline_request(pack: str, photo: int) -> None:
+    """No recorded mask may be orphaned: mock mode must be able to return it.
+
+    ``meta_client._mock_segment_concept`` filters one photo's mask file by the
+    requested phrase, and ``pipeline.py`` can send exactly two shapes of request
+    per Stage A concept: the bare ``phrase`` and, after a zero-mask answer, the
+    single retry ``foreground {phrase}``. A mask whose
+    ``concept`` matches neither is dead data — it can never reach a cut-out, so
+    the pack would silently report fewer products than the live capture it
+    claims to replay.
+
+    This is the invariant the retry-record restoration exists to keep: the retry
+    records are reachable through the retry phrase, not through a loosened
+    matcher.
+    """
+    concepts_path = FIXTURES_DIR / f"pack_{pack}" / f"photo{photo}_concepts.json"
+    masks_path = FIXTURES_DIR / f"pack_{pack}" / f"photo{photo}_masks.json"
+
+    phrases = [str(item["phrase"]) for item in load_fixture(concepts_path)["payload"]]
+    requests = {phrase.strip().lower() for phrase in phrases}
+    requests |= {f"foreground {phrase}".strip().lower() for phrase in phrases}
+
+    masks = load_fixture(masks_path)["payload"]
+    unreachable: dict[str, int] = {}
+    for mask in masks:
+        if not isinstance(mask, dict):
+            continue
+        label = str(mask.get("concept", ""))
+        if label.strip().lower() in requests:
+            continue
+        unreachable[label] = unreachable.get(label, 0) + 1
+
+    assert not unreachable, (
+        f"pack_{pack}/photo{photo}: {sum(unreachable.values())} mask record(s) carry "
+        "concept labels no pipeline request can ask for, so mock mode would never "
+        f"return them: {dict(sorted(unreachable.items()))}\n"
+        f"requests the pipeline can send for this photo: {sorted(requests)}"
+    )

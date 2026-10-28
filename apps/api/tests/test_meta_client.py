@@ -541,3 +541,90 @@ def test_live_extract_product_repair_path_also_normalises(
     assert len(client.responses.calls) == 2, "exactly one repair retry"
     assert len(entries) == 1
     assert entries[0].category == "Aksesoris HP"
+
+
+# ---------------------------------------------------------------------------
+# Pack C mock slots: the two-call Stage B sequence, offline.
+#
+# `pipeline.py` sends a bare concept phrase and, only when that answers zero
+# masks, one retry with `foreground {phrase}`. Pack C's restored mask fixtures
+# hold retry records, so this pins the sequence the pipeline actually performs:
+# which phrases hit on the first call, which are empty and recover on the
+# retry, and which are empty upstream (recorded as empty, not patched).
+# ---------------------------------------------------------------------------
+
+
+def _bytes_for_slot(pack: str, photo: int) -> bytes:
+    """Image bytes whose deterministic mock slot is exactly ``(pack, photo)``.
+
+    ``_locate`` hashes the bytes, so a slot is addressable only by search: one
+    candidate in six lands on a given slot. 10 000 attempts is far past the
+    point where a miss means anything but a broken locator.
+    """
+    for attempt in range(10_000):
+        candidate = f"mock-slot:{pack}:{photo}:{attempt}".encode("utf-8")
+        if meta_client._locate(candidate) == (pack, photo):
+            return candidate
+    raise AssertionError(
+        f"no byte string maps to mock slot ({pack!r}, {photo}) in 10 000 attempts"
+    )
+
+
+def test_pack_c_two_call_mask_sequence(_block_network: None) -> None:
+    import asyncio
+
+    photo1 = _bytes_for_slot("c", 1)
+    photo2 = _bytes_for_slot("c", 2)
+
+    def _segment(image: bytes, phrase: str) -> list[schemas.MaskResult]:
+        masks = asyncio.run(meta_client.segment_concept(image, phrase))
+        for mask in masks:
+            assert isinstance(mask, schemas.MaskResult)
+            assert isinstance(mask.mask_png_base64, str) and mask.mask_png_base64, (
+                f"{phrase!r} returned a mask with no raster; mock mode must serve "
+                "the recorded mask_png_base64"
+            )
+        return masks
+
+    def _labels(masks: list[schemas.MaskResult]) -> set[str]:
+        return {mask.concept for mask in masks}
+
+    # --- Photo 1: one concept hits bare, one needs the retry. ---
+    snack = _segment(photo1, "snack bag")
+    assert len(snack) == 16, f"bare 'snack bag' returned {len(snack)} masks, expected 16"
+    assert _labels(snack) == {"snack bag"}
+
+    assert _segment(photo1, "wafer packet") == [], "bare 'wafer packet' must answer zero"
+    wafer = _segment(photo1, "foreground wafer packet")
+    assert len(wafer) == 6, f"retry returned {len(wafer)} masks, expected 6"
+    assert _labels(wafer) == {"foreground wafer packet"}
+
+    # --- Photo 2: three bare hits, four retry hits, one upstream empty. ---
+    for phrase, expected in (
+        ("seaweed snack bag", 10),
+        ("potato chip bag", 4),
+        ("cassava chip bag", 5),
+    ):
+        masks = _segment(photo2, phrase)
+        assert len(masks) == expected, (
+            f"bare {phrase!r} returned {len(masks)} masks, expected {expected}"
+        )
+        assert _labels(masks) == {phrase}
+
+    for phrase, expected in (
+        ("milk carton", 2),
+        ("biscuit pack", 1),
+        ("wafer pack", 10),
+        ("peanut snack bag", 5),
+    ):
+        assert _segment(photo2, phrase) == [], f"bare {phrase!r} must answer zero"
+        retry = _segment(photo2, f"foreground {phrase}")
+        assert len(retry) == expected, (
+            f"retry for {phrase!r} returned {len(retry)} masks, expected {expected}"
+        )
+        assert _labels(retry) == {f"foreground {phrase}"}
+
+    # Upstream returned nothing for this phrase on either call; the mock keeps
+    # it empty rather than inventing a record the live capture never had.
+    assert _segment(photo2, "chocolate bar") == []
+    assert _segment(photo2, "foreground chocolate bar") == []

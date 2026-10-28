@@ -65,8 +65,8 @@ status=completed, 39 records, parsed with ``meta-sam-parser`` 0.1.0). Other
 live functions keep their hypothesis docstrings until probed. The live path
 lazy-imports ``openai`` and ``meta-sam-parser`` inside the functions that need
 them and raises :class:`MetaLiveUnavailable` when a package (or the key) is
-absent; ``requirements.txt`` stays locked at four packages — adding either
-package there is a Lead decision. The live branch is unreachable when
+absent; ``requirements.txt`` stays locked at six packages — both are
+kept as optional runtime imports. The live branch is unreachable when
 ``settings.meta_mock`` is true, and tests never execute it.
 """
 
@@ -407,8 +407,8 @@ def _live_client() -> Any:
         except ImportError as exc:
             raise MetaLiveUnavailable(
                 "live Meta calls need the 'openai' client package, which is not "
-                "installed: requirements.txt is locked at four packages and adding "
-                "one is a Lead decision (due with the API key)."
+                "installed: requirements.txt is locked at six packages; both "
+                "are kept as optional runtime imports."
             ) from exc
         api_key = settings.model_api_key
         if not api_key:
