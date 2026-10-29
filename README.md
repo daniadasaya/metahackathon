@@ -1,77 +1,81 @@
 # Katalog Kilat
 
-Katalog Kilat turns messy multi-product seller photos into a ready-to-sell Meta catalog in one click.
+*From messy chat photos to a ready-to-sell Meta catalog in one click.*
 
-## Status
+Social-commerce sellers across Indonesia run their entire business inside WhatsApp, Instagram, and Facebook chats. Their products live in messy multi-item photos on shop tables, display racks, and cardboard boxes, while their prices live in chat captions. Traditional e-commerce catalog tools assume clean, one-product-per-photo studio shots and manual spreadsheet entry — so most sellers never build a catalog at all.
 
-A single production Docker container serves both the FastAPI backend and the compiled Vite + React Single Page Application (SPA) on `127.0.0.1:8180`, with all 258 offline automated tests passing. Canonical pydantic v2 product data contracts are locked in `apps/api/app/schemas.py`, published to `apps/api/openapi.json` (9 routes, 28 schema components), and synchronized to the client artifact `apps/web/src/lib/types.ts` with compile-time assertions in `apps/web/src/lib/types.check.ts`. All 27 mock fixture files under `apps/api/tests/fixtures/` are frozen from real live Meta Model API responses (concepts, segmentation masks including `foreground` retry phrases, catalog entries, and fidelity verdicts), locked by automated regression tests. Nine active API routes serve health checks, job creation and polling, catalog file exports, per-SKU cleanup retry and method toggling, and public product serving. The web interface provides Screens 1–2 (photo upload, general and per-photo captions, sample pack picker, 5-stage pipeline progress stepper, and independent per-item error recovery) and Screens 3–4 (product review, strict Price Law enforcement, multi-photo per SKU merge/unmerge/promote angle shots, SKU-named export blocking, browser refresh persistence, and 2-column store preview) built with TanStack Router, compact fintech density, flat hairline-bordered surfaces (`Lightbox Pasar` brandkit) with no hard offset shadows, a full-width stage progress ribbon, bilingual UI (`id` default / `en`), and three theme states (`system`, `light`, `dark`). The catalog exporter (`apps/api/app/exporter.py`) and public routes serve four real downloadable outputs (an 11-column Meta Commerce CSV feed with populated `additional_image_link`, a product photo ZIP packing studio shots, crop shots, merged angle shots, and the root CSV, an Instagram caption pack with slugified hashtags, and a WhatsApp price list with WhatsApp formatting and `wa.me` order links) alongside public product pages `/p/{job_id}/{sku}` and image endpoints `/p/{job_id}/{sku}.jpg`. Client-side **Demo Safe Mode** bundles four golden sample packs (`a`, `b`, `c`, `d` under `apps/web/public/samples/{a,b,c,d}/golden/`) frozen from real live Meta Model API runs — including Sample Pack D demonstrating multi-angle SKU merging across opposite-side product photos — operating 100% offline with zero `/api/` requests and instant Blob downloads.
+Katalog Kilat starts from the mess sellers already have. Upload multi-product photos and chat captions, and three orchestrated Meta models (`muse-spark-1.3-contributor`, `sam-3.1`, and `muse-image-1.0`) detect every product concept, segment each physical item, generate studio-clean product imagery guarded by a strict visual fidelity gate, and extract bilingual catalog listings ready for Meta Commerce Manager, Instagram, and WhatsApp.
 
-## How It Works
+## Multi-Model Architecture (How It Works)
 
-Katalog Kilat orchestrates three Meta models across a five-stage pipeline:
+Katalog Kilat coordinates three Meta models across a five-stage pipeline where each model checks the others' work:
 
-1. **Stage A — Concept Discovery (`muse-spark-1.3-contributor`)**: Vision inference identifies distinct foreground product concepts, scene context, and verbatim visible text/price tags.
-2. **Stage B — Instance Segmentation (`sam-3.1`)**: Generates instance segmentation masks per concept (one short noun phrase per request, automatic `foreground` retry on zero-mask concepts, and cross-concept IoU/containment deduplication).
-3. **Stage C — Cut-out (Pillow)**: Deterministic mask alignment, largest-connected-component cleanup, and 8%-padded alpha crop extraction without a generative model.
-4. **Stage D — Studio Cleanup & Two-Stage Fidelity Gate (`muse-image-1.0` + `muse-spark-1.3-contributor`)**: Produces a 1:1 studio product image guarded by a two-stage fidelity gate against a two-panel ground-truth reference (`crops/{sku}-ref.png` evaluated by `muse-spark-1.3-contributor`): a pre-gate rejects defective cut-outs before calling Muse Image, and a post-gate evaluates three booleans (`same_product`, `color_match`, `logo_text_match`), falling back automatically to a deterministic Pillow studio composite whenever an edit alters the product.
-5. **Stage E — Structured Catalog Extraction (`muse-spark-1.3-contributor`)**: Extracts structured product data via `POST /v1/responses` with `web_search` Search Grounding and `json_schema` structured output, pinning categories to a canonical 14-value Indonesian taxonomy (`Handphone & Tablet`, `Aksesoris HP`, etc.), generating bilingual descriptions (`description_id` / `description_en`), attributes, and non-binding AI price suggestions (`price_suggestion_idr`) while never populating `price_hint_idr` from web search results.
+1. **Stage A — Vision Concept Discovery (`muse-spark-1.3-contributor`)**: Analyzes each messy multi-product photo to extract foreground product concepts (short English noun phrases), scene context, and verbatim visible text/price tags.
+2. **Stage B — Streamed Instance Segmentation (`sam-3.1`)**: Runs concept segmentation (one concept per request, streamed via `meta-sam-parser`) to isolate individual product instances, with automatic `foreground` retry on zero-mask concepts and cross-concept IoU/containment deduplication.
+3. **Stage C — Deterministic Cut-out (Pillow)**: Aligns instance masks, filters largest connected components, and extracts 8%-padded alpha product crops without generative distortion.
+4. **Stage D — Studio Cleanup & Two-Stage Fidelity Gate (`muse-image-1.0` + `muse-spark-1.3-contributor`)**: Transforms each cut-out into a 1:1 off-white (`#F7F7F5`) studio shot while enforcing a two-stage visual audit against a two-panel ground-truth reference:
+   - **Pre-Gate**: Rejects occluded or fragmented crops before spending a generative edit.
+   - **Post-Gate**: Verifies `same_product`, `color_match`, and `logo_text_match`. Any edit that alters product geometry, color, or printed branding is rejected and automatically replaced with a deterministic Pillow studio composite.
+5. **Stage E — Grounded Catalog Extraction (`muse-spark-1.3-contributor`)**: Uses Meta's Responses API (`POST /v1/responses`) with `web_search` Search Grounding and schema-constrained JSON output (`json_schema`) to generate product titles, bilingual descriptions (`description_id` and `description_en`), brand/condition attributes, and a canonical 14-value Indonesian category taxonomy.
 
-## Outputs
+## Core Engineering Guarantees
 
-1. **Meta Commerce Catalog Feed (CSV)**: Canonical 11-column catalog feed compliant with Meta Commerce Manager specifications, including multi-angle image URLs in `additional_image_link`.
-2. **Product Photo Pack (ZIP)**: Clean 1:1 studio images, original crops, merged angle photos, and the catalog CSV at the archive root.
-3. **Instagram Caption Pack (TXT)**: Ready-to-post promotional captions for each product with slugified hashtags.
-4. **WhatsApp Price List (TXT)**: Formatted price list summary with WhatsApp bold/italic styling and direct `wa.me` order links.
+- **Strict Price Law (Zero Invented Prices)**: AI never invents an exportable price. Only prices explicitly written in the seller's captions or printed on a visible price tag (`price_hint_idr`) may pre-fill the review input. AI market estimates (`price_suggestion_idr`) are displayed strictly as non-binding helper text and can never pre-fill or export. Items without a seller-confirmed price (`price_idr`) or explicit `"price via chat"` (`price_via_chat`) flag block export and highlight the blocking SKUs.
+- **Zero Ungated Generative Images**: Every exported image is guaranteed to be either a fidelity-gate-approved `muse-image-1.0` studio shot or a non-generative Pillow studio composite.
+- **Multi-Angle SKU Merging**: Sellers photographing the same item from multiple angles (front, back, side) can merge secondary crops into a primary SKU, promote any angle as the primary image, or split them back during mobile review.
+- **Offline Demo Safe Mode**: Four pre-bundled sample packs (Packs A–D under `apps/web/public/samples/{a,b,c,d}/golden/`, frozen from real live Meta Model API runs) execute entirely client-side with zero network requests and instant Blob exports.
 
-Public product pages are served at `/p/{job_id}/{sku}` with individual studio image endpoints at `/p/{job_id}/{sku}.jpg`.
+## Catalog Outputs
+
+1. **Meta Commerce Catalog Feed (`.csv`)**: Spec-compliant 11-column feed (`id,title,description,availability,condition,price,link,image_link,brand,product_type,additional_image_link`) ready for direct import into Meta Commerce Manager (Facebook Shop, Instagram Shop, and WhatsApp Catalog).
+2. **Product Photo Archive (`.zip`)**: Studio 1:1 JPEGs, original crop JPEGs, merged angle photos, and the catalog CSV at the archive root.
+3. **Instagram Caption Pack (`.txt`)**: Ready-to-paste promotional captions with slugified category hashtags.
+4. **WhatsApp Price List (`.txt`)**: Formatted WhatsApp broadcast list (`*bold*`, `_italic_`, `"harga via chat"` support, and direct `wa.me` order links).
+5. **Public Product Gallery (`/p/{job_id}/{sku}`)**: Shareable mobile product page with multi-angle photo gallery and one-tap WhatsApp ordering.
 
 ## Tech Stack
 
 | Layer | Technology | Description |
 | :--- | :--- | :--- |
-| **Web UI** | React 19, TypeScript, Vite, Tailwind CSS | Single Page Application with TanStack Router and Query, Lightbox Pasar design system, bilingual support (`id`/`en`), and 3 theme states. |
-| **API Backend** | FastAPI, Python 3.12, Uvicorn, Pydantic v2 | High-performance asynchronous REST backend with strict schema validation and OpenAPI generation. |
-| **Imaging** | Pillow (PIL), meta-sam-parser | Non-generative image processing, mask raster decoding, connected-component filtering, alpha extraction, and deterministic compositing. |
+| **Frontend** | React 19, TypeScript, Vite, TanStack Router & Query, Tailwind CSS | Single Page Application with Lightbox Pasar design system, mobile-first density, bilingual interface (`id`/`en`), and 3 theme states (`system`, `light`, `dark`). |
+| **Backend** | Python 3.12, FastAPI, Pydantic v2, Uvicorn | High-performance asynchronous REST backend with strict schema validation and OpenAPI contract generation. |
+| **Imaging** | Pillow, `meta-sam-parser` | Non-generative image processing, mask raster decoding, connected-component filtering, alpha extraction, and deterministic compositing. |
 | **AI Models** | `muse-spark-1.3-contributor`, `sam-3.1`, `muse-image-1.0` | Meta Model API orchestration for vision concept discovery, instance segmentation, generative cleanup, fidelity inspection, and search-grounded catalog extraction. |
-| **Deployment** | Docker, Docker Compose | Unified multi-stage container hosting both compiled frontend static assets and FastAPI API service. |
+| **Packaging** | Docker, Docker Compose | Unified multi-stage container hosting both compiled frontend static assets and FastAPI backend service. |
 
-## Running Locally
+## Quickstart
 
-Clone the repository and copy the example environment configuration:
+Clone the repository and set up environment configuration:
 
 ```bash
 cp .env.example .env
 ```
 
-### Production Container (Unified)
+Set `MODEL_API_KEY` in `.env` (or leave `META_MOCK=true` to run offline using the 27 recorded live fixtures).
 
-Run the unified production container hosting both API and SPA:
+### Run with Docker Compose (recommended)
 
 ```bash
 docker compose -p katalogkilat up -d --build
-curl http://127.0.0.1:8180/api/health
-curl http://127.0.0.1:8180/review
 ```
 
-The `/api/health` endpoint returns `{"ok":true,"mock":false}` when `.env` sets `META_MOCK=false`, or `{"ok":true,"mock":true}` via the `${META_MOCK:-true}` fallback when `.env` is absent. The `/review` endpoint serves the SPA shell `index.html` containing `<div id="root">`.
+Open `http://localhost:8180` in your browser (health check at `http://localhost:8180/api/health`).
 
-### Bare-Metal Development
-
-Run backend and frontend in separate terminals:
+### Run for local development
 
 ```bash
-# Vite web UI (port 4100)
-npm --prefix apps/web run dev
-
-# FastAPI with uvicorn (port 8100)
+# Terminal 1 — FastAPI backend (port 8100)
 uvicorn app.main:app --app-dir apps/api --port 8100 --reload
+
+# Terminal 2 — Vite web app (port 4100)
+npm --prefix apps/web run dev
 ```
 
-Port allocation summary:
-- `4100`: Vite development server
-- `4180`: Vite preview server
-- `8100`: Bare uvicorn FastAPI development server
-- `8180`: Unified production container loopback port
+### Run offline test suite
+
+```bash
+docker exec -e META_MOCK=true katalogkilat-api pytest apps/api/tests -q
+```
 
 ## Repository Structure
 
@@ -93,12 +97,12 @@ metahackathon/
 
 | Document | Description |
 | :--- | :--- |
-| `docs/prompts-final.md` | Final prompt versions and execution specifications for Meta Model API calls. |
-| `apps/api/openapi.json` | Committed OpenAPI contract specifying all 9 routes and 28 schema components. |
-| `apps/api/tests/fixtures/README.md` | Provenance and validation documentation for the 27 live-recorded mock fixtures. |
-| `apps/web/design/brandkit.md` | Lightbox Pasar design system tokens, typography, and density specifications. |
-| `LICENSE` | Proprietary License & Hackathon Evaluation Grant terms. |
+| [`docs/prompts-final.md`](docs/prompts-final.md) | Final prompt versions and execution specifications for Meta Model API calls. |
+| [`apps/api/openapi.json`](apps/api/openapi.json) | Committed OpenAPI contract specifying all 9 routes and 28 schema components. |
+| [`apps/api/tests/fixtures/README.md`](apps/api/tests/fixtures/README.md) | Provenance and validation documentation for the 27 live-recorded mock fixtures. |
+| [`apps/web/design/brandkit.md`](apps/web/design/brandkit.md) | Lightbox Pasar design system tokens, typography, and density specifications. |
+| [`LICENSE`](LICENSE) | Proprietary License & Hackathon Evaluation Grant terms. |
 
 ## License
 
-Proprietary License with Hackathon Evaluation Grant for the Meta Global AI Developer Hackathon 2026 — see `LICENSE`.
+Proprietary License with Hackathon Evaluation Grant for the Meta Global AI Developer Hackathon 2026 — see [`LICENSE`](LICENSE).

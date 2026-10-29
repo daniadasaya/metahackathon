@@ -1,4 +1,4 @@
-# prompts-final — Katalog Kilat
+# Katalog Kilat — Meta Model API Prompt Specification
 
 **Status: shipped.** All prompts P1–P6 below are implemented in `apps/api/app/meta_client.py` and
 verified live against `https://api.meta.ai/v1` (`muse-spark-1.3`, `sam-3.1`, `muse-image-1.0`) between
@@ -553,16 +553,16 @@ description_en, category (one of: "Handphone & Tablet", "Komputer & Laptop",
 - Indonesian price shorthand parsed per product; other items' prices,
   phone/model numbers, and spec figures never become `price_hint_idr`.
 
-Version 4 — 2026-10-28. Alasan: proses live mengembalikan string
-konsep berbahasa Inggris (`"smartphone"`, `"smartphone box"`,
-`"phone case"`, `"charging case"`, `"accessories"`) atau teks bebas
-(`"Aksesori Ponsel"`) sebagai `category`; nilai tersebut bocor ke kolom
-`product_type` pada CSV Commerce Manager dan ke tagar `#jual...` pada paket
-caption Instagram. Seluruh aturan Version 2 dan Version 3 tetap berlaku;
-Version 4 hanya menambahkan pembatasan kategori berikut.
+Version 4 — 2026-10-28. Reason: live runs returned English
+concept strings (`"smartphone"`, `"smartphone box"`,
+`"phone case"`, `"charging case"`, `"accessories"`) or free text
+(`"Aksesori Ponsel"`) as `category`; those values leaked into the
+`product_type` column of the Commerce Manager CSV and the `#jual...`
+hashtags in the Instagram caption pack. All Version 2 and Version 3
+rules still apply; Version 4 only adds the category restriction below.
 
-Taksonomi kategori kanonis — empat belas nilai, ejaan persis (satu-satunya
-sumber: `PRODUCT_CATEGORIES` di `meta_client.py`):
+Canonical category taxonomy — fourteen values, exact spelling
+(single source: `PRODUCT_CATEGORIES` in `meta_client.py`):
 
 ```
 "Handphone & Tablet" | "Aksesoris HP" | "Komputer & Laptop" | "Audio" |
@@ -571,48 +571,50 @@ sumber: `PRODUCT_CATEGORIES` di `meta_client.py`):
 "Lainnya"
 ```
 
-Penerapannya empat lapis (`meta_client.py`):
+Enforcement has four layers (`meta_client.py`):
 
-1. Enum pada skema wire outbound: `_stage_e_schema()` membuat deep copy
-   dari `ProductEntry.model_json_schema()` dan menetapkan
-   `properties.category.enum` ke daftar di atas. `schemas.py` tetap
-   berkontrak `category: str` — kontrak tersebut beku dan tidak diubah;
-   pembatasan hanya hidup pada salinan skema wire, sehingga skema pydantic
-   yang di-cache tidak pernah bermutasi.
-2. Kalimat pengikat pada prompt P5 live (teks prompt tetap berbahasa
-   Inggris, tidak diterjemahkan):
+1. Enum on the outbound wire schema: `_stage_e_schema()` deep-copies
+   `ProductEntry.model_json_schema()` and pins
+   `properties.category.enum` to the list above. `schemas.py` keeps
+   its `category: str` contract — that contract is frozen and unchanged;
+   the restriction lives only on the wire-schema copy, so the cached
+   pydantic schema never mutates.
+2. Binding sentence in the live P5 prompt (prompt text stays in
+   English, untranslated):
 
 ```
 category (binding): choose exactly one taxonomy entry from the list below; never return an English concept word, a product type, or a category you invent ("smartphone", "phone case", "accessories" are all invalid values). A phone case, charger, cable, power bank, or screen protector is 'Aksesoris HP'; a TWS/earbud charging case is 'Audio'; a sealed phone retail box is 'Handphone & Tablet'.
 ```
 
-3. `_normalize_category(raw_category, concept)` sebagai jaring pengaman
-   pasca-parse yang deterministis (tanpa panggilan model, tanpa keacakan):
-   pencocokan persis tanpa memperhatikan kapitalisasi lebih dahulu
-   (idempoten — nilai kanonis lolos tanpa berubah); kemudian tabel kata
-   kunci berurutan dari yang paling spesifik — charging case → Audio;
-   phone case/casing/tempered glass/screen protector → Aksesoris HP;
-   charger/kabel/power bank/adapter → Aksesoris HP; accessories/aksesori →
-   Aksesoris HP; earbud/headphone/speaker → Audio; laptop/komputer/keyboard/
+3. `_normalize_category(raw_category, concept)` as a deterministic
+   post-parse safety net (no model call, no randomness): exact
+   case-insensitive match first (idempotent — canonical values pass
+   through unchanged); then a most-specific-first keyword table —
+   charging case → Audio; phone case/casing/tempered glass/screen
+   protector → Aksesoris HP; charger/kabel/power bank/adapter →
+   Aksesoris HP; accessories/aksesori → Aksesoris HP;
+   earbud/headphone/speaker → Audio; laptop/komputer/keyboard/
    mouse/monitor → Komputer & Laptop; smartphone/tablet/ponsel/hp →
-   Handphone & Tablet; kaos/jaket/dress/hijab → Pakaian; sepatu/sneakers →
-   Sepatu; tas/dompet → Tas; mie/makanan/minuman/kopi → Makanan & Minuman;
-   skincare/kosmetik/serum/sabun → Kecantikan; rumah/dapur/panci/ember →
-   Rumah Tangga; tv/kamera/konsol → Elektronik Lainnya — dievaluasi pada
-   string mentah, lalu pada konsep Stage A bila tidak ada yang cocok, lalu
-   `"Lainnya"`. Keluaran selalu anggota taksonomi; pencocokan memakai batas
-   kata (`\b`) agar token pendek seperti `hp` tidak cocok di dalam kata
-   lain. Fungsi ini adalah normalizer, bukan classifier: ia hanya boleh
-   memilih entri taksonomi yang ada, dan tidak pernah menyentuh `name`,
-   `description_id`, atau `description_en`.
-4. Diterapkan pada satu jalur bersama untuk kedua cabang melalui
-   `_with_canonical_category(entry, concept)` (mengembalikan objek yang
-   sama bila sudah kanonis, `model_copy` bila belum): di
-   `_live_extract_product` pada respons pertama maupun retry perbaikan P6
-   melalui satu helper `_parse` lokal, dan di `_mock_extract_product` pada
-   setiap entri fixture (no-op terverifikasi — fixture sudah memuat
-   kategori kanonis — sehingga mock dan live tidak pernah berbeda
-   mengenai taksonomi).
+   Handphone & Tablet; kaos/jaket/dress/hijab → Pakaian;
+   sepatu/sneakers → Sepatu; tas/dompet → Tas;
+   mie/makanan/minuman/kopi → Makanan & Minuman;
+   skincare/kosmetik/serum/sabun → Kecantikan;
+   rumah/dapur/panci/ember → Rumah Tangga; tv/kamera/konsol →
+   Elektronik Lainnya — evaluated against the raw string, then against
+   the Stage A concept when nothing matches, then `"Lainnya"`. Output
+   is always a taxonomy member; matching uses word boundaries (`\b`)
+   so short tokens like `hp` never match inside other words. This
+   function is a normalizer, not a classifier: it may only pick an
+   existing taxonomy entry and never touches `name`,
+   `description_id`, or `description_en`.
+4. Applied on one shared path for both branches via
+   `_with_canonical_category(entry, concept)` (returns the same object
+   when already canonical, `model_copy` when not): in
+   `_live_extract_product` on both the first response and the P6
+   repair retry through one local `_parse` helper, and in
+   `_mock_extract_product` on every fixture entry (verified no-op —
+   fixtures already carry canonical categories — so mock and live
+   never diverge on taxonomy).
 
 ---
 
@@ -649,7 +651,7 @@ The binding rule is the Price Law stated below: if this section and the Price La
   seller types it. Export is **blocked** for that item until a price is set or the seller checks
   "Harga via chat".
 - `price_via_chat` items are **excluded from the CSV** and appear in the WhatsApp list as
-  `"Harga: tanya via chat"`. A stand-in `0 IDR` is never emitted for an unknown price.
+  `"harga via chat"`. A stand-in `0 IDR` is never emitted for an unknown price.
 - No code path may compute, infer, or default a price. If a price is missing, it stays missing.
 - The only exportable price is `price_idr` — the seller's confirmed value.
 
@@ -670,7 +672,7 @@ The binding rule is the Price Law stated below: if this section and the Price La
    weakened gate deletes the product's only differentiator. If P4 rejects too much, the answer is a better
    P3 or the deterministic composite fallback — never a softer P4.
 5. Prompt iteration is not a licence to change the `apps/api/app/schemas.py` contract. Prompt output must
-   keep validating against it; if a prompt genuinely needs a field the schema does not have, that is a
+   keep validating against it; if a prompt genuinely needs a field the schema does not have, that
    requires a schema change in schemas.py, not a prompt edit.
 6. Any prompt-body change is a change to `meta_client.py` in the same commit. A prompt that exists only in
    this document is not shipped.
