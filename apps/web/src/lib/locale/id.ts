@@ -63,13 +63,6 @@ export const id = {
     selected: 'Paket {pack} dipilih. Foto unggahan diabaikan.',
     clear: 'Batalkan paket',
   },
-  demo: {
-    title: 'Mode Demo Aman',
-    help: 'Paket contoh langsung tampil dari hasil tersimpan, tanpa internet. Foto unggahanmu tetap diproses langsung.',
-  },
-  notice: {
-    mock: 'Mode Demo Aman: hasil contoh, tanpa server',
-  },
   progress: {
     title: 'Memproses katalog',
     titleDone: 'Katalog siap',
@@ -190,7 +183,6 @@ export const id = {
     done: 'Ekspor selesai. Unduh file-nya di bawah.',
     download: 'Unduh',
     summary: '{n} produk diekspor, {m} di antaranya harga via chat · {k} dikecualikan',
-    demoNote: 'Mode Demo Aman: kamu mengunduh file contoh yang sudah jadi. Perubahan harga dan data toko tidak ikut.',
     stale: 'Data toko berubah sejak ekspor terakhir. Ekspor ulang supaya file-nya ikut berubah.',
     downloadsTitle: 'File ekspor',
     downloadsHint: 'Tombol unduh aktif setelah ekspor selesai.',

@@ -7,7 +7,6 @@ import { EmptyState } from '../components/EmptyState';
 import { StickyBar } from '../components/StickyBar';
 import { ApiError, exportJob, type ExportKind, type ExportResponse } from '../lib/api';
 import { canExport, exportScope, isWaNumber, readiness } from '../lib/catalog';
-import { isGoldenJobId } from '../lib/golden';
 import { useT, type MessageKey } from '../lib/locale';
 import {
   setStoredJobId,
@@ -103,9 +102,7 @@ export function ExportScreen() {
   const viaChat = scope.products.filter((product) => product.included && product.price_via_chat).length;
 
   const signature = JSON.stringify([scope.products, storeName.trim(), waNumber]);
-  // A golden export is a bundled file: it does not follow later edits, so "export again" would lie.
-  const golden = isGoldenJobId(scope.jobId);
-  const stale = !golden && done !== null && done.signature !== signature;
+  const stale = done !== null && done.signature !== signature;
 
   async function submit() {
     setTouched({ name: true, wa: true });
@@ -158,11 +155,6 @@ export function ExportScreen() {
         </div>
         <p className="mt-2 text-base text-fg-2 [@media(max-height:830px)]:sr-only">{t('export.lead')}</p>
         {scope.mixed ? <p className="mt-2 text-sm text-warning">{t('export.mixedJobs')}</p> : null}
-        {golden ? (
-          <p className="mt-2 text-xs font-medium text-fg-2" role="note">
-            {t('export.demoNote')}
-          </p>
-        ) : null}
 
         <section className="mt-3 flex flex-col gap-3" aria-labelledby="export-seller">
           <h2 id="export-seller" className="sr-only">

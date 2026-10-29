@@ -1,7 +1,7 @@
 /**
  * Client state. This module owns `localStorage`.
  *
- * Exactly six keys are ever persisted; a seventh is a defect. Locale and theme
+ * Exactly five keys are ever persisted; a sixth is a defect. Locale and theme
  * are resolved here, in the browser, and are never fetched. The inline script in
  * `index.html` performs the same first-paint resolution before this module loads, so there is no
  * flash of the wrong theme.
@@ -27,7 +27,6 @@ export type Locale = 'id' | 'en';
 export const STORAGE_KEYS = {
   catalog: 'kk:catalog',
   job: 'kk:job',
-  demoSafe: 'kk:demoSafe',
   seller: 'kk:seller',
   locale: 'kk:locale',
   theme: 'kk:theme',
@@ -107,7 +106,6 @@ function parseLocale(raw: string | null): Locale {
 
 const themeStore = createValueStore<Theme>(parseTheme(readRaw(STORAGE_KEYS.theme)));
 const localeStore = createValueStore<Locale>(parseLocale(readRaw(STORAGE_KEYS.locale)));
-const demoSafeStore = createValueStore<boolean>(readRaw(STORAGE_KEYS.demoSafe) === 'true');
 const jobStore = createValueStore<string | null>(readRaw(STORAGE_KEYS.job));
 
 const darkQuery: MediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
@@ -144,11 +142,6 @@ export function setLocale(locale: Locale): void {
   applyLocale();
 }
 
-export function setDemoSafe(on: boolean): void {
-  demoSafeStore.set(on);
-  writeRaw(STORAGE_KEYS.demoSafe, on ? 'true' : 'false');
-}
-
 export function setStoredJobId(jobId: string | null): void {
   jobStore.set(jobId);
   writeRaw(STORAGE_KEYS.job, jobId);
@@ -162,10 +155,6 @@ export function getLocale(): Locale {
   return localeStore.get();
 }
 
-export function getDemoSafe(): boolean {
-  return demoSafeStore.get();
-}
-
 export function getStoredJobId(): string | null {
   return jobStore.get();
 }
@@ -176,10 +165,6 @@ export function useTheme(): Theme {
 
 export function useLocale(): Locale {
   return useSyncExternalStore(localeStore.subscribe, localeStore.get);
-}
-
-export function useDemoSafe(): boolean {
-  return useSyncExternalStore(demoSafeStore.subscribe, demoSafeStore.get);
 }
 
 export function useStoredJobId(): string | null {
@@ -198,8 +183,6 @@ window.addEventListener('storage', (event) => {
   } else if (event.key === STORAGE_KEYS.locale) {
     localeStore.set(parseLocale(event.newValue));
     applyLocale();
-  } else if (event.key === STORAGE_KEYS.demoSafe) {
-    demoSafeStore.set(event.newValue === 'true');
   } else if (event.key === STORAGE_KEYS.job) {
     jobStore.set(event.newValue);
   } else if (event.key === STORAGE_KEYS.catalog) {

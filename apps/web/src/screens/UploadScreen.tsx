@@ -2,21 +2,12 @@ import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Column } from '../components/Column';
-import { Switch } from '../components/Switch';
 import { StickyBar } from '../components/StickyBar';
 import { Toast } from '../components/Toast';
 import { CheckIcon, CloseIcon, PhotoIcon, PlusIcon, UploadIcon } from '../components/Icons';
-import { ApiError, BackendUnavailableError, createJob, fetchSamplePack, type SamplePack } from '../lib/api';
-import { isGoldenJobId } from '../lib/golden';
+import { ApiError, BackendUnavailableError, createJob, type SamplePack } from '../lib/api';
 import { useT, type MessageKey } from '../lib/locale';
-import {
-  getDemoSafe,
-  replaceCatalog,
-  setDemoSafe,
-  setStoredJobId,
-  useDemoSafe,
-  useStoredJobId,
-} from '../lib/store';
+import { setStoredJobId, useStoredJobId } from '../lib/store';
 
 interface PickedPhoto {
   id: number;
@@ -24,16 +15,12 @@ interface PickedPhoto {
   caption: string;
 }
 
-const LIVE_PACKS: ReadonlyArray<{ pack: SamplePack; label: MessageKey }> = [
+const PACKS: ReadonlyArray<{ pack: SamplePack; label: MessageKey }> = [
   { pack: 'a', label: 'samples.packA' },
   { pack: 'b', label: 'samples.packB' },
   { pack: 'c', label: 'samples.packC' },
+  { pack: 'd', label: 'samples.packD' },
 ];
-
-/** Demo Safe Mode only: pack d is a golden bundle with no live pipeline behind it (merge demo). */
-const SAFE_ONLY_PACK: { pack: SamplePack; label: MessageKey } = { pack: 'd', label: 'samples.packD' };
-
-const SAFE_PACKS: ReadonlyArray<{ pack: SamplePack; label: MessageKey }> = [...LIVE_PACKS, SAFE_ONLY_PACK];
 
 function Thumb({ file }: { file: File }) {
   const [url, setUrl] = useState<string | null>(null);
@@ -59,7 +46,6 @@ function Thumb({ file }: { file: File }) {
 export function UploadScreen() {
   const { t, errorText } = useT();
   const navigate = useNavigate();
-  const demoSafe = useDemoSafe();
   const storedJobId = useStoredJobId();
 
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
@@ -71,13 +57,6 @@ export function UploadScreen() {
   const nextId = useRef(1);
   const dismissToast = useCallback(() => setToast(null), []);
 
-  // Pack d exists only in Demo Safe Mode. Turning the toggle off (here or in another tab) drops it,
-  // so a live run can never start from a golden-only pack.
-  useEffect(() => {
-    if (!demoSafe && pack === SAFE_ONLY_PACK.pack) setPack(null);
-  }, [demoSafe, pack]);
-
-  const packs = demoSafe ? SAFE_PACKS : LIVE_PACKS;
   const canStart = !busy && (pack !== null || photos.length > 0);
 
   function addFiles(list: FileList | null) {
@@ -101,18 +80,12 @@ export function UploadScreen() {
     setBusy(true);
     setBackendMissing(false);
     try {
-      const live = pack !== null && !getDemoSafe();
-      if (pack === SAFE_ONLY_PACK.pack && live) throw new Error('pack d has no live path');
-      const sample = live ? await fetchSamplePack(pack) : null;
       const jobId = await createJob({
-        photos: sample === null ? photos.map((photo) => photo.file) : sample.photos,
-        photoCaptions: sample === null ? photos.map((photo) => photo.caption) : sample.photos.map(() => ''),
-        generalCaption: sample === null ? general : sample.captions,
-        demoSafe: getDemoSafe(),
+        photos: pack === null ? photos.map((photo) => photo.file) : [],
+        photoCaptions: pack === null ? photos.map((photo) => photo.caption) : [],
+        generalCaption: pack === null ? general : '',
         samplePack: pack,
       });
-      // A golden run always has the same id: starting it again must start from the bundled catalog.
-      if (isGoldenJobId(jobId)) replaceCatalog([]);
       setStoredJobId(jobId);
       await navigate({ to: '/jobs/$jobId', params: { jobId } });
     } catch (error) {
@@ -234,8 +207,8 @@ export function UploadScreen() {
           <p id="samples-hint" className="sr-only">
             {t('samples.hint')}
           </p>
-          <div className={`mt-3 grid gap-2 ${demoSafe ? 'grid-cols-2' : 'grid-cols-3'}`}>
-            {packs.map((entry) => {
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {PACKS.map((entry) => {
               const selected = pack === entry.pack;
               return (
                 <button
@@ -278,21 +251,6 @@ export function UploadScreen() {
             <p className="mt-2 text-sm text-fg-muted">{t('upload.captionHelp')}</p>
           </div>
         </details>
-
-        <section className="kk-card-flat mt-4 py-1 pr-2 pl-4">
-          <div className="flex min-h-[44px] items-center gap-3">
-            <h2 id="demo-title" className="min-w-0 flex-1 text-base font-bold">
-              {t('demo.title')}
-            </h2>
-            <Switch checked={demoSafe} onChange={setDemoSafe} labelledBy="demo-title" describedBy="demo-help" />
-          </div>
-          <p
-            id="demo-help"
-            className="pr-2 pb-3 text-xs font-medium text-fg-2 [@media(max-height:830px)]:sr-only"
-          >
-            {t('demo.help')}
-          </p>
-        </section>
 
         {toast !== null ? <Toast text={toast} onDismiss={dismissToast} /> : null}
       </Column>

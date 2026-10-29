@@ -3,20 +3,11 @@
  * origin. The server's `message` is developer English and is never read here beyond parsing the
  * envelope; only `code` leaves this module.
  *
- * `golden.ts` is the Demo Safe Mode transport (zero API calls): a `golden-{pack}` job
- * id, which only a sample pack picked with the toggle on produces, is answered from the static
- * bundle under `/samples/{pack}/golden/` and never reaches `/api/...`. A real upload never gets
- * one; when the backend is absent `createJob` says so instead of simulating a job.
+ * Every job, sample pack or upload, goes through `/api/...`. When the backend is absent
+ * `createJob` says so instead of simulating a job.
  */
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
-import {
-  goldenExportFiles,
-  goldenJobId,
-  goldenJobState,
-  isGoldenJobId,
-  loadGolden,
-} from './golden';
 import type { components } from './types';
 
 export type JobState = components['schemas']['JobState'];
@@ -65,11 +56,11 @@ export class BackendUnavailableError extends Error {
 }
 
 export interface CreateJobInput {
+  /** Uploaded photos. Empty when `samplePack` is set: the pack's bundled photos are used instead. */
   photos: File[];
   /** One caption per photo, same order as `photos`; empty string when none. */
   photoCaptions: string[];
   generalCaption: string;
-  demoSafe: boolean;
   samplePack: SamplePack | null;
 }
 
@@ -83,7 +74,7 @@ export interface SamplePackFiles {
 }
 
 /**
- * Loads a bundled sample pack's photos so the real pipeline can run on them (Demo Safe Mode off).
+ * Loads a bundled sample pack's photos so the real pipeline can run on them.
  * The SPA catch-all answers a missing file with HTML and status 200, so the content type is the
  * proof that a real image came back.
  */
@@ -112,24 +103,24 @@ export async function fetchSamplePack(pack: SamplePack): Promise<SamplePackFiles
   return { photos, captions };
 }
 
-/** Creates a job and returns its id. Demo Safe Mode with a sample pack makes no request at all. */
+/**
+ * Creates a job and returns its id. A sample pack with no uploaded photos is fetched from the
+ * bundle and submitted as a regular `POST /api/jobs`, the same request an upload makes.
+ */
 export async function createJob(input: CreateJobInput): Promise<string> {
-  if (input.demoSafe && input.samplePack !== null) {
-    try {
-      await loadGolden(input.samplePack);
-    } catch {
-      throw new ApiError(404, 'not_found');
-    }
-    return goldenJobId(input.samplePack);
+  let photos = input.photos;
+  let photoCaptions = input.photoCaptions;
+  let generalCaption = input.generalCaption;
+  if (input.samplePack !== null && photos.length === 0) {
+    const sample = await fetchSamplePack(input.samplePack);
+    photos = sample.photos;
+    photoCaptions = sample.photos.map(() => '');
+    generalCaption = sample.captions;
   }
 
   const form = new FormData();
-  input.photos.forEach((photo) => form.append('photos', photo, photo.name));
-  form.append(
-    'captions',
-    JSON.stringify({ general: input.generalCaption, photos: input.photoCaptions }),
-  );
-  form.append('demo_safe', String(input.demoSafe));
+  photos.forEach((photo) => form.append('photos', photo, photo.name));
+  form.append('captions', JSON.stringify({ general: generalCaption, photos: photoCaptions }));
 
   let response: Response;
   try {
@@ -146,13 +137,6 @@ export async function createJob(input: CreateJobInput): Promise<string> {
 }
 
 export async function getJob(jobId: string): Promise<JobState> {
-  if (isGoldenJobId(jobId)) {
-    try {
-      return await goldenJobState(jobId);
-    } catch {
-      throw new ApiError(404, 'not_found');
-    }
-  }
   let response: Response;
   try {
     response = await fetch(`/api/jobs/${encodeURIComponent(jobId)}`);
@@ -164,8 +148,6 @@ export async function getJob(jobId: string): Promise<JobState> {
 }
 
 export async function retryCleanup(jobId: string, sku: string): Promise<void> {
-  // A golden job is finished and clean; there is nothing to retry and nobody to ask.
-  if (isGoldenJobId(jobId)) return;
   let response: Response;
   try {
     response = await fetch(
@@ -188,14 +170,6 @@ export type ExportKind = components['schemas']['ExportKind'];
  * surfaces as `ApiError(0, null)`, distinct from a server refusal that carries a `code`.
  */
 export async function exportJob(jobId: string, body: ExportRequest): Promise<ExportResponse> {
-  // Demo Safe Mode: the bundled files are the export. No request, not even to the exporter.
-  if (isGoldenJobId(jobId)) {
-    try {
-      return { job_id: jobId, files: await goldenExportFiles(jobId) };
-    } catch {
-      throw new ApiError(404, 'not_found');
-    }
-  }
   let response: Response;
   try {
     response = await fetch(`/api/jobs/${encodeURIComponent(jobId)}/export`, {

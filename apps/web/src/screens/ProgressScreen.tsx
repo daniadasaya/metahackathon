@@ -12,7 +12,6 @@ import { ApiError, retryCleanup, useJob, type JobState } from '../lib/api';
 import { photoNumber, STAGE_LETTERS } from '../lib/display';
 import { STAGE_ORDER, sortedErrors, stageIndex, tileStates, type StageError } from '../lib/jobView';
 import { useT } from '../lib/locale';
-import { isGoldenJobId } from '../lib/golden';
 import { setStoredJobId } from '../lib/store';
 
 /** Products on `photoIndex` that fell back to the composite: the ones a cleanup retry can fix. */
@@ -144,12 +143,6 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
         <h1 className="text-2xl">{title}</h1>
         {finished && errors.length > 0 && productCount > 0 ? (
           <p className="mt-2 text-base text-fg-2">{t('progress.doneWithNotes', { n: productCount })}</p>
-        ) : null}
-
-        {isGoldenJobId(jobId) ? (
-          <p className="kk-card-flat mt-3 px-3 py-2 text-sm text-fg-2" role="note">
-            {t('notice.mock')}
-          </p>
         ) : null}
 
         <section className="kk-card mt-4 flex flex-col gap-4 p-4" aria-label={t('progress.stripLabel')}>

@@ -1,33 +1,128 @@
-# Katalog Kilat — Meta Model API Prompt Specification
+# Katalog Kilat — Meta Model API Prompt & Verification Specification
 
-**Status: shipped.** All prompts P1–P6 below are implemented in `apps/api/app/meta_client.py` and
-verified live against `https://api.meta.ai/v1` (`muse-spark-1.3`, `sam-3.1`, `muse-image-1.0`) between
-2026-10-26 and 2026-10-28. The prompts below are self-contained. Line breaks inside a prompt body are part
-of the prompt — do not reflow them.
+Katalog Kilat orchestrates three Meta models across `https://api.meta.ai/v1` — `muse-spark-1.3-contributor`
+for seeing and writing, `sam-3.1` for cutting, and `muse-image-1.0` for studio cleanup — arranged so each
+model audits the others' work: Spark names what SAM may cut, Spark inspects every cut before cleanup,
+Spark judges every cleanup before export, and Spark writes the listing from the verified image plus the
+seller's own words.
+
+> [!IMPORTANT]
+> Two prompt laws are non-negotiable:
+>
+> - **Two-Stage Visual Fidelity Gate (P4a + P4b)** — no hallucinated product edit ever reaches an export.
+>   A generative edit that redesigns the product is a defect in a sales catalog, not a style choice.
+> - **Strict Price Law (P5)** — no AI-invented price ever reaches an export. The only exported price is
+>   the seller's confirmed value. A missing price stays missing.
+
+**Status: shipped.** Prompts P1–P6 below are implemented in `apps/api/app/meta_client.py` and verified
+live against `https://api.meta.ai/v1` (`muse-spark-1.3`, `sam-3.1`, `muse-image-1.0`). The prompts below
+are self-contained. Line breaks inside a prompt body are part of the prompt — do not reflow them.
 
 Any change after live testing is appended here as a **new version** with the date and what changed.
 **The previous version is kept. A prompt body is never overwritten.**
-
-Consumers: `apps/api/app/meta_client.py` and `docs/`.
-
----
-
-## Table of prompt IDs
-
-| ID | Stage | Model | Purpose | Temperature |
-| :--- | :--- | :--- | :--- | :--- |
-| P1 | A | `muse-spark-1.3-contributor` | concept discovery | 0.4 |
-| P2 | B | `sam-3.1` | the concept phrase itself, one per request | n/a |
-| P3 | D | `muse-image-1.0` | cleanup edit | n/a |
-| P4 | D | `muse-spark-1.3-contributor` | fidelity gate | 0.0 |
-| P5 | E | `muse-spark-1.3-contributor` | extraction | 0.2 |
-| P6 | E | `muse-spark-1.3-contributor` | repair retry | 0.2 |
 
 `{...}` marks a runtime substitution. Everything outside braces is literal prompt text.
 
 ---
 
-## P1 — Stage A, concept discovery (`muse-spark-1.3-contributor`, vision, temp 0.4)
+## 1. Prompt orchestration — how P1 through P6 connect
+
+```mermaid
+flowchart TD
+    P1["P1 · Stage A concepts<br/>Spark vision names product types"]
+    P2["P2 · Stage B segmentation<br/>SAM 3.1 · one phrase per request"]
+    C["Stage C cut-out<br/>bbox crop plus padding"]
+    P4A["P4a · Pre-Gate crop check<br/>single cut-out in, no studio bytes yet"]
+    P3["P3 · Studio cleanup<br/>Muse Image edits"]
+    P4B["P4b · Post-Gate edit check<br/>reference versus studio"]
+    P5["P5 · Extraction<br/>responses plus web_search plus json_schema"]
+    P6["P6 · Repair retry<br/>at most once"]
+    STUDIO["Verified image forwarded"]
+    COMP["Deterministic Pillow composite"]
+    ERR["Product-level error<br/>recorded, pipeline continues"]
+
+    P1 --> P2 --> C --> P4A
+    P4A -- valid single product --> P3 --> P4B
+    P4A -- fragment or merged or clutter --> COMP
+    P4B -- pass, all three checks true --> P5
+    P4B -- fail --> COMP
+    COMP --> P5
+    P5 -- valid --> STUDIO
+    P5 -- validation failure --> P6
+    P6 -- repaired --> STUDIO
+    P6 -- still invalid --> ERR
+```
+
+Fallbacks are first-class outcomes, not errors: a P4a rejection skips P3 entirely, a P4b rejection
+discards the studio edit, and a second P5 validation failure becomes a named product-level error while
+the rest of the catalog continues.
+
+---
+
+## 2. Master prompt and API surface matrix
+
+| ID | Pipeline Stage | Model ID | API Endpoint & Mode | Temp | Input → Output | Core Guardrail |
+| :--- | :--- | :--- | :--- | :---: | :--- | :--- |
+| **P1** | A — concept discovery | `muse-spark-1.3-contributor` | `POST /v1/chat/completions`, vision | 0.4 | photo + captions → `concepts[]`, `scene_note`, `visible_text` | Short English noun phrases; never a comma inside a phrase |
+| **P2** | B — segmentation | `sam-3.1` | `POST /v1/responses`, streamed, parsed with `meta-sam-parser` | n/a | one concept phrase → mask records with own boxes | One phrase per request; confidence and fill filters; one re-run only |
+| **P3** | D — studio cleanup | `muse-image-1.0` | `POST /v1/images/edits`, `n=1`, PNG out | n/a | Stage C crop → studio PNG | Preserve product exactly; never redesign |
+| **P4a** | D — pre-cleanup crop gate | `muse-spark-1.3-contributor` | `POST /v1/chat/completions`, vision | 0.0 | candidate cut-out in, strict JSON verdict out | Reject fragments, merged items, clutter before cleanup |
+| **P4b** | D — post-cleanup edit gate | `muse-spark-1.3-contributor` | `POST /v1/chat/completions`, two images in | 0.0 | reference + studio edit in, strict JSON verdict out | All three checks must be true; fail means composite |
+| **P5** | E — extraction | `muse-spark-1.3-contributor` | `POST /v1/responses` + `web_search` + `json_schema` | 0.2 | cleaned image + context → `ProductEntry` JSON | Strict Price Law; 14-value category taxonomy |
+| **P6** | E — repair retry | `muse-spark-1.3-contributor` | `POST /v1/responses`, same repair path as P5 | 0.2 | validation error + same content → corrected JSON | One retry only; second failure is a product-level error |
+
+---
+
+## 3. P1 — Stage A, concept discovery
+
+| Model | Endpoint | Temperature | Output Format | Retry Policy |
+| :--- | :--- | :---: | :--- | :--- |
+| `muse-spark-1.3-contributor` | `POST /v1/chat/completions`, vision | 0.4 | JSON object: `concepts[]`, `scene_note`, `visible_text` | Transient-error retry in adapter; no prompt-shape re-run |
+
+### Active production prompt — P1 Version 3
+
+```
+System: You analyze photos taken by small online sellers. Your job is to prepare
+the photo for concept segmentation by listing the foreground product types clearly
+presented for sale, whether on the main surface or held up for sale.
+
+User (with photo + optional seller captions: "{captions}"):
+List every distinct foreground product TYPE clearly presented for sale in this
+photo — whether laid on the main counter, table, mat, or display counter, held
+up in a seller's hand, or hung on a hanger or mannequin. Rules:
+- Output concepts as short English noun phrases: "smartphone", "smartphone box",
+  "phone case", "charging case", "power bank", "charging cable", "sneakers",
+  "instant noodle cup". One phrase per visually distinct product type.
+  Multiple identical items are ONE concept.
+- When sealed retail product boxes are held up or stacked on the main counter,
+  list their box type (e.g. "smartphone box") rather than "phone case".
+- Never put brand names, model names, colors, or commas inside a concept phrase.
+- ONLY list foreground products presented for sale (on a surface, in a hand, on
+  a hanger/mannequin). Ignore the hand, arm, or person holding the product, the
+  mannequin or hanger itself, distant or blurry items hanging on background
+  walls/pegboards/shelves, open brown shipping cartons in the back room, plastic
+  display stands/holders, price tags/signs, pens/notebooks, furniture, walls,
+  posters, and reflections or items trapped underneath glass counter shelves.
+- Transcribe any readable text (brands, model numbers, price tags) verbatim into visible_text.
+Return ONLY JSON:
+{"concepts": ["..."], "scene_note": "one sentence describing the scene",
+ "visible_text": ["..."]}
+```
+
+**Invariants:**
+
+- Concepts are **short English noun phrases** — never sentences, never brand+model strings.
+- **Never a comma inside a concept phrase.** SAM takes one concept phrase per request; a comma is not a
+  multi-label interface.
+- One concept per *visually distinct product type*. Multiple identical items are **ONE** concept — five
+  phones is one concept `"smartphone"`, and SAM returns all five instances.
+- Foreground products on a surface, in a hand, or on a hanger/mannequin only. Hands, holders,
+  backgrounds, and reflections are never concepts.
+- `visible_text` is transcribed **verbatim** — brand names, price tags, model numbers.
+- `scene_note` is one sentence and is the context Stage E receives.
+- Output is JSON only, in the shape shown.
+
+<details><summary>📜 View Prompt Iteration History (Versions 1–2)</summary>
 
 Version 1 — Initial baseline prompt P1.
 
@@ -49,18 +144,6 @@ Return ONLY JSON:
 {"concepts": ["..."], "scene_note": "one sentence describing the scene",
  "visible_text": ["..."]}
 ```
-
-**Invariants** (prompt above):
-
-- Concepts are **short English noun phrases** — never sentences, never brand+model strings.
-- **Never a comma inside a concept phrase.** SAM takes one concept phrase per request; a comma is not a
-  multi-label interface.
-- One concept per *visually distinct product type*. Multiple identical items are **ONE** concept — five
-  phones is one concept `"smartphone"`, and SAM returns all five instances.
-- Ignore people, hands, tables, shelves, walls, packaging trash, text/posters, reflections.
-- `visible_text` is transcribed **verbatim** — brand names, price tags, model numbers.
-- `scene_note` is one sentence and is the context Stage E receives.
-- Output is JSON only, in the shape shown.
 
 Version 2 — 2026-10-26, live iteration. Reason: Version 1 listed background
 pegboard clutter ("screen protector") and missed foreground box/case distinctions
@@ -97,39 +180,19 @@ missed products a seller holds up in hand (a hand-held sealed box was still
 listed, but the surface-bound wording is brittle for hand/manikin/held-up
 presentations); P5's copy named hands and rice-field backgrounds.
 
-```
-System: You analyze photos taken by small online sellers. Your job is to prepare
-the photo for concept segmentation by listing the foreground product types clearly
-presented for sale, whether on the main surface or held up for sale.
+*(Version 3 body is the active prompt shown above.)*
 
-User (with photo + optional seller captions: "{captions}"):
-List every distinct foreground product TYPE clearly presented for sale in this
-photo — whether laid on the main counter, table, mat, or display counter, held
-up in a seller's hand, or hung on a hanger or mannequin. Rules:
-- Output concepts as short English noun phrases: "smartphone", "smartphone box",
-  "phone case", "charging case", "power bank", "charging cable", "sneakers",
-  "instant noodle cup". One phrase per visually distinct product type.
-  Multiple identical items are ONE concept.
-- When sealed retail product boxes are held up or stacked on the main counter,
-  list their box type (e.g. "smartphone box") rather than "phone case".
-- Never put brand names, model names, colors, or commas inside a concept phrase.
-- ONLY list foreground products presented for sale (on a surface, in a hand, on
-  a hanger/mannequin). Ignore the hand, arm, or person holding the product, the
-  mannequin or hanger itself, distant or blurry items hanging on background
-  walls/pegboards/shelves, open brown shipping cartons in the back room, plastic
-  display stands/holders, price tags/signs, pens/notebooks, furniture, walls,
-  posters, and reflections or items trapped underneath glass counter shelves.
-- Transcribe any readable text (brands, model numbers, price tags) verbatim into visible_text.
-Return ONLY JSON:
-{"concepts": ["..."], "scene_note": "one sentence describing the scene",
- "visible_text": ["..."]}
-```
+</details>
 
 ---
 
-## P2 — Stage B, SAM prompt (`sam-3.1`)
+## 4. P2 — Stage B, SAM prompt
 
-Version 1 — Initial baseline prompt P2.
+| Model | Endpoint | Temperature | Output Format | Retry Policy |
+| :--- | :--- | :---: | :--- | :--- |
+| `sam-3.1` | `POST /v1/responses`, streamed via `meta-sam-parser` | n/a | Mask records carrying their own boxes and dimensions | Exactly one re-run with a more specific phrase on zero masks; never a loop |
+
+### Active production prompt — P2 Version 3
 
 The prompt body is the concept phrase itself, exactly as P1 emitted it, one phrase per request. The
 runtime substitution is the whole prompt:
@@ -138,7 +201,23 @@ runtime substitution is the whole prompt:
 {concept}
 ```
 
-**Invariants** (prompt above):
+Post-parse filtering in `meta_client.py::_live_segment_concept`, applied after `decode_mask_to_raster`:
+
+- Drop records with `confidence < 0.70` (all valid foreground products score `0.739..0.965`;
+  reflections, wires, cartons, and the tangled multi-cable pile at `0.683` score below `0.70`).
+- Drop records with foreground fill `(fg_pixels / (width*height)) < 0.38`
+  (occlusion slivers live at `0.351..0.369`; valid items at `0.431..0.751`).
+
+### Post-parse segmentation filter table
+
+| Metric | Threshold | What It Rejects | Measured Live Range |
+| :--- | :--- | :--- | :--- |
+| Confidence score | Keep `score >= 0.70`, drop `confidence < 0.70` | Reflections, crossing wires, back-room cartons, under-glass items, tangled multi-cable piles | Valid foreground `0.739..0.965`; clutter below `0.66`; tangled pile at `0.683` |
+| Foreground fill `fg_pixels / (width*height)` | Keep `>= 0.38`, drop `< 0.38` | Sparse occlusion slivers | Slivers `0.351..0.369`; valid items `0.431..0.751` |
+| Phrase shape | Exactly one phrase per request; no commas | Comma-joined phrases match nothing and yield `[]`, never an error | Contract rule, no numeric range |
+| Zero-mask refinement | Exactly one re-run with a more specific phrase | Recovery path, not a rejection | Single re-run; never a phrase ladder |
+
+**Invariants:**
 
 - **The concept phrase alone. No extra text** — no instruction prefix, no suffix, no added punctuation,
   no joining of two concepts with a comma.
@@ -149,6 +228,19 @@ runtime substitution is the whole prompt:
   prompt's shape. Stage B does this once automatically when a concept returns zero masks and the scene
   note suggests a distinguishing attribute — exactly one re-run, never a loop, never a phrase ladder.
 - The hosted API accepts text prompts only — no point or box prompts.
+
+<details><summary>📜 View Prompt Iteration History (Versions 1–2)</summary>
+
+Version 1 — Initial baseline prompt P2.
+
+The prompt body is the concept phrase itself, exactly as P1 emitted it, one phrase per request. The
+runtime substitution is the whole prompt:
+
+```
+{concept}
+```
+
+*(Invariants as listed above.)*
 
 Version 2 — 2026-10-26, live iteration. Reason: live Pack A masks showed
 low-confidence under-glass/cable crossings, blurry wall wires, back-room cartons,
@@ -169,9 +261,44 @@ flip. All 15 valid foreground products across Pack A score `0.739..0.965`.
 - Confidence threshold raised to `score >= 0.70` (drop `confidence < 0.70`).
   Fill rule unchanged (`< 0.38`).
 
+*(Version 3 thresholds are the active filters shown above.)*
+
+</details>
+
 ---
 
-## P3 — Stage D, Muse Image cleanup edit (`muse-image-1.0`)
+## 5. P3 — Stage D, Muse Image cleanup edit
+
+| Model | Endpoint | Temperature | Output Format | Retry Policy |
+| :--- | :--- | :---: | :--- | :--- |
+| `muse-image-1.0` | `POST /v1/images/edits` | n/a | One PNG (`n=1`, `response_format="b64_json"`, `output_format="png"`) | No retry; P4 decides studio versus composite |
+
+### Active production prompt — P3 Version 3
+
+```
+Place this exact product on a clean off-white studio background (#F7F7F5),
+soft even lighting, gentle natural shadow beneath it, centered, front view,
+e-commerce product photography. Preserve the product exactly: same shape,
+same colors, same logos, same text, same details — do not redesign, restyle,
+or add or remove any part of the product. Preserve the product's actual
+surface, colors, logos, and printed text 100% intact. Also clean up
+distracting photographer silhouettes, outdoor or room reflections, and harsh
+glare on glossy packaging or screens, without altering the product itself.
+Remove the original background, hands, plastic display stands or holders,
+price tags, and any other non-product objects completely.
+```
+
+**Invariants:**
+
+- **Preserve the product exactly** — same shape, same colors, same logos, same text, same details.
+- **Do not redesign, restyle, or add or remove any part of the product.** A generative edit that changes
+  the product is a defect in a sales catalog, not a style choice.
+- The input is the Stage C crop; output is one PNG (`n=1`, `response_format="b64_json"`,
+  `output_format="png"`).
+- `size="1024x1024"` sets **aspect ratio**, not guaranteed pixels.
+- No P3 output reaches an export without passing P4.
+
+<details><summary>📜 View Prompt Iteration History (Versions 1–2)</summary>
 
 Version 1 — Initial baseline prompt P3.
 
@@ -183,16 +310,6 @@ same colors, same logos, same text, same details — do not redesign, restyle,
 or add or remove any part of the product. Remove the original background,
 hands, and any other objects completely.
 ```
-
-**Invariants** (prompt above):
-
-- **Preserve the product exactly** — same shape, same colors, same logos, same text, same details.
-- **Do not redesign, restyle, or add or remove any part of the product.** A generative edit that changes
-  the product is a defect in a sales catalog, not a style choice.
-- The input is the Stage C crop; output is one PNG (`n=1`, `response_format="b64_json"`,
-  `output_format="png"`).
-- `size="1024x1024"` sets **aspect ratio**, not guaranteed pixels.
-- No P3 output reaches an export without passing P4.
 
 Version 2 — 2026-10-26, live iteration. Reason: cleanup left plastic display
 stands/holders and price tags in the studio image.
@@ -211,22 +328,139 @@ Version 3 — 2026-10-28, POCO X8 Pro live job (`job-2f42ad437ffd`) iteration.
 Reason: Version 2 left photographer silhouettes and outdoor/room reflections
 or harsh glare on glossy packaging/screens in studio output.
 
-```
-Place this exact product on a clean off-white studio background (#F7F7F5),
-soft even lighting, gentle natural shadow beneath it, centered, front view,
-e-commerce product photography. Preserve the product exactly: same shape,
-same colors, same logos, same text, same details — do not redesign, restyle,
-or add or remove any part of the product. Preserve the product's actual
-surface, colors, logos, and printed text 100% intact. Also clean up
-distracting photographer silhouettes, outdoor or room reflections, and harsh
-glare on glossy packaging or screens, without altering the product itself.
-Remove the original background, hands, plastic display stands or holders,
-price tags, and any other non-product objects completely.
-```
+*(Version 3 body is the active prompt shown above.)*
+
+</details>
 
 ---
 
-## P4 — Stage D, fidelity gate (`muse-spark-1.3-contributor`, vision, temp 0.0)
+## 6. P4 — Stage D, two-stage fidelity gate
+
+| Model | Endpoint | Temperature | Output Format | Retry Policy |
+| :--- | :--- | :---: | :--- | :--- |
+| `muse-spark-1.3-contributor` | `POST /v1/chat/completions`, vision (one image in for P4a, two images in for P4b) | 0.0 | Strict JSON: `same_product`, `color_match`, `logo_text_match`, `reason` | No retry; a fail is a verdict and routes to the deterministic composite |
+
+```mermaid
+flowchart TD
+    CUT["Candidate cut-out in"]
+    P4A{"P4a pre-cleanup check"}
+    P3N["P3 studio cleanup"]
+    P4B{"P4b post-cleanup check"}
+    STUDIO["Studio PNG to Stage E"]
+    COMP["Deterministic Pillow composite to Stage E"]
+
+    CUT --> P4A
+    P4A -- "single substantially complete product" --> P3N --> P4B
+    P4A -- "fragment, merged, clutter, wedge, or bite" --> COMP
+    P4B -- "same_product and color_match and logo_text_match" --> STUDIO
+    P4B -- "any check false" --> COMP
+```
+
+P4a fires while the studio bytes are still empty; P4b fires once both the reference and the studio
+edit exist. Either gate can route the product to the deterministic Pillow composite.
+
+### Fidelity gate audit matrix
+
+| Criterion | P4a — pre-cleanup crop check | P4b — post-cleanup edit check |
+| :--- | :--- | :--- |
+| Input | Candidate cut-out, with store-photo context panels when shown | Ground-truth reference plus studio edit |
+| Fires when | Studio bytes are still empty | Both reference and studio edit exist |
+| `same_product` false when | Partial, sandwiched, or half-hidden fragment; trapped under glass or crossed by cables; background clutter or merged distinct items; price-card wedge or cable bite above 12% of the body | Item count changed (1 box became 2–3); device became an accessory render; model, camera, or port layout changed; foreign stand retained; added second object; missing notch, wedge, or chunk still visible |
+| `color_match` false when | Set together with the triple verdict on the crop | Body, screen, or accent colors recolored |
+| `logo_text_match` false when | Set together with the triple verdict on the crop | Visible brand logo or printed text altered or illegible (true when neither image shows logo or text) |
+| Pass routes to | P3 studio cleanup | Studio PNG forwarded to Stage E |
+| Fail routes to | Deterministic Pillow composite | Deterministic Pillow composite |
+
+### Active production prompts — P4 Version 3 (P4a + P4b bodies plus refinement deltas)
+
+P4a — pre-cleanup crop check (one image in):
+
+```
+System: You are a strict quality inspector for product photography.
+User (with candidate cut-out; two panels if shown: LEFT = store photo context
+with red box, RIGHT = cut-out on magenta #FF00FF):
+You are a strict product crop inspector for an e-commerce catalog pipeline.
+Decide whether the segmented cut-out is a VALID, SINGLE, SUBSTANTIALLY COMPLETE
+foreground product ready for studio cleanup.
+Set same_product=false, color_match=false, logo_text_match=false (and reject the crop)
+if ANY of the following is true:
+1. PARTIAL / SANDWICHED / HALF-HIDDEN FRAGMENT: Another object blocks a major face or
+   half (>30%) of the product (for example: only the side walls of a middle or bottom box
+   sandwiched underneath another box in a stack; only the top half of a phone standing
+   behind boxes; or an L-shaped sliver behind a power bank).
+2. TRAPPED UNDER GLASS / CROSSED BY CABLES: The object is underneath a glass
+   counter/shelf at the bottom edge of the photo with charging cables crossing over its
+   face, or has a hole through its center.
+3. BACKGROUND CLUTTER OR MERGED DISTINCT ITEMS: The cut-out is a distant blurry item
+   hanging on a background wall rack, an open brown shipping carton in the back room, or
+   merges two distinct rigid products/boxes together (note: a coiled bundle of charging
+   cables resting together on the counter counts as ONE valid cable product).
+Set same_product=true, color_match=true, logo_text_match=true if the cut-out shows ONE
+clear foreground product on the main counter with its primary face/body intact (>=75%
+visible), even if a small corner (<25%) is notched where an adjacent price tag, cable,
+or stand lip was masked out.
+Return ONLY JSON:
+{"same_product": bool, "color_match": bool, "logo_text_match": bool,
+ "reason": "one short sentence"}
+```
+
+P4b — post-cleanup edit gate (two images in: Image 1 = ground-truth reference,
+Image 2 = studio edit):
+
+```
+System: You are a strict quality inspector for product photography.
+User (with image 1 = ground truth, image 2 = edited version):
+You are a strict quality and fidelity inspector for e-commerce product photography.
+Image 1 is the ground-truth reference (if two panels are shown: LEFT is the original
+photo region with a red box around the target item, and RIGHT is the segmented cut-out
+on magenta). Image 2 is the AI-edited studio image.
+Check whether Image 2 is a faithful studio version of the EXACT single product shown in Image 1:
+(a) same_product: Image 2 must show the exact same product type, exact same item count
+(1 item must stay 1 item — never turn 1 box into 2 or 3 stacked boxes, never turn a
+phone screen into a charging cable), and exact same physical model, camera/port layout,
+and shape. If Image 1 was an incomplete/sandwiched fragment (<70% of the product visible)
+or if Image 2 retained a foreign display stand/holder or added a second box/object,
+same_product MUST be false. Reconstructing a small (<25%) corner notch where a price
+sign or stand clip touched the edge is acceptable ONLY if the product model, main face,
+and details are unchanged.
+(b) color_match: The product's body, screen, and accent colors in Image 2 match Image 1
+without recoloring.
+(c) logo_text_match: Any visible brand logo or printed text on the product in Image 1 is
+identical and legible in Image 2 (or true if the product has no visible logo/text in
+either image).
+Be strict: if any check fails, set that boolean to false.
+Return ONLY JSON:
+{"same_product": bool, "color_match": bool, "logo_text_match": bool,
+ "reason": "one short sentence"}
+```
+
+Version 3 deltas — 2026-10-27, post-audit refinement. Reason: P4a passed
+wedge/bitten cut-outs (`KK-0006` price-tag wedge, `KK-0008` V chunk,
+`KK-0009` cable bite) that P4b then judged non-reproducibly; P4b oscillated on
+notched `composite` re-runs (`KK-0001`, `KK-0002`, `KK-0006`, `KK-0009`,
+`KK-0016`).
+- P4a item 1 rejects wedges/bites: price-card wedges and cable bites cutting a
+  large angular wedge or diagonal bite (>12% of the body) into a phone/box
+  silhouette are rejected pre-cleanup; a small rectangular stand-clip cutout
+  notch centered at the very bottom rim of an upright vertical phone still
+  passes this pre-check.
+- P4b `(a)` is deterministic on notched composites: if Image 2 still shows a
+  missing cutout notch, corner wedge, or chunk in the product silhouette,
+  `same_product` MUST be false — no reconstruction allowance. `composite`
+  re-runs of notched cut-outs therefore fail P4b on every run instead of
+  oscillating.
+
+**Invariants:**
+
+- Returns **only JSON** with exactly three booleans and a reason: `same_product`, `color_match`,
+  `logo_text_match`, `reason`.
+- **A pass requires all three booleans true.** Two of three is a fail.
+- The gate is a real call, not a heuristic.
+- A fail is **not an error** — it is the design working. The verdict is returned; the pipeline applies the
+  deterministic fallback (Pillow composite, `cleanup_method: "composite"`).
+- **Never loosen this prompt to make a test pass.**
+
+<details><summary>📜 View Prompt Iteration History (Versions 1–2)</summary>
 
 Version 1 — Initial baseline prompt P4.
 
@@ -241,16 +475,6 @@ Return ONLY JSON:
 {"same_product": bool, "color_match": bool, "logo_text_match": bool,
  "reason": "one short sentence"}
 ```
-
-**Invariants** (prompt above):
-
-- Returns **only JSON** with exactly three booleans and a reason: `same_product`, `color_match`,
-  `logo_text_match`, `reason`.
-- **A pass requires all three booleans true.** Two of three is a fail.
-- The gate is a real call, not a heuristic.
-- A fail is **not an error** — it is the design working. The verdict is returned; the pipeline applies the
-  deterministic fallback (Pillow composite, `cleanup_method: "composite"`).
-- **Never loosen this prompt to make a test pass.**
 
 Version 2 — 2026-10-26, live iteration (P4a pre-cleanup crop gate +
 P4b post-cleanup edit gate). Reason: partial/sandwiched fragments and merged
@@ -334,9 +558,168 @@ notched `composite` re-runs (`KK-0001`, `KK-0002`, `KK-0006`, `KK-0009`,
   re-runs of notched cut-outs therefore fail P4b on every run instead of
   oscillating.
 
+*(Version 3 deltas apply to the active P4a/P4b bodies shown above.)*
+
+</details>
+
 ---
 
-## P5 — Stage E, extraction (`muse-spark-1.3-contributor`, vision, temp 0.2)
+## 7. P5 — Stage E, extraction
+
+| Model | Endpoint | Temperature | Output Format | Retry Policy |
+| :--- | :--- | :---: | :--- | :--- |
+| `muse-spark-1.3-contributor` | `POST /v1/responses` + `web_search` grounding + `json_schema` structured output | 0.2 | `ProductEntry` JSON: `name`, `description_id`, `description_en`, `category`, `brand`, `condition`, `attributes`, `price_hint_idr`, `price_suggestion_idr`, `confidence` | Exactly one P6 repair retry on validation failure, then a product-level error |
+
+### Active production prompt — P5 Version 3 body plus Version 4 category restriction
+
+```
+System (instructions): You write ready-to-publish storefront listings for
+Indonesian social-commerce sellers (Instagram, WhatsApp, Meta Shop). Your
+name/description_id/description_en are persuasive product copy — you NEVER
+talk about the photo, the camera, or what is/isn't visible, and you never
+apologize for missing attributes. You never invent specifications, prices,
+or brands you cannot see.
+User (with cleaned product photo + web_search tool):
+Seller's own notes/captions: "{captions}". Text seen in the original photo:
+{visible_text}. Product type: "{concept}". Write the catalog entry for THIS
+product.
+STOREFRONT COPY ONLY — ZERO META-COMMENTARY OR CAMERA-TALK: name,
+description_id, and description_en must read as natural, persuasive,
+ready-to-publish e-commerce listings for Instagram, WhatsApp, and Meta Shop
+— NEVER talk about the photo, the camera, the image, or what can or cannot
+be seen. STRICTLY FORBIDDEN in name, description_id, and description_en: any
+reference to the photo or to missing information — NEVER write phrases like
+"tidak terlihat di foto", "tidak tertera di gambar", "berdasarkan foto",
+"terlihat pada gambar", "not visible in the photo", "not shown in the
+image", "cannot be determined from the photo", "RAM/storage variant and
+color not visible", or ANY similar meta-commentary; NEVER add disclaimers
+about missing attributes (RAM, storage, color, size, variant): when
+color/size/variant is not visible or stated, set that attributes field to
+null and OMIT it from the prose entirely without commenting on its absence.
+RETAIL BOX = THE PRODUCT INSIDE (BNIB), NEVER AN EMPTY BOX: when the product
+type is a retail box/package (e.g. "smartphone box", "shoe box", "product
+box") or the image shows sealed product packaging, the seller is selling THE
+ACTUAL PRODUCT INSIDE as a brand-new unit (BNIB / baru bersegel) — NEVER
+describe it as "Dus/box original ...", "Kotak kemasan ...", or "cocok untuk
+penjualan unit baru" as if an empty cardboard box were for sale, UNLESS the
+seller's captions explicitly say they sell only the empty box ("jual dus
+saja", "kotak kosong", "box only"). Name and describe the phone inside: e.g.
+a sealed "POCO X8 Pro" box is the "POCO X8 Pro 5G Smartphone (Baru / BNIB
+Segel)", highlighting the phone's features and that it comes brand-new in
+its sealed box.
+ACCESSORY VS MAIN DEVICE: when the product type or visual item is an
+accessory ("phone case", "screen protector", "tempered glass", "charging
+cable", "charger", "strap") with compatibility text printed on it (e.g. "For
+14 Pro", "For Samsung A54"), describe and price it as THE ACCESSORY FOR that
+device (e.g. "Casing Pelindung untuk iPhone 14 Pro"), NEVER as the
+smartphone itself.
+IGNORE NON-PRODUCT CONTENT: never mention hands/fingers holding the item,
+outdoor/indoor backgrounds (rice fields, tables, walls, bedsheets), display
+stands, price cards, or surface reflections/glare in name, description_id, or
+description_en.
+Use web_search ONLY when a brand, series, or model name is clearly legible in
+the photo text above or explicitly written in the seller's captions (e.g.
+"POCO X8 Pro", "Samsung A54"): in that case enrich
+description_id/description_en with 2-3 accurate, buyer-relevant highlights
+and estimate a realistic Indonesian market price in price_suggestion_idr.
+NEVER guess a brand/model/series and NEVER run web_search for unbranded,
+generic, or plain items where no brand or model text is visible or stated.
+Only include model-level specs verified for all units of that model; never
+guess unit-specific RAM/storage/color variants that are not visible or
+stated (leave those attributes fields null silently, no commentary).
+Price rules (binding): parse Indonesian price shorthand in the seller's
+captions or visible_text for THIS product — "15rb"/"15k" -> 15000,
+"1,5jt"/"1.5 juta" -> 1500000, "250rb/pcs"/"@250k" -> 250000.
+Multi-item disambiguation: visible_text and captions may come from a
+multi-product photo with price tags for OTHER items (e.g. a "Rp 1.500.000"
+smartphone sign next to a phone case or charging cable; a caption "HP 3jt,
+Casing 50rb"): set price_hint_idr ONLY if the stated price clearly belongs
+to THIS product (concept/brand) — NEVER attach another item's price to this
+product. Non-price numbers are NEVER prices: WhatsApp/phone numbers
+("08...", "628..."), model numbers ("X8", "A54", "14 Pro"), or technical
+specs ("6500mAh", "100W", "50MP", "256GB", "120Hz"). Strict Price Law:
+price_hint_idr MUST be null unless the seller's captions or visible_text
+explicitly states a price for THIS product — NEVER populate price_hint_idr
+from web_search results. price_suggestion_idr is an integer IDR market
+estimate for the actual item sold (from web_search or confident
+recognition); it never pre-fills or exports.
+Condition: sealed retail boxes ("segel", "BNIB"), tagged new goods, and
+sealed food/skincare default to "new". Unboxed loose devices with visible
+wear or captions stating "second", "bekas", "seken", "preloved",
+"batangan", "minus" are "used" (mention any stated defect honestly, without
+photo meta-commentary).
+Return ONLY valid JSON matching the schema: name, description_id,
+description_en, category (one of: "Handphone & Tablet", "Komputer & Laptop",
+"Audio", "Fashion Pria", "Fashion Wanita", "Sepatu", "Tas",
+"Makanan & Minuman", "Kecantikan", "Rumah Tangga", "Elektronik Lainnya",
+"Lainnya"), brand (string or null), condition ("new" | "used"), attributes
+{color, size, variant}, price_hint_idr (int|null), price_suggestion_idr
+(int|null), confidence ("high" | "medium" | "low").
+```
+
+Version 4 category restriction (all Version 2 and Version 3 rules still apply; Version 4 only adds
+the category restriction below):
+
+```
+category (binding): choose exactly one taxonomy entry from the list below; never return an English concept word, a product type, or a category you invent ("smartphone", "phone case", "accessories" are all invalid values). A phone case, charger, cable, power bank, or screen protector is 'Aksesoris HP'; a TWS/earbud charging case is 'Audio'; a sealed phone retail box is 'Handphone & Tablet'.
+```
+
+### Canonical Indonesian category taxonomy — fourteen values, exact spelling
+
+| Canonical Category | Target Products | Deterministic Normalizer Keywords |
+| :--- | :--- | :--- |
+| `Handphone & Tablet` | Smartphones, tablets, sealed phone retail boxes (BNIB) | `smartphone`, `tablet`, `ponsel`, `hp` (word-boundary match) |
+| `Aksesoris HP` | Phone cases, chargers, cables, power banks, screen protectors, adapters, generic accessories | `phone case`, `casing`, `tempered glass`, `screen protector`, `charger`, `kabel`, `power bank`, `adapter`, `accessories`, `aksesori` |
+| `Komputer & Laptop` | Laptops, desktops, keyboards, mice, monitors | `laptop`, `komputer`, `keyboard`, `mouse`, `monitor` |
+| `Audio` | TWS and earbud charging cases, earbuds, headphones, speakers | `charging case`, `earbud`, `headphone`, `speaker` |
+| `Elektronik Lainnya` | TVs, cameras, consoles | `tv`, `kamera`, `konsol` |
+| `Pakaian` | General apparel | `kaos`, `jaket`, `dress`, `hijab` |
+| `Fashion Pria` | Men's fashion items | Model-assigned; no keyword override |
+| `Fashion Wanita` | Women's fashion items | Model-assigned; no keyword override |
+| `Sepatu` | Shoes, sneakers | `sepatu`, `sneakers` |
+| `Tas` | Bags, wallets | `tas`, `dompet` |
+| `Makanan & Minuman` | Noodles, food, drinks, coffee | `mie`, `makanan`, `minuman`, `kopi` |
+| `Kecantikan` | Skincare, cosmetics, serums, soap | `skincare`, `kosmetik`, `serum`, `sabun` |
+| `Rumah Tangga` | Home and kitchen goods | `rumah`, `dapur`, `panci`, `ember` |
+| `Lainnya` | Everything else (final fallback) | Fallback when nothing matches |
+
+### Taxonomy enforcement — four layers
+
+| Layer | Mechanism | Module Location | Purpose |
+| :--- | :--- | :--- | :--- |
+| 1 | Enum on the outbound wire schema | `_stage_e_schema` in `meta_client.py` | Pins `properties.category.enum` to the fourteen values on a deep copy; the frozen schema contract never mutates |
+| 2 | Binding sentence in the live prompt | P5 Version 4 body above (prompt text stays in English, untranslated) | Forces exactly one taxonomy entry; bans English concept words and invented categories |
+| 3 | Deterministic post-parse safety net | `_normalize_category` in `meta_client.py` | Exact case-insensitive match first, then most-specific-first keyword table against the raw string and then the Stage A concept, then `"Lainnya"`; always returns a taxonomy member |
+| 4 | One shared application path | `_with_canonical_category` in `meta_client.py` | Applied to the first response and the P6 repair retry through one local parse helper, and to stored entries, so all paths agree on taxonomy |
+
+**Invariants:**
+
+- **Never invent specifications, prices, or brands.** No RAM, size, or material that is not visible or
+  stated.
+- `brand` is set **only if visibly readable** on the product or in the photo text.
+- `condition` defaults to `"new"`; `"used"` requires visible evidence or the captions saying so. Sealed
+  retail boxes, tagged new goods, and sealed food/skincare default to `"new"`.
+- `name` / `description_id` / `description_en` are storefront copy with **zero** photo/camera-talk;
+  unknown attributes are `null` and omitted, never apologized for.
+- Sealed retail box = the product inside (BNIB); `box only` copy requires explicit seller wording.
+- Accessories with compatibility print stay accessories of that device.
+- Indonesian price shorthand parsed per product; other items' prices, phone/model numbers, and spec
+  figures never become `price_hint_idr`.
+- `POST /v1/responses` with `tools=[{"type": "web_search",
+  "search_context_size": "low", "user_location": {"type": "approximate",
+  "country": "ID"}}]` and `text={"format": {"type": "json_schema", "name":
+  "ProductEntry", "schema": ProductEntry.model_json_schema()}}`.
+- `web_search` ONLY for clearly legible/stated brand+model; never for unbranded/generic items.
+- **Strict Price Law:** `price_hint_idr` MUST be null unless the seller's captions or `visible_text`
+  states an explicit price for THIS product — never from `web_search`. `price_suggestion_idr` is an
+  integer IDR market estimate that never pre-fills or exports.
+- Response parsing skips `phase == "commentary"` messages (only the final answer message is parsed) and
+  strips optional markdown fences before `ProductEntry.model_validate_json`; exactly one P6 repair retry
+  on `(ValueError, ValidationError)`.
+- One call per product. Input is the cleaned image plus `scene_note`, the seller's captions, the photo's
+  `visible_text`, and the product's concept phrase.
+
+<details><summary>📜 View Prompt Iteration History (Versions 1–3)</summary>
 
 Version 1 — Initial baseline prompt P5.
 
@@ -457,101 +840,7 @@ other items' price tags to the wrong product (live baselines: a sealed
 `smartphone box` produced empty-box copy; a `phone case` with a nearby
 `Rp 1.500.000` phone sign got `price_hint_idr = 1500000`).
 
-```
-System (instructions): You write ready-to-publish storefront listings for
-Indonesian social-commerce sellers (Instagram, WhatsApp, Meta Shop). Your
-name/description_id/description_en are persuasive product copy — you NEVER
-talk about the photo, the camera, or what is/isn't visible, and you never
-apologize for missing attributes. You never invent specifications, prices,
-or brands you cannot see.
-User (with cleaned product photo + web_search tool):
-Seller's own notes/captions: "{captions}". Text seen in the original photo:
-{visible_text}. Product type: "{concept}". Write the catalog entry for THIS
-product.
-STOREFRONT COPY ONLY — ZERO META-COMMENTARY OR CAMERA-TALK: name,
-description_id, and description_en must read as natural, persuasive,
-ready-to-publish e-commerce listings for Instagram, WhatsApp, and Meta Shop
-— NEVER talk about the photo, the camera, the image, or what can or cannot
-be seen. STRICTLY FORBIDDEN in name, description_id, and description_en: any
-reference to the photo or to missing information — NEVER write phrases like
-"tidak terlihat di foto", "tidak tertera di gambar", "berdasarkan foto",
-"terlihat pada gambar", "not visible in the photo", "not shown in the
-image", "cannot be determined from the photo", "RAM/storage variant and
-color not visible", or ANY similar meta-commentary; NEVER add disclaimers
-about missing attributes (RAM, storage, color, size, variant): when
-color/size/variant is not visible or stated, set that attributes field to
-null and OMIT it from the prose entirely without commenting on its absence.
-RETAIL BOX = THE PRODUCT INSIDE (BNIB), NEVER AN EMPTY BOX: when the product
-type is a retail box/package (e.g. "smartphone box", "shoe box", "product
-box") or the image shows sealed product packaging, the seller is selling THE
-ACTUAL PRODUCT INSIDE as a brand-new unit (BNIB / baru bersegel) — NEVER
-describe it as "Dus/box original ...", "Kotak kemasan ...", or "cocok untuk
-penjualan unit baru" as if an empty cardboard box were for sale, UNLESS the
-seller's captions explicitly say they sell only the empty box ("jual dus
-saja", "kotak kosong", "box only"). Name and describe the phone inside: e.g.
-a sealed "POCO X8 Pro" box is the "POCO X8 Pro 5G Smartphone (Baru / BNIB
-Segel)", highlighting the phone's features and that it comes brand-new in
-its sealed box.
-ACCESSORY VS MAIN DEVICE: when the product type or visual item is an
-accessory ("phone case", "screen protector", "tempered glass", "charging
-cable", "charger", "strap") with compatibility text printed on it (e.g. "For
-14 Pro", "For Samsung A54"), describe and price it as THE ACCESSORY FOR that
-device (e.g. "Casing Pelindung untuk iPhone 14 Pro"), NEVER as the
-smartphone itself.
-IGNORE NON-PRODUCT CONTENT: never mention hands/fingers holding the item,
-outdoor/indoor backgrounds (rice fields, tables, walls, bedsheets), display
-stands, price cards, or surface reflections/glare in name, description_id, or
-description_en.
-Use web_search ONLY when a brand, series, or model name is clearly legible in
-the photo text above or explicitly written in the seller's captions (e.g.
-"POCO X8 Pro", "Samsung A54"): in that case enrich
-description_id/description_en with 2-3 accurate, buyer-relevant highlights
-and estimate a realistic Indonesian market price in price_suggestion_idr.
-NEVER guess a brand/model/series and NEVER run web_search for unbranded,
-generic, or plain items where no brand or model text is visible or stated.
-Only include model-level specs verified for all units of that model; never
-guess unit-specific RAM/storage/color variants that are not visible or
-stated (leave those attributes fields null silently, no commentary).
-Price rules (binding): parse Indonesian price shorthand in the seller's
-captions or visible_text for THIS product — "15rb"/"15k" -> 15000,
-"1,5jt"/"1.5 juta" -> 1500000, "250rb/pcs"/"@250k" -> 250000.
-Multi-item disambiguation: visible_text and captions may come from a
-multi-product photo with price tags for OTHER items (e.g. a "Rp 1.500.000"
-smartphone sign next to a phone case or charging cable; a caption "HP 3jt,
-Casing 50rb"): set price_hint_idr ONLY if the stated price clearly belongs
-to THIS product (concept/brand) — NEVER attach another item's price to this
-product. Non-price numbers are NEVER prices: WhatsApp/phone numbers
-("08...", "628..."), model numbers ("X8", "A54", "14 Pro"), or technical
-specs ("6500mAh", "100W", "50MP", "256GB", "120Hz"). Strict Price Law:
-price_hint_idr MUST be null unless the seller's captions or visible_text
-explicitly states a price for THIS product — NEVER populate price_hint_idr
-from web_search results. price_suggestion_idr is an integer IDR market
-estimate for the actual item sold (from web_search or confident
-recognition); it never pre-fills or exports.
-Condition: sealed retail boxes ("segel", "BNIB"), tagged new goods, and
-sealed food/skincare default to "new". Unboxed loose devices with visible
-wear or captions stating "second", "bekas", "seken", "preloved",
-"batangan", "minus" are "used" (mention any stated defect honestly, without
-photo meta-commentary).
-Return ONLY valid JSON matching the schema: name, description_id,
-description_en, category (one of: "Handphone & Tablet", "Komputer & Laptop",
-"Audio", "Fashion Pria", "Fashion Wanita", "Sepatu", "Tas",
-"Makanan & Minuman", "Kecantikan", "Rumah Tangga", "Elektronik Lainnya",
-"Lainnya"), brand (string or null), condition ("new" | "used"), attributes
-{color, size, variant}, price_hint_idr (int|null), price_suggestion_idr
-(int|null), confidence ("high" | "medium" | "low").
-```
-
-**Invariants** (Version 3 additions — Version 2 rules still hold):
-
-- `name` / `description_id` / `description_en` are storefront copy with
-  **zero** photo/camera-talk; unknown attributes are `null` + omitted, never
-  apologized for.
-- Sealed retail box = the product inside (BNIB); `box only` copy requires
-  explicit seller wording.
-- Accessories with compatibility print stay accessories of that device.
-- Indonesian price shorthand parsed per product; other items' prices,
-  phone/model numbers, and spec figures never become `price_hint_idr`.
+*(Version 3 body is the active prompt shown above.)*
 
 Version 4 — 2026-10-28. Reason: live runs returned English
 concept strings (`"smartphone"`, `"smartphone box"`,
@@ -571,56 +860,19 @@ Canonical category taxonomy — fourteen values, exact spelling
 "Lainnya"
 ```
 
-Enforcement has four layers (`meta_client.py`):
+*(Enforcement layers and taxonomy tables are the active specification shown above.)*
 
-1. Enum on the outbound wire schema: `_stage_e_schema()` deep-copies
-   `ProductEntry.model_json_schema()` and pins
-   `properties.category.enum` to the list above. `schemas.py` keeps
-   its `category: str` contract — that contract is frozen and unchanged;
-   the restriction lives only on the wire-schema copy, so the cached
-   pydantic schema never mutates.
-2. Binding sentence in the live P5 prompt (prompt text stays in
-   English, untranslated):
-
-```
-category (binding): choose exactly one taxonomy entry from the list below; never return an English concept word, a product type, or a category you invent ("smartphone", "phone case", "accessories" are all invalid values). A phone case, charger, cable, power bank, or screen protector is 'Aksesoris HP'; a TWS/earbud charging case is 'Audio'; a sealed phone retail box is 'Handphone & Tablet'.
-```
-
-3. `_normalize_category(raw_category, concept)` as a deterministic
-   post-parse safety net (no model call, no randomness): exact
-   case-insensitive match first (idempotent — canonical values pass
-   through unchanged); then a most-specific-first keyword table —
-   charging case → Audio; phone case/casing/tempered glass/screen
-   protector → Aksesoris HP; charger/kabel/power bank/adapter →
-   Aksesoris HP; accessories/aksesori → Aksesoris HP;
-   earbud/headphone/speaker → Audio; laptop/komputer/keyboard/
-   mouse/monitor → Komputer & Laptop; smartphone/tablet/ponsel/hp →
-   Handphone & Tablet; kaos/jaket/dress/hijab → Pakaian;
-   sepatu/sneakers → Sepatu; tas/dompet → Tas;
-   mie/makanan/minuman/kopi → Makanan & Minuman;
-   skincare/kosmetik/serum/sabun → Kecantikan;
-   rumah/dapur/panci/ember → Rumah Tangga; tv/kamera/konsol →
-   Elektronik Lainnya — evaluated against the raw string, then against
-   the Stage A concept when nothing matches, then `"Lainnya"`. Output
-   is always a taxonomy member; matching uses word boundaries (`\b`)
-   so short tokens like `hp` never match inside other words. This
-   function is a normalizer, not a classifier: it may only pick an
-   existing taxonomy entry and never touches `name`,
-   `description_id`, or `description_en`.
-4. Applied on one shared path for both branches via
-   `_with_canonical_category(entry, concept)` (returns the same object
-   when already canonical, `model_copy` when not): in
-   `_live_extract_product` on both the first response and the P6
-   repair retry through one local `_parse` helper, and in
-   `_mock_extract_product` on every fixture entry (verified no-op —
-   fixtures already carry canonical categories — so mock and live
-   never diverge on taxonomy).
+</details>
 
 ---
 
-## P6 — Repair prompt (Stage E validation failure retry, `muse-spark-1.3-contributor`, temp 0.2)
+## 8. P6 — Repair prompt (Stage E validation failure retry)
 
-Version 1 — Initial baseline prompt P6.
+| Model | Endpoint | Temperature | Output Format | Retry Policy |
+| :--- | :--- | :---: | :--- | :--- |
+| `muse-spark-1.3-contributor` | `POST /v1/responses`, same repair path as P5 | 0.2 | Corrected JSON only, matching the schema exactly | One retry total; a second failure is a product-level error |
+
+### Active production prompt — P6 Version 1
 
 ```
 Your previous answer failed validation: {validation_error}.
@@ -628,7 +880,7 @@ Return the same content as corrected JSON only, matching the schema exactly.
 No explanation, no markdown fences.
 ```
 
-**Invariants** (schema above):
+**Invariants:**
 
 - Receives the **validation error** as `{validation_error}`.
 - Returns **corrected JSON only**, matching the schema exactly. No explanation, no markdown fences.
@@ -637,35 +889,31 @@ No explanation, no markdown fences.
 
 ---
 
-## Price rules carried by P5
+## 9. Price rules carried by P5
 
-The binding rule is the Price Law stated below: if this section and the Price Law ever differ, the Price Law wins and this section is the bug.
+> [!WARNING]
+> The Price Law below is binding on P5 and on every consumer of its output. If this section and the
+> shipped P5 prompt ever differ, the Price Law wins and this section is not the place that gets edited —
+> the prompt is.
 
-- **`price_hint_idr`** — a price the **seller themselves wrote** in their captions, or that is visible in
-  the photo's `visible_text`, for **this** product. It is the only value that may **pre-fill** the Review
-  price field.
-- **`price_suggestion_idr`** — an **AI guess** at a market-typical price. It is shown in Review as grey
-  helper text (`"Saran AI: Rp… — periksa lagi"`) and **never** pre-fills the field, **never** reaches any
-  export, the CSV, the caption pack, or the WhatsApp list.
-- If both are null, the Review price field is shown **empty and highlighted** with "Isi harga" — the
-  seller types it. Export is **blocked** for that item until a price is set or the seller checks
-  "Harga via chat".
-- `price_via_chat` items are **excluded from the CSV** and appear in the WhatsApp list as
-  `"harga via chat"`. A stand-in `0 IDR` is never emitted for an unknown price.
-- No code path may compute, infer, or default a price. If a price is missing, it stays missing.
-- The only exportable price is `price_idr` — the seller's confirmed value.
+### Price Law truth table
+
+| Field / Flag | Source of Truth | Pre-fills Review Input? | Exported to CSV? | Exported to IG / WhatsApp? | Enforcement Rule |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| `price_hint_idr` | A price the seller wrote in captions, or visible in `visible_text`, for THIS product | Yes — the only pre-fill source | Only after the seller confirms it (as `price_idr`) | Only after the seller confirms it | Never populated from `web_search`; never attach another item's price; phone numbers, model numbers, and spec figures are never prices |
+| `price_suggestion_idr` | AI market estimate from `web_search` or confident recognition | No — grey helper text (`"Saran AI: Rp… — periksa lagi"`) | No | No | Never pre-fills, never exports |
+| `price_idr` | The seller's confirmed value | Shows the confirmed value | Yes — the only exported price | Yes, where applicable | If missing, it stays missing; no code path computes or defaults it |
+| `price_via_chat = true` | Seller checks "Harga via chat" | No numeric price shown | Excluded from the CSV | WhatsApp list shows `"harga via chat"` | Never emit `0 IDR` as a stand-in for an unknown price |
+| `price_idr = null` and `price_via_chat = false` | No price known | Empty highlighted field ("Isi harga") | Blocked — the item is named | Blocked | Export stays blocked until a price is set or via-chat is checked |
 
 ---
 
-## Change protocol
+## 10. Change protocol
 
-1. **A prompt changes only after a live gate result.** Not after a hunch, not after a mock run, not
-   because a draft reads better. Mock-green is a statement about our fixtures, not about Meta's contract.
-2. **The change is recorded here as a new version**, with:
-   - the version number (`Version 2`, `Version 3`, …),
-   - the **date**,
-   - the **gate number** whose live result justified it,
-   - a **one-line reason**.
+1. **A prompt changes only after a live gate result.** Not after a hunch, not because a draft reads
+   better.
+2. **The change is recorded here as a new version**, with the version number (`Version 2`,
+   `Version 3`, …), the **date**, the gate result that justified it, and a **one-line reason**.
 3. **The old version stays in the file.** The new body is appended below it; nothing is overwritten and
    nothing is deleted. A reader must be able to see what shipped before and why it moved.
 4. **A prompt is never loosened to make a test pass.** This is absolute for **P4**, the fidelity gate: a
@@ -679,7 +927,7 @@ The binding rule is the Price Law stated below: if this section and the Price La
 
 ---
 
-## Where these are used
+## 11. Where these are used
 
 `apps/api/app/meta_client.py` is the only module that talks to `api.meta.ai`. Its six public functions map
 to these prompts as follows.

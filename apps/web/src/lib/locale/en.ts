@@ -62,13 +62,6 @@ export const en = {
     selected: 'Pack {pack} selected. Uploaded photos are ignored.',
     clear: 'Clear pack',
   },
-  demo: {
-    title: 'Demo Safe Mode',
-    help: 'Sample packs show a saved result instantly, no internet needed. Your own uploads are still processed live.',
-  },
-  notice: {
-    mock: 'Demo Safe Mode: sample result, no server used',
-  },
   progress: {
     title: 'Processing your catalog',
     titleDone: 'Catalog ready',
@@ -189,7 +182,6 @@ export const en = {
     done: 'Export done. Download your files below.',
     download: 'Download',
     summary: '{n} products exported, {m} of them price via chat · {k} left out',
-    demoNote: 'Demo Safe Mode: you are downloading ready-made sample files. Price and store changes are not included.',
     stale: 'Your store details changed since the last export. Export again so the files match.',
     downloadsTitle: 'Export files',
     downloadsHint: 'Download buttons turn on once the export is done.',

@@ -399,16 +399,15 @@ def build_csv(
 ) -> str:
     """Render the Commerce Manager CSV.
 
-    ``images`` (keyword-only) supplies crop availability from a mapping
-    keyed ``"{sku}.jpg"`` / ``"{sku}-crop.jpg"`` instead of reading the job
-    folder. It exists for golden-bundle regeneration: the Demo Safe Mode bundle
-    keeps its images as static JPEGs under ``apps/web/public/samples/{pack}/
-    golden/images/`` and the job folder that produced them is long wiped, so
-    :func:`crop_available` and :func:`resolve_image_bytes` cannot serve them.
-    When ``images`` is given neither is consulted at all: a SKU has a crop
-    exactly when ``"{sku}-crop.jpg"`` is a key, and an absent key is a legal
-    "no crop", never an incomplete map. ``None`` (the default) keeps the
-    job-folder behaviour byte-identical.
+    ``images`` (keyword-only) overrides the crop source with an in-memory
+    mapping keyed ``"{sku}.jpg"`` / ``"{sku}-crop.jpg"`` instead of reading the
+    job folder. It serves callers that already hold the image bytes and have no
+    job folder left to read — re-rendering a catalog from a stored snapshot, for
+    example — where :func:`crop_available` and :func:`resolve_image_bytes`
+    cannot serve them. When ``images`` is given neither is consulted at all: a
+    SKU has a crop exactly when ``"{sku}-crop.jpg"`` is a key, and an absent key
+    is a legal "no crop", never an incomplete map. ``None`` (the default) keeps
+    the job-folder behaviour byte-identical.
     """
     base = base_url.rstrip("/")
     children_by_parent = merged_children_map(products)
@@ -564,16 +563,15 @@ def build_zip(
     ``clean_url`` names (:func:`photo_sku`), so the ZIP always matches the
     CSV's links. An entry is written once, never twice.
 
-    ``images`` (keyword-only) supplies the JPG bytes from a mapping keyed
-    ``"{sku}.jpg"`` / ``"{sku}-crop.jpg"`` instead of reading the job folder.
-    It exists for golden-bundle regeneration: the Demo Safe Mode bundle keeps
-    its images as static JPEGs under ``apps/web/public/samples/{pack}/golden/
-    images/`` and the job folder that produced them is long wiped, so
-    :func:`resolve_image_bytes` cannot serve them. When ``images`` is given,
-    :func:`resolve_image_bytes` and :func:`crop_available` are not consulted at
-    all; a missing primary entry raises ``KeyError`` naming the SKU instead of
-    skipping the photo or substituting a placeholder. ``None`` (the default)
-    keeps the job-folder behaviour byte-identical.
+    ``images`` (keyword-only) supplies the JPG bytes from an in-memory mapping
+    keyed ``"{sku}.jpg"`` / ``"{sku}-crop.jpg"`` instead of reading the job
+    folder. It serves callers that already hold the image bytes and have no job
+    folder left to read — re-rendering a catalog from a stored snapshot, for
+    example — where :func:`resolve_image_bytes` cannot serve them. When
+    ``images`` is given, :func:`resolve_image_bytes` and :func:`crop_available`
+    are not consulted at all; a missing primary entry raises ``KeyError`` naming
+    the SKU instead of skipping the photo or substituting a placeholder.
+    ``None`` (the default) keeps the job-folder behaviour byte-identical.
     """
     children_by_parent = merged_children_map(products)
 

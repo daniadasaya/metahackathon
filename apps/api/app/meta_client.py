@@ -1,8 +1,10 @@
-"""Meta Model API adapter — the only module that may talk to ``api.meta.ai``.
+"""Live-first adapter for the Meta Model API (``https://api.meta.ai/v1``).
 
-Single-adapter boundary: no other file imports ``openai``, points ``httpx`` at Meta,
-or constructs a Meta URL. The rest of the codebase calls exactly the six
-public functions below and nothing else::
+``app.meta_client`` is the single adapter module in Katalog Kilat that
+communicates with the Meta Model API. No other module imports ``openai``,
+points ``httpx`` at Meta, or constructs a Meta URL. The rest of the
+codebase calls exactly the six public async functions below and nothing
+else::
 
     discover_concepts(image_bytes, captions) -> list[Concept]
     segment_concept(image_bytes, concept)    -> list[MaskResult]
@@ -11,63 +13,26 @@ public functions below and nothing else::
     extract_product(clean_png, context)     -> list[ProductEntry]
     health_probe()                          -> HealthResponse
 
-MOCK MODE (``META_MOCK=true``, the default) is the only verified path today
-(2026-10-26). Every function serves the recorded
-fixtures under ``apps/api/tests/fixtures/pack_{a,b,c}/`` (see that
-directory's README for the envelope). All fixtures are recorded live
-responses (``placeholder: false``, ``recorded_at`` set); mock-green
-proves nothing about the live API (a green mock run proves wiring, not the contract).
+Function to pipeline mapping:
 
-Deterministic input → fixture mapping (same input bytes → same output;
-every input maps to some fixture — mock never raises "not found").
+* ``discover_concepts`` — Stage A concept discovery with
+  ``muse-spark-1.3-contributor`` (vision, temperature 0.4).
+* ``segment_concept`` — Stage B segmentation with ``sam-3.1`` streamed
+  through ``meta-sam-parser``; one concept phrase per request, masks
+  carry their own boxes.
+* ``clean_product_image`` — Stage D studio cleanup with
+  ``muse-image-1.0`` (Images edits endpoint, PNG output).
+* ``verify_fidelity`` — Stage D two-stage fidelity gate with
+  ``muse-spark-1.3-contributor`` (temperature 0.0, strict JSON verdict):
+  pre-cleanup crop check plus post-cleanup edit check.
+* ``extract_product`` — Stage E catalog extraction with
+  ``muse-spark-1.3-contributor`` on ``POST /v1/responses`` with
+  ``web_search`` grounding and ``json_schema`` structured output.
+* ``health_probe`` — reachability check only; sends no prompt and
+  produces no catalog content.
 
-ONE shared slot scheme: every fixture-routed read derives its
-``(pack, photo)`` slot from the call's primary image bytes alone —
-``digest = sha256(image_bytes)``, ``digest[0] % 3`` picks ``a``/``b``/``c``,
-``digest[1] % 2`` picks photo 1/2. No other argument changes the slot:
-captions, concept phrases, and labels never move a call to a different
-photo, so Stage A concepts and Stage B masks for the same input photo
-always come from the same fixture photo.
-
-* ``discover_concepts`` serves that photo's ``photo{n}_concepts.json``
-  payload verbatim. ``captions`` is accepted (the live P1 prompt needs it)
-  but ignored for routing.
-* ``segment_concept`` serves the same slot's ``photo{n}_masks.json``,
-  filtered to records whose ``concept`` matches the requested phrase
-  (case-insensitive, stripped). Anything else — including a comma-joined
-  phrase, which is never a valid SAM request — matches nothing and yields
-  ``[]``, never an error.
-* ``extract_product`` accepts the seller-captions wire shape for seller captions: ONE
-  JSON string ``{"general": "...", "photos": [...]}`` (anything that does
-  not parse as that object is treated as opaque text). It serves the slot
-  of its ``clean_png`` bytes from ``photo{n}_entries.json`` — image bytes
-  only; ``concept`` and the captions text do not move the slot.
-  (``clean_png`` is Stage D output, bytes-different from the Stage A photo,
-  so Stage E's slot is deterministic but not the same photo's slot; the
-  pipeline, not the adapter, carries product identity across stages.)
-* ``verify_fidelity`` takes its pack from the slot of ``original_png`` and
-  selects ``fidelity_pass.json`` vs ``fidelity_fail.json`` by parity of
-  ``sha256(original + cleaned)`` (even → pass, odd → fail), so both gate
-  outcomes stay reachable. The parity bit is the verdict selector, not a
-  slot input.
-* ``clean_product_image`` has no image fixture (bytes, not JSON). It
-  generates a deterministic 640x640 studio PNG with Pillow at runtime,
-  seeded by ``sha256(crop_png + label)`` — same input → same bytes.
-* ``health_probe`` serves ``pack_a/health.json`` (identical in all packs).
-
-Price Law: the adapter returns ``price_hint_idr`` /
-``price_suggestion_idr`` exactly as the fixture carries them. It never
-computes, infers, or defaults a price.
-
-LIVE BRANCH (``META_MOCK=false``): the ``segment_concept`` (SAM 3.1) path was
-verified live on 2026-10-26 (non-streaming ``POST /v1/responses``,
-status=completed, 39 records, parsed with ``meta-sam-parser`` 0.1.0). Other
-live functions keep their hypothesis docstrings until probed. The live path
-lazy-imports ``openai`` and ``meta-sam-parser`` inside the functions that need
-them and raises :class:`MetaLiveUnavailable` when a package (or the key) is
-absent; ``requirements.txt`` stays locked at six packages — both are
-kept as optional runtime imports. The live branch is unreachable when
-``settings.meta_mock`` is true, and tests never execute it.
+Price Law holds at the boundary: the adapter never computes, infers,
+or defaults a price; a missing price stays missing.
 """
 
 from __future__ import annotations

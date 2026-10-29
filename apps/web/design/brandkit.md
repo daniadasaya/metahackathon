@@ -129,7 +129,7 @@ Rules:
 
 ## 3. Typography
 
-Self-hosted WOFF2 via `@fontsource-variable/*` (Latin subset; same-origin, so safe in Demo Safe Mode). Three packages,
+Self-hosted WOFF2 via `@fontsource-variable/*` (Latin subset; same-origin, so it works offline). Three packages,
 each needing one design-log line (see the checklist in §5): `@fontsource-variable/outfit`,
 `@fontsource-variable/plus-jakarta-sans`, `@fontsource-variable/jetbrains-mono`. Inter is not used.
 
@@ -228,9 +228,8 @@ The active stage's name appears as a caption under the row; connectors are 4px r
 ### Upload fit budget (394×875 and 360×800, empty state, zero page scroll)
 
 Header 49 (48 + 1px rule) · top pad 16 · title 28 · lead 8 + 44 (two lines) · hero drop row 16 + 86 · sample packs (heading +
-one row of three 72px tiles) 20 + 116 · caption `<details>` 16 + 38 · Demo Safe Mode row 16 + 54 (94 when the hint shows at
-≥ 830px height) · bottom pad 16 · sticky bar 91. Empty state sums to ≈ 614px (360×800) and ≈ 654px (394×875); a resume banner
-adds ≈ 76px. Measured `scrollHeight` equals `innerHeight` on both viewports, with 150–220px to spare.
+two rows of two 72px tiles) 20 + 152 (2 × 72 + 8 gap) · caption `<details>` 16 + 38 · bottom pad 16 · sticky bar 91. Empty state sums to ≈ 614px (360×800) and ≈ 654px (394×875); a resume banner
+adds ≈ 76px. The height figures predate the 2×2 pack grid and need re-measuring at 360×800 before they are quoted again.
 
 ## 5. Implementation checklist
 
