@@ -1,5 +1,7 @@
-# Katalog Kilat — single service. Project name must always be passed: -p katalogkilat
+# Katalog Kilat — API plus its Cloudflare Tunnel connector.
+# The project name is always passed explicitly: -p katalogkilat
 # Host port 8180 is the external service port; container port 8000 is internal.
+# Local development runs `docker compose up api`: the tunnel service needs TUNNEL_TOKEN.
 
 name: katalogkilat
 
@@ -13,9 +15,18 @@ services:
     restart: unless-stopped
     environment:
       MODEL_API_KEY: ${MODEL_API_KEY:-}
+      # Absolute origin used to build image_link in the exported catalog CSV.
       BASE_URL: ${BASE_URL:-http://127.0.0.1:8180}
+      # Mock stays the default so a bare clone boots without a key; production
+      # sets META_MOCK=false and /api/health reports it.
+      META_MOCK: ${META_MOCK:-true}
     ports:
+      # Loopback only: the tunnel is outbound, nothing here faces the internet.
       - "127.0.0.1:8180:8000"
+    volumes:
+      # Job records and exports live outside the container, so recreating the
+      # container keeps every /p/{job_id}/{sku}.jpg link alive.
+      - ./data:/srv/data
     healthcheck:
       test:
         - CMD
@@ -26,3 +37,20 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: katalogkilat-tunnel
+    restart: unless-stopped
+    # Host networking is required: the ingress rules point at 127.0.0.1:8180,
+    # which is the host loopback, not a container network alias.
+    network_mode: host
+    command: tunnel --no-autoupdate run
+    environment:
+      # Unique metrics port: a second cloudflared on the same host would
+      # otherwise fight over the default 20241.
+      TUNNEL_METRICS: 127.0.0.1:20242
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+    depends_on:
+      api:
+        condition: service_healthy

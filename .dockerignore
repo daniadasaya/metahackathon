@@ -15,6 +15,7 @@ dist
 
 # Runtime state: a job folder is disposable, never baked in.
 apps/api/data
+data
 **/__pycache__
 **/*.py[cod]
 **/.venv

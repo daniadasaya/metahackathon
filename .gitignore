@@ -20,6 +20,7 @@ dist/
 
 # Runtime job & export data (state lives on disk, never in git)
 apps/api/data/
+/data/
 
 # Local tooling
 .DS_Store
