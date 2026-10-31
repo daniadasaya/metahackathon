@@ -71,6 +71,11 @@ if [[ "$APPLY" == 1 && "${NUKE_REEXEC:-0}" != 1 ]]; then
   exec bash "$tmp_self" "$@"
 fi
 
+# The copy under /tmp is disposable and must not outlive the run.
+if [[ "${NUKE_REEXEC:-0}" == 1 ]]; then
+  trap 'rm -f -- "$0"' EXIT
+fi
+
 [[ -d "$TARGET_DIR" ]] || die "project directory not found: $TARGET_DIR"
 COMPOSE_FILE="$TARGET_DIR/docker-compose.yml"
 [[ -f "$COMPOSE_FILE" ]] || die "no compose file at $COMPOSE_FILE — is this the deployment directory?"
