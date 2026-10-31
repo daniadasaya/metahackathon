@@ -176,12 +176,15 @@ remaining="$(docker ps -a --filter "name=^${NAME_PREFIX}" --format '{{.Names}}')
 
 step "Removing the project directory"
 cd /
+# The containers run as root, so the job tree they wrote into the bind mount is
+# root-owned and a plain rm -rf fails on it. sudo is the host's only privilege
+# escalation and this script never runs unattended.
 if [[ "$KEEP_DATA" == 1 ]]; then
-  find "$resolved" -mindepth 1 -maxdepth 1 ! -name data -exec rm -rf -- {} +
+  sudo find "$resolved" -mindepth 1 -maxdepth 1 ! -name data -exec rm -rf -- {} +
   say "kept  : $resolved/data"
   say "wiped : everything else under $resolved (including .env and the secrets in it)"
 else
-  rm -rf -- "$resolved"
+  sudo rm -rf -- "$resolved"
   say "wiped : $resolved"
 fi
 
