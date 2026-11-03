@@ -1,80 +1,81 @@
-import { Link, useRouterState } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 
-import { useT } from '../lib/locale';
-import { nextTheme, setLocale, setTheme, useLocale, useTheme, type Theme } from '../lib/store';
+import { useT, type MessageKey } from '../lib/locale';
+import { setLocale, setTheme, THEME_ORDER, useLocale, useTheme, type Theme } from '../lib/store';
 import { MoonIcon, SunIcon, SystemIcon } from './Icons';
 import { Wordmark } from './Logo';
 
-const TOTAL_STEPS = 5;
+const THEME_NAME: Record<Theme, MessageKey> = {
+  system: 'header.themeSystem',
+  light: 'header.themeLight',
+  dark: 'header.themeDark',
+};
 
-/** Upload → Progress → Review → Preview → Export, by path. Purely visual: no router state is changed. */
-function stepOf(pathname: string): number {
-  if (pathname.startsWith('/jobs/')) return 2;
-  if (pathname === '/review/preview') return 4;
-  if (pathname.startsWith('/review')) return 3;
-  if (pathname.startsWith('/export')) return 5;
-  return 1;
-}
+const THEME_ICON: Record<Theme, typeof SunIcon> = {
+  system: SystemIcon,
+  light: SunIcon,
+  dark: MoonIcon,
+};
 
-function ThemeIcon({ theme }: { theme: Theme }) {
-  if (theme === 'light') return <SunIcon />;
-  if (theme === 'dark') return <MoonIcon />;
-  return <SystemIcon />;
-}
-
-/** Sticky app header, shared by every screen: lockup, locale switch, theme cycle, step indicator. */
+/**
+ * Sticky app header: the lockup, the language switch, and a labelled theme menu. The menu shows the
+ * active mode by name and icon (System, Light or Dark), and opening it lists all three. `kk:theme`
+ * persists the choice; `system` follows the OS live.
+ */
 export function AppHeader() {
   const { t } = useT();
   const locale = useLocale();
   const theme = useTheme();
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const step = stepOf(pathname);
-
-  const themeLabel =
-    theme === 'light' ? t('header.themeLight') : theme === 'dark' ? t('header.themeDark') : t('header.themeSystem');
+  const ModeIcon = THEME_ICON[theme];
 
   return (
     <header className="sticky top-(--kk-status-inset) z-10 border-b border-line bg-canvas">
       <div className="mx-auto flex min-h-12 w-full max-w-[420px] md:max-w-none items-center justify-between gap-2 px-4">
-        <Link to="/" className="inline-flex min-h-11 items-center rounded-[12px]" aria-label={t('app.name')}>
+        <Link to="/" className="inline-flex min-h-11 shrink-0 items-center rounded-[12px]" aria-label={t('app.name')}>
           <Wordmark name={t('app.name')} />
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
+          {/* The accessible name starts with the visible code, as WCAG 2.5.3 (Label in Name) requires. */}
           <div className="kk-seg" role="group" aria-label={t('header.language')}>
             <button
               type="button"
               aria-pressed={locale === 'id'}
-              aria-label={t('header.languageId')}
+              aria-label={`${t('header.codeId')} · ${t('header.languageId')}`}
               onClick={() => setLocale('id')}
             >
-              ID
+              {t('header.codeId')}
             </button>
             <button
               type="button"
               aria-pressed={locale === 'en'}
-              aria-label={t('header.languageEn')}
+              aria-label={`${t('header.codeEn')} · ${t('header.languageEn')}`}
               onClick={() => setLocale('en')}
             >
-              EN
+              {t('header.codeEn')}
             </button>
           </div>
-          <button
-            type="button"
-            className="kk-btn kk-btn-secondary kk-btn-icon kk-tactile"
-            aria-label={t('header.themeSwitch', { current: themeLabel })}
-            title={themeLabel}
-            onClick={() => setTheme(nextTheme(theme))}
-          >
-            <ThemeIcon theme={theme} />
-          </button>
+          <div className="kk-theme">
+            <span className="kk-theme-icon" aria-hidden="true">
+              <ModeIcon size={16} />
+            </span>
+            <select
+              className="kk-theme-field"
+              aria-label={t('header.theme')}
+              value={theme}
+              onChange={(event) => {
+                const next = THEME_ORDER.find((value) => value === event.target.value);
+                if (next !== undefined) setTheme(next);
+              }}
+            >
+              {THEME_ORDER.map((value) => (
+                <option key={value} value={value}>
+                  {t(THEME_NAME[value])}
+                </option>
+              ))}
+            </select>
+            <span className="kk-theme-caret" aria-hidden="true" />
+          </div>
         </div>
-      </div>
-      {/* The step rail sits on the header's bottom edge: progress without a second row. */}
-      <p className="sr-only">{t('header.step', { n: step, total: TOTAL_STEPS })}</p>
-      <div className="kk-steps" aria-hidden="true">
-        {Array.from({ length: TOTAL_STEPS }, (_, index) => (
-          <span key={index} data-state={index + 1 < step ? 'done' : index + 1 === step ? 'current' : 'todo'} />
-        ))}
       </div>
     </header>
   );

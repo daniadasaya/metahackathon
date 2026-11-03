@@ -2,3 +2,4 @@ node_modules/
 dist/
 *.tsbuildinfo
 gen-types-loader.mjs
+.qa/

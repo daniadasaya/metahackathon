@@ -2,9 +2,9 @@ import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Column } from '../components/Column';
+import { CheckIcon, CloseIcon, LayersIcon, PhotoIcon, PlusIcon, UploadIcon } from '../components/Icons';
 import { StickyBar } from '../components/StickyBar';
 import { Toast } from '../components/Toast';
-import { CheckIcon, CloseIcon, PhotoIcon, PlusIcon, UploadIcon } from '../components/Icons';
 import { ApiError, BackendUnavailableError, createJob, type SamplePack } from '../lib/api';
 import { useT, type MessageKey } from '../lib/locale';
 import { setStoredJobId, useStoredJobId } from '../lib/store';
@@ -112,44 +112,45 @@ export function UploadScreen() {
         <p className="mt-2 text-base text-fg-2">{t('upload.lead')}</p>
 
         {storedJobId !== null ? (
-          <section
-            className="kk-card-flat mt-4 flex items-center gap-2 py-2 pr-2 pl-4"
-            aria-labelledby="resume-title"
-          >
-            <div className="min-w-0 flex-1">
-              <h2 id="resume-title" className="text-sm font-bold">
-                {t('upload.resumeTitle')}
-              </h2>
-              <p className="sr-only">{t('upload.resumeHint')}</p>
+          <section className="kk-resume mt-4" aria-labelledby="resume-title">
+            <div className="flex items-start gap-3">
+              <span className="kk-resume-icon" aria-hidden="true">
+                <LayersIcon size={18} />
+              </span>
+              <div className="min-w-0">
+                <h2 id="resume-title" className="text-base font-bold">
+                  {t('upload.resumeTitle')}
+                </h2>
+                <p className="text-base text-fg-2">{t('upload.resumeHint')}</p>
+              </div>
             </div>
-            <button
-              type="button"
-              className="kk-btn kk-btn-secondary kk-btn-compact kk-tactile"
-              onClick={() => void navigate({ to: '/jobs/$jobId', params: { jobId: storedJobId } })}
-            >
-              {t('upload.resumeOpen')}
-            </button>
-            <button type="button" className="kk-btn kk-btn-ghost px-2" onClick={() => setStoredJobId(null)}>
-              {t('upload.resumeDismiss')}
-            </button>
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <button type="button" className="kk-btn kk-btn-ghost kk-tactile px-2" onClick={() => setStoredJobId(null)}>
+                {t('upload.resumeDismiss')}
+              </button>
+              <button
+                type="button"
+                className="kk-btn kk-btn-secondary kk-tactile"
+                onClick={() => void navigate({ to: '/jobs/$jobId', params: { jobId: storedJobId } })}
+              >
+                {t('upload.resumeOpen')}
+              </button>
+            </div>
           </section>
         ) : null}
 
-        <label className="kk-hero kk-card-tap kk-tactile mt-4" data-filled={photos.length > 0}>
+        <label className="kk-drop kk-card-tap kk-tactile mt-4" data-filled={photos.length > 0}>
           <span className="kk-icon-tile">
-            {photos.length > 0 ? <PlusIcon size={20} /> : <UploadIcon size={20} />}
+            {photos.length > 0 ? <PlusIcon size={20} /> : <UploadIcon size={22} />}
           </span>
-          <span className="min-w-0">
-            <span className="block font-display text-lg font-bold text-fg">
-              {photos.length > 0 ? t('upload.addMore') : t('upload.dropTitle')}
-            </span>
-            <span className="block text-sm text-fg-2">{t('upload.dropHint')}</span>
-          </span>
+          <span className="kk-drop-title">{photos.length > 0 ? t('upload.addMore') : t('upload.dropTitle')}</span>
+          <span className="kk-drop-hint">{t('upload.dropHint')}</span>
           <input
             type="file"
             accept="image/*"
             multiple
             className="sr-only"
+            aria-label={t('upload.dropTitle')}
             onChange={(event) => {
               addFiles(event.target.files);
               event.target.value = '';
@@ -204,10 +205,10 @@ export function UploadScreen() {
           <h2 id="samples-title" className="text-xl">
             {t('samples.title')}
           </h2>
-          <p id="samples-hint" className="sr-only">
+          <p id="samples-hint" className="mt-1 text-base text-fg-muted">
             {t('samples.hint')}
           </p>
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-3 grid grid-cols-2 gap-3">
             {PACKS.map((entry) => {
               const selected = pack === entry.pack;
               return (
@@ -217,22 +218,27 @@ export function UploadScreen() {
                   data-sample={entry.pack}
                   className="kk-pack kk-tactile"
                   aria-pressed={selected}
+                  aria-label={`${t('samples.packTag', { pack: entry.pack.toUpperCase() })}: ${t(entry.label)}`}
                   onClick={() => setPack(selected ? null : entry.pack)}
                 >
-                  <span className="kk-pack-tile" aria-hidden="true">
-                    {entry.pack.toUpperCase()}
+                  <span className="kk-pack-media" aria-hidden="true">
+                    <img src={`/samples/thumbs/${entry.pack}.jpg`} alt="" width={640} height={480} loading="lazy" decoding="async" />
+                    <span className="kk-pack-check" aria-hidden="true">
+                      <CheckIcon size={12} />
+                    </span>
                   </span>
-                  <span className="text-sm font-bold text-fg">{t(entry.label)}</span>
-                  {selected ? <span className="sr-only">{t('samples.chosen')}</span> : null}
-                  <span className="kk-pack-check" aria-hidden="true">
-                    <CheckIcon size={16} />
+                  <span className="kk-pack-meta" aria-hidden="true">
+                    <span className="kk-pack-tag">
+                      {t('samples.packTag', { pack: entry.pack.toUpperCase() })}
+                    </span>
+                    <span className="kk-pack-name">{t(entry.label)}</span>
                   </span>
                 </button>
               );
             })}
           </div>
           {pack !== null ? (
-            <p className="mt-2 text-sm text-fg-2">{t('samples.selected', { pack: pack.toUpperCase() })}</p>
+            <p className="mt-2 text-base text-fg-2">{t('samples.selected', { pack: pack.toUpperCase() })}</p>
           ) : null}
         </section>
 
@@ -248,14 +254,14 @@ export function UploadScreen() {
               placeholder={t('upload.captionGeneralPlaceholder')}
               onChange={(event) => setGeneral(event.target.value)}
             />
-            <p className="mt-2 text-sm text-fg-muted">{t('upload.captionHelp')}</p>
+            <p className="mt-2 text-base text-fg-muted">{t('upload.captionHelp')}</p>
           </div>
         </details>
 
-        {toast !== null ? <Toast text={toast} onDismiss={dismissToast} /> : null}
       </Column>
 
       <StickyBar>
+        {toast !== null ? <Toast text={toast} onDismiss={dismissToast} /> : null}
         {backendMissing ? (
           <p className="kk-card-flat px-3 py-2 text-sm text-fg-2" role="alert">
             {t('upload.backendUnavailable')}
@@ -270,9 +276,6 @@ export function UploadScreen() {
           {busy ? t('upload.ctaBusy') : t('upload.cta')}
         </button>
         {!canStart && !busy ? <p className="text-center text-sm text-fg-muted">{t('upload.ctaNeed')}</p> : null}
-        {photos.length > 0 && canStart ? (
-          <p className="text-center text-sm font-bold">{t('upload.photosCount', { n: photos.length })}</p>
-        ) : null}
       </StickyBar>
     </>
   );

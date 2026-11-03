@@ -153,7 +153,7 @@ export function ExportScreen() {
             {t('common.back')}
           </Link>
         </div>
-        <p className="mt-2 text-base text-fg-2 [@media(max-height:830px)]:sr-only">{t('export.lead')}</p>
+        <p className="mt-2 text-base text-fg-2">{t('export.lead')}</p>
         {scope.mixed ? <p className="mt-2 text-sm text-warning">{t('export.mixedJobs')}</p> : null}
 
         <section className="mt-3 flex flex-col gap-3" aria-labelledby="export-seller">
@@ -192,7 +192,7 @@ export function ExportScreen() {
               type="text"
               inputMode="numeric"
               autoComplete="tel-national"
-              className="kk-input kk-money mt-1"
+              className="kk-input mt-1"
               maxLength={20}
               value={waNumber}
               placeholder={t('export.waPlaceholder')}
@@ -203,7 +203,7 @@ export function ExportScreen() {
             />
             <p
               id="export-wa-hint"
-              className={`mt-1 px-0.5 text-xs ${touched.wa && waError === 'format' ? 'font-bold text-danger' : 'text-fg-muted'}`}
+              className={`mt-1 px-0.5 text-sm ${touched.wa && waError === 'format' ? 'font-bold text-danger' : 'text-fg-muted'}`}
             >
               {t('export.waHint')}
             </p>
@@ -227,7 +227,7 @@ export function ExportScreen() {
           </div>
         ) : null}
 
-        {state.included === 0 ? <p className="mt-4 text-sm text-fg-2">{t('review.noneIncluded')}</p> : null}
+        {state.included === 0 ? <p className="mt-4 text-base text-fg-2">{t('review.noneIncluded')}</p> : null}
 
         {failureText !== null && failure?.kind !== undefined && !(failure.kind === 'code' && failure.code === 'price_missing') ? (
           <div className="kk-card-flat mt-4 flex flex-col gap-3 p-4" role="alert">
@@ -267,7 +267,7 @@ export function ExportScreen() {
               return (
                 <li
                   key={kind}
-                  className={`kk-card m-0 flex min-h-14 items-center gap-3 py-1 pr-2 pl-3 ${file === undefined ? 'opacity-70' : ''}`}
+                  className="kk-card m-0 flex min-h-14 items-center gap-3 py-2 pr-2 pl-3"
                 >
                   <span
                     className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ${
@@ -278,7 +278,7 @@ export function ExportScreen() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="font-display text-base font-bold break-words">{t(label)}</p>
-                    <p className="truncate text-xs font-medium text-fg-2">{t(desc)}</p>
+                    <p className="text-sm text-fg-2">{t(desc)}</p>
                     {file !== undefined ? (
                       <p className="kk-money truncate text-xs text-fg-muted">{file.filename}</p>
                     ) : null}
@@ -311,8 +311,8 @@ export function ExportScreen() {
 
         <details className="kk-details kk-card-flat mt-3 px-4">
           <summary>{t('export.guide.title')}</summary>
-          <div className="flex flex-col gap-3 border-t border-line py-3 text-sm text-fg-2">
-            <ol className="m-0 flex list-decimal flex-col gap-1.5 pl-5">
+          <div className="flex flex-col gap-3 py-3 text-base text-fg-2">
+            <ol className="m-0 flex list-decimal flex-col gap-2 pl-5">
               <li>{t('export.guide.step1')}</li>
               <li>{t('export.guide.step2')}</li>
               <li>{t('export.guide.step3')}</li>

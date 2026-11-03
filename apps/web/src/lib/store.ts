@@ -94,8 +94,6 @@ function createValueStore<T>(initial: T): ValueStore<T> {
 // Theme
 // ---------------------------------------------------------------------------
 
-const THEME_ORDER: readonly Theme[] = ['system', 'light', 'dark'];
-
 function parseTheme(raw: string | null): Theme {
   return raw === 'light' || raw === 'dark' ? raw : 'system';
 }
@@ -124,11 +122,8 @@ function applyLocale(): void {
   document.documentElement.lang = localeStore.get();
 }
 
-/** system -> light -> dark -> system. */
-export function nextTheme(theme: Theme): Theme {
-  const index = THEME_ORDER.indexOf(theme);
-  return THEME_ORDER[(index + 1) % THEME_ORDER.length] ?? 'system';
-}
+/** Theme options, in the order the header lists them. */
+export const THEME_ORDER: readonly Theme[] = ['system', 'light', 'dark'];
 
 export function setTheme(theme: Theme): void {
   themeStore.set(theme);

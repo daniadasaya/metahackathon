@@ -133,7 +133,7 @@ export function ReviewScreen() {
           </div>
         </div>
         {state.excluded > 0 ? (
-          <p className="mt-2 text-sm text-fg-muted">{t('review.excluded', { n: state.excluded })}</p>
+          <p className="mt-2 text-base text-fg-muted">{t('review.excluded', { n: state.excluded })}</p>
         ) : null}
 
         <ul className="m-0 mt-3 flex list-none flex-col gap-3 p-0">

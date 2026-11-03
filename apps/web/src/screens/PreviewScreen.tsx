@@ -109,7 +109,7 @@ export function PreviewScreen() {
           ) : (
             <h1 className="text-2xl break-words text-fg-muted">{t('preview.defaultStoreName')}</h1>
           )}
-          <p className="mt-1 text-sm text-fg-2">
+          <p className="mt-1 text-base text-fg-2">
             {storeNamed ? t('review.count', { n: shown.length }) : t('preview.defaultStoreHint')}
           </p>
         </div>
@@ -130,14 +130,14 @@ export function PreviewScreen() {
                 className={`kk-card m-0 flex min-w-0 flex-col gap-2 p-2 ${soldOut ? 'opacity-60' : ''}`}
               >
                 <PhotoGallery product={product} mergedPhotos={childrenMap.get(product.sku) ?? []} />
-                <h2 className="kk-clamp-2 px-1 text-lg break-words">{product.name}</h2>
-                <div className="px-1">
+                <h2 className="kk-clamp-2 text-lg break-words">{product.name}</h2>
+                <div>
                   <PriceLine product={product} />
                 </div>
-                <p className="kk-clamp-2 px-1 text-xs font-medium text-fg-muted" lang={locale}>
+                <p className="kk-clamp-2 text-sm text-fg-2" lang={locale}>
                   {locale === 'id' ? product.description_id : product.description_en}
                 </p>
-                <div className="mt-auto flex flex-col items-start gap-2 px-1">
+                <div className="mt-auto flex flex-col items-start gap-2">
                   <span className="kk-pill" data-tone={soldOut ? 'fallback' : 'pass'}>
                     {soldOut ? t('preview.soldOut') : t('preview.available')}
                   </span>
@@ -169,7 +169,7 @@ export function PreviewScreen() {
             />
           </div>
           {waNumber === '' && shown.length > 0 ? (
-            <p className="text-sm text-fg-muted">{t('preview.waHint')}</p>
+            <p className="text-base text-fg-muted">{t('preview.waHint')}</p>
           ) : null}
         </div>
       </details>

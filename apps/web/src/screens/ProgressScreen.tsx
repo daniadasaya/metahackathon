@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Column } from '../components/Column';
 import { EmptyState } from '../components/EmptyState';
 import { AlertIcon, ArrowRightIcon, CheckIcon, PhotoIcon, RetryIcon } from '../components/Icons';
+import { ProductPhoto } from '../components/ProductPhoto';
 import { Skeleton } from '../components/Skeleton';
 import { StageStrip, type TileState } from '../components/StageStrip';
 import { StickyBar } from '../components/StickyBar';
@@ -81,7 +82,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
     const code = query.error.code;
     return (
       <Column>
-        <h1 className="text-2xl">{t('progress.title')}</h1>
+        <h1 className="text-2xl">{t('progress.titleFailed')}</h1>
         <div className="mt-5">
           <EmptyState text={t('progress.loadFailed')} icon={<AlertIcon size={24} />}>
             {code !== null ? <p className="text-sm text-danger">{errorText(code)}</p> : null}
@@ -159,7 +160,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
           ) : null}
 
           {clean ? (
-            <div className="flex items-center gap-3 border-t border-line pt-3">
+            <div className="flex items-center gap-3 pt-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success text-surface">
                 <CheckIcon size={20} />
               </span>
@@ -167,7 +168,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
                 <p className="font-display text-lg font-bold">
                   {t('review.count', { n: productCount })}
                 </p>
-                <p className="text-sm text-fg-2">
+                <p className="text-base text-fg-2">
                   {t('progress.photos', { done: job.progress.photos_done, total: job.progress.photos_total })}
                 </p>
               </div>
@@ -214,7 +215,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
                         stage: t(`stages.${error.stage}`),
                       })}
                     </p>
-                    <p className="mt-1 text-sm text-fg-2">{errorText(error.code)}</p>
+                    <p className="mt-1 text-base text-fg-2">{errorText(error.code)}</p>
                     {skus.length > 0 ? (
                       <button
                         type="button"
@@ -235,6 +236,22 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
                 {retryFailure}
               </p>
             ) : null}
+          </section>
+        ) : null}
+
+        {!running && productCount > 0 ? (
+          <section className="mt-5" aria-labelledby="result-title">
+            <h2 id="result-title" className="text-xl">
+              {t('progress.resultTitle')}
+            </h2>
+            <ul className="m-0 mt-3 grid list-none grid-cols-3 gap-2 p-0">
+              {job.products.map((product) => (
+                <li key={product.sku} className="m-0 flex min-w-0 flex-col gap-1">
+                  <ProductPhoto src={product.clean_url} className="aspect-square w-full" />
+                  <span className="kk-money truncate text-xs font-bold text-fg-2">{product.sku}</span>
+                </li>
+              ))}
+            </ul>
           </section>
         ) : null}
 

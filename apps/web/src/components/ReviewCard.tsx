@@ -58,7 +58,7 @@ export const ReviewCard = memo(function ReviewCard({
   return (
     <li
       id={`card-${sku}`}
-      className="kk-card kk-review m-0 flex scroll-mt-20 list-none flex-col gap-2.5 p-3"
+      className="kk-card kk-review m-0 flex scroll-mt-20 list-none flex-col gap-3 p-4"
       data-included={product.included}
       data-price-state={priceState}
     >
@@ -67,7 +67,7 @@ export const ReviewCard = memo(function ReviewCard({
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
           <textarea
             rows={2}
-            className="kk-input resize-none px-2.5 py-1 font-display text-lg"
+            className="kk-input resize-none px-3 py-2 font-display text-lg"
             value={product.name}
             aria-label={t('review.nameFor', { sku })}
             onChange={(event) =>
@@ -133,35 +133,7 @@ export const ReviewCard = memo(function ReviewCard({
         </section>
       ) : null}
 
-      {mergeTargets.length > 0 ? (
-        <div className="flex flex-col gap-1">
-          <label htmlFor={mergeSelectId} className="text-sm font-bold">
-            {t('review.mergeLabel')}
-          </label>
-          <select
-            id={mergeSelectId}
-            className="kk-input min-h-11 w-full text-sm"
-            value=""
-            onChange={(event) => {
-              if (event.target.value !== '') mergeSkuInto(sku, event.target.value);
-            }}
-          >
-            <option value="">{t('review.mergePlaceholder')}</option>
-            {mergeTargets.map((target) => (
-              <option key={target.sku} value={target.sku}>
-                {target.sku} — {target.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      ) : null}
-
-      {viaChat ? (
-        <div className="kk-chatrow">
-          <ChatIcon size={20} />
-          {t('review.viaChat')}
-        </div>
-      ) : (
+      {viaChat ? null : (
         <div>
           <div className="kk-price" data-state={confirmed ? 'confirmed' : 'missing'}>
             <input
@@ -185,15 +157,15 @@ export const ReviewCard = memo(function ReviewCard({
               </span>
             ) : null}
           </div>
-          <div id={helperId} className="mt-1 flex flex-col px-0.5">
+          <div id={helperId} className="mt-1 flex flex-col px-1">
             {missing ? (
-              <p className="flex items-center gap-1.5 text-sm font-bold text-warning">
+              <p className="flex items-center gap-2 text-sm font-bold text-warning">
                 <AlertIcon size={16} />
                 {t('review.noPrice')}
               </p>
             ) : null}
             {suggestion !== null ? (
-              <p className="text-sm text-price-ai">
+              <p className="text-base text-price-ai">
                 {t('review.aiSuggestion', { price: formatRupiah(suggestion) })}
               </p>
             ) : null}
@@ -211,7 +183,7 @@ export const ReviewCard = memo(function ReviewCard({
         {t('review.viaChat')}
       </button>
 
-      <div className="flex flex-col gap-1 border-t border-line py-2">
+      <div className="flex flex-col gap-1 pt-2">
         <div className="flex items-center justify-between gap-3">
           <span id={`${uid}-stock`} className="text-sm font-bold">
             {t('review.inStock')}
@@ -234,17 +206,40 @@ export const ReviewCard = memo(function ReviewCard({
         </div>
       </div>
 
+      {mergeTargets.length > 0 ? (
+        <div className="flex flex-col gap-1">
+          <label htmlFor={mergeSelectId} className="text-sm font-bold">
+            {t('review.mergeLabel')}
+          </label>
+          <select
+            id={mergeSelectId}
+            className="kk-input min-h-11 w-full"
+            value=""
+            onChange={(event) => {
+              if (event.target.value !== '') mergeSkuInto(sku, event.target.value);
+            }}
+          >
+            <option value="">{t('review.mergePlaceholder')}</option>
+            {mergeTargets.map((target) => (
+              <option key={target.sku} value={target.sku}>
+                {target.sku} — {target.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
+
       <details className="kk-details">
         <summary>{t('review.details')}</summary>
-        <div className="flex flex-col gap-3 pt-1 pb-1 text-sm">
+        <div className="flex flex-col gap-3 pt-1 pb-1 text-base">
           <div>
-            <p className="text-xs font-bold text-fg-muted">{t('header.languageId')}</p>
+            <p className="text-sm font-bold text-fg-muted">{t('header.languageId')}</p>
             <p lang="id" className="text-fg-2">
               {product.description_id}
             </p>
           </div>
           <div>
-            <p className="text-xs font-bold text-fg-muted">{t('header.languageEn')}</p>
+            <p className="text-sm font-bold text-fg-muted">{t('header.languageEn')}</p>
             <p lang="en" className="text-fg-2">
               {product.description_en}
             </p>
@@ -252,7 +247,7 @@ export const ReviewCard = memo(function ReviewCard({
           <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1" lang={locale}>
             {details.map(([label, value]) => (
               <div key={label} className="contents">
-                <dt className="text-fg-muted">{label}</dt>
+                <dt className="text-sm text-fg-muted">{label}</dt>
                 <dd className="m-0 min-w-0 break-words text-fg">{value}</dd>
               </div>
             ))}

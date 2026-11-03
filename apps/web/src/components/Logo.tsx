@@ -61,7 +61,7 @@ export function Wordmark({ name }: WordmarkProps) {
   return (
     <span className="inline-flex items-center gap-2">
       <Logo size={20} />
-      <span className="font-display text-base font-extrabold text-fg">
+      <span className="font-display text-base font-extrabold whitespace-nowrap text-fg">
         {name}
       </span>
     </span>

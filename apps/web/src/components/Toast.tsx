@@ -11,7 +11,10 @@ interface ToastProps {
 
 const AUTO_DISMISS_MS = 6000;
 
-/** Error toast: one small component. Announced to assistive tech, dismisses itself. */
+/**
+ * Error alert. It sits inside the sticky bar above the primary action, so it never covers the
+ * action. Announced to assistive tech; dismisses itself after six seconds.
+ */
 export function Toast({ text, onDismiss }: ToastProps) {
   const { t } = useT();
 
@@ -21,24 +24,14 @@ export function Toast({ text, onDismiss }: ToastProps) {
   }, [text, onDismiss]);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-24 z-20 flex justify-center px-4">
-      <div
-        role="alert"
-        className="kk-toast pointer-events-auto flex w-full max-w-[392px] items-start gap-3 py-1 pr-1 pl-4"
-      >
-        <span className="mt-2.5 text-danger">
-          <AlertIcon />
-        </span>
-        <p className="min-w-0 flex-1 py-2 text-sm break-words">{text}</p>
-        <button
-          type="button"
-          className="kk-btn kk-btn-ghost"
-          aria-label={t('common.close')}
-          onClick={onDismiss}
-        >
-          <CloseIcon size={16} />
-        </button>
-      </div>
+    <div role="alert" className="kk-toast flex items-start gap-2 py-1 pr-1 pl-3">
+      <span className="mt-2 text-danger">
+        <AlertIcon />
+      </span>
+      <p className="min-w-0 flex-1 py-2 text-sm break-words">{text}</p>
+      <button type="button" className="kk-btn kk-btn-ghost" aria-label={t('common.close')} onClick={onDismiss}>
+        <CloseIcon size={16} />
+      </button>
     </div>
   );
 }

@@ -98,6 +98,7 @@
   .kk-btn-primary {
     min-height: 48px;
     padding: 0 20px;
+    border: 1.5px solid transparent;
     font-size: 15px;
     line-height: 20px;
     background: var(--accent-primary);
@@ -132,14 +133,21 @@
     border-radius: 10px;
   }
 
-  /* Quiet 44px remove target: a soft fill, no edge, no shouting. */
+  /* Quiet remove target: a 32px soft fill; the ::after overlay makes the tap area 44px. */
   .kk-btn-quiet {
-    min-height: 44px;
-    min-width: 44px;
+    position: relative;
+    min-height: 32px;
+    min-width: 32px;
     padding: 0;
-    border-radius: 14px;
+    border-radius: 10px;
     background: var(--bg-subtle);
     color: var(--text-secondary);
+  }
+
+  .kk-btn-quiet::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
   }
 
   /* Compact secondary (44px) for demoted actions beside a list. */
@@ -163,8 +171,14 @@
   .kk-btn:disabled,
   .kk-btn[aria-disabled='true'] {
     background: var(--bg-subtle);
-    color: var(--text-muted);
+    color: var(--text-secondary);
     cursor: not-allowed;
+  }
+
+  /* Disabled primary stays a visible button: quiet fill, outlined edge, label 7.6:1. Never a dimmed saffron. */
+  .kk-btn-primary:disabled,
+  .kk-btn-primary[aria-disabled='true'] {
+    border-color: var(--border-strong);
   }
 
   /* ---- Chip ------------------------------------------------------------ */
@@ -172,7 +186,7 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     min-height: 32px;
     padding: 0 12px;
     border-radius: 999px;
@@ -191,7 +205,7 @@
   .kk-chip::after {
     content: '';
     position: absolute;
-    inset: -5px 0;
+    inset: -6px 0;
   }
 
   .kk-chip[aria-pressed='true'] {
@@ -303,8 +317,11 @@
 
   .kk-seg > button {
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-width: 36px;
-    min-height: 36px;
+    min-height: 42px;
     padding: 0 8px;
     border: 0;
     background: transparent;
@@ -319,12 +336,69 @@
   .kk-seg > button::after {
     content: '';
     position: absolute;
-    inset: -4px;
+    inset: -4px -4px;
   }
 
+  /* Theme menu: one native select carries its own 44px edge. The mode icon and caret sit over its
+     padding, so the whole control is the hit area and the label stays a real <select>. */
+  .kk-theme {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .kk-theme-icon {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    display: flex;
+    transform: translateY(-50%);
+    color: var(--text-primary);
+    pointer-events: none;
+  }
+
+  .kk-theme-field {
+    appearance: none;
+    -webkit-appearance: none;
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 0 24px 0 32px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-family: var(--ff-display);
+    font-size: 16px;
+    line-height: 18px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .kk-theme-field option {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+  }
+
+  .kk-theme-caret {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-right: 2px solid var(--text-secondary);
+    border-bottom: 2px solid var(--text-secondary);
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+  }
+
+  /* Active segment is ink on paper, so saffron stays reserved for the next action. */
   .kk-seg > button[aria-pressed='true'] {
-    background: var(--accent-primary);
-    color: var(--accent-primary-fg);
+    background: var(--text-primary);
+    color: var(--bg-canvas);
+  }
+
+  .kk-seg > button + button {
+    box-shadow: inset 1px 0 0 var(--border-subtle);
   }
 
   /* ---- Stage tiles (brandkit §4 Stage A–E strip) ----------------------- */
@@ -416,16 +490,7 @@
     box-shadow: 0 -8px 24px -12px color-mix(in srgb, var(--text-primary) 14%, transparent);
   }
 
-  .kk-bar::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 100%;
-    height: 16px;
-    background: linear-gradient(to top, var(--bg-canvas), transparent);
-    pointer-events: none;
-  }
+  /* No fade above the bar: surfaces stay flat (brandkit §4). */
 
   /* Screen enter (S3): fade + 4px rise, once per route. transform/opacity only, 160ms.
      `backwards` (not `both`): no transform lingers afterwards, so fixed children (toast) keep the viewport. */
@@ -444,47 +509,157 @@
     }
   }
 
-  /* ---- Step rail (H1): five segments on the header's bottom edge --------------- */
-  .kk-steps {
-    position: absolute;
-    right: 0;
-    bottom: -1px;
-    left: 0;
-    display: flex;
-    gap: 2px;
-    height: 3px;
+  /* ---- Step rail: five named steps under the header; scrolls with the page ----- */
+
+  .kk-rail-list {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    margin: 0;
+    padding: 8px 16px;
+    list-style: none;
   }
 
-  .kk-steps > span {
-    flex: 1;
+  .kk-rail-step {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  .kk-rail-bar {
+    display: block;
+    height: 3px;
+    border-radius: 2px;
     background: var(--border-subtle);
   }
 
-  .kk-steps > span[data-state='done'] {
+  .kk-rail-step[data-state='done'] .kk-rail-bar {
     background: var(--accent-secondary);
   }
 
-  .kk-steps > span[data-state='current'] {
+  .kk-rail-step[data-state='current'] .kk-rail-bar {
     background: var(--accent-primary);
   }
 
-  /* ---- Hero drop card (Upload): always one compact row ------------------------- */
-  .kk-hero {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    text-align: left;
-    border: 1px dashed var(--border-strong);
-    border-radius: var(--r-md);
-    background: var(--bg-surface);
+  .kk-rail-label {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
-  .kk-hero[data-filled='true'] {
+  .kk-rail-step[data-state='done'] .kk-rail-label {
+    color: var(--text-secondary);
+  }
+
+  .kk-rail-step[data-state='current'] .kk-rail-label {
+    color: var(--text-primary);
+    font-weight: 700;
+  }
+
+  /* ---- Drop zone (Upload): the one dominant control on the screen -------------- */
+  .kk-drop {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-height: 120px;
+    padding: 16px 16px;
+    text-align: center;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+    cursor: pointer;
+  }
+
+  .kk-drop .kk-icon-tile {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 4px;
+    border-radius: 16px;
+  }
+
+  .kk-drop-title {
+    font-family: var(--ff-display);
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  .kk-drop-hint {
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  /* Drop zone: the file input is visually hidden, so the zone shows the focus ring itself. */
+  .kk-drop:focus-within {
+    outline: 3px solid var(--text-primary);
+    outline-offset: 2px;
+  }
+
+  /* Once photos are picked the zone shrinks to one row: icon left, the two lines right. */
+  .kk-drop[data-filled='true'] {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    column-gap: 12px;
+    align-items: center;
+    justify-items: start;
+    min-height: 0;
+    padding: 12px 16px;
+    text-align: left;
     border-style: solid;
-    border-width: 1px;
     border-color: var(--border-subtle);
+  }
+
+  .kk-drop[data-filled='true'] .kk-icon-tile {
+    grid-row: 1 / span 2;
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    border-radius: 10px;
+  }
+
+  .kk-drop[data-filled='true'] .kk-drop-title {
+    grid-column: 2;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .kk-drop[data-filled='true'] .kk-drop-hint {
+    grid-column: 2;
+  }
+
+  /* ---- Resume (Upload): an earlier run, two actions, no third competitor ----------- */
+  .kk-resume {
+    padding: 16px;
+    border-radius: var(--r-md);
+    background: var(--bg-subtle);
+  }
+
+  .kk-resume-icon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
   }
 
   .kk-icon-tile {
@@ -495,67 +670,97 @@
     width: 40px;
     height: 40px;
     border-radius: 10px;
+    background: var(--bg-subtle);
+    color: var(--text-primary);
+  }
+
+  /* Saffron marks the next action: the drop zone wears it until photos are picked. */
+  .kk-drop:not([data-filled='true']) .kk-icon-tile {
     background: var(--accent-primary);
     color: var(--accent-primary-fg);
   }
 
-  /* ---- Sample pack tile (U2): three in a row, letter tile over a short label ---- */
+  /* ---- Sample pack (Upload): a real photo from the pack, a short name, a selected ring ---- */
   .kk-pack {
     position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 8px;
     min-width: 0;
-    min-height: 72px;
-    padding: 8px 6px;
-    text-align: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: var(--text-primary);
-    background: var(--bg-surface);
-    border: 1.5px solid var(--border-subtle);
-    border-radius: var(--r-md);
-    cursor: pointer;
+    text-align: left;
     font-family: var(--ff-body);
+    cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
 
-  .kk-pack-tile {
-    flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+  .kk-pack-media {
+    position: relative;
+    display: block;
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
     background: var(--bg-subtle);
-    color: var(--text-primary);
+  }
+
+  .kk-pack-media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .kk-pack-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .kk-pack-tag {
     font-family: var(--ff-display);
-    font-weight: 800;
-    font-size: 17px;
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+
+  .kk-pack-name {
+    font-family: var(--ff-body);
+    font-size: 15px;
     line-height: 22px;
+    font-weight: 600;
+    color: var(--text-secondary);
   }
 
-  .kk-pack[aria-pressed='true'] {
-    border-color: var(--accent-secondary);
-    border-width: 2px;
-    padding: 7.5px 5.5px;
-    background: var(--bg-surface);
+  .kk-pack[aria-pressed='true'] .kk-pack-media {
+    outline: 2px solid var(--accent-secondary);
+    outline-offset: 2px;
   }
 
-  .kk-pack[aria-pressed='true'] .kk-pack-tile {
-    background: var(--accent-primary);
-    color: var(--accent-primary-fg);
+  .kk-pack[aria-pressed='true'] .kk-pack-tag {
+    color: var(--accent-secondary);
+  }
+
+  .kk-pack[aria-pressed='true'] .kk-pack-name {
+    color: var(--text-primary);
+    font-weight: 700;
   }
 
   .kk-pack-check {
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 8px;
+    right: 8px;
+    z-index: 1;
     display: none;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     border-radius: 999px;
     background: var(--accent-secondary);
     color: var(--bg-surface);
@@ -569,9 +774,9 @@
   .kk-count {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     min-height: 26px;
-    padding: 0 10px;
+    padding: 0 12px;
     border-radius: 999px;
     background: var(--bg-subtle);
     color: var(--text-primary);
@@ -624,18 +829,6 @@
     border-radius: 14px;
     background: var(--bg-subtle);
     color: var(--text-secondary);
-  }
-
-  /* ---- Success badge (export ready) ----------------------------------------- */
-  .kk-ok {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--status-success);
-    font-size: 12px;
-    line-height: 16px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
   }
 
   /* ---- Review card (brandkit §4) ---------------------------------------- */
@@ -741,27 +934,12 @@
     pointer-events: none;
   }
 
-  .kk-chatrow {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 44px;
-    padding: 0 14px;
-    border-radius: var(--r-sm);
-    background: var(--bg-subtle);
-    color: var(--text-primary);
-    font-family: var(--ff-display);
-    font-size: 15px;
-    line-height: 20px;
-    font-weight: 700;
-  }
-
   .kk-details > summary {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 36px;
+    min-height: 44px;
     list-style: none;
     cursor: pointer;
     font-size: 13px;
@@ -785,7 +963,7 @@
     content: '';
     width: 8px;
     height: 8px;
-    margin-right: 6px;
+    margin-right: 8px;
     border-right: 2.5px solid currentColor;
     border-bottom: 2.5px solid currentColor;
     transform: translateY(-2px) rotate(45deg);

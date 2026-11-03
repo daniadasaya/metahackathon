@@ -2,6 +2,7 @@ import { Outlet, createRootRoute, createRoute, createRouter, useRouterState } fr
 import { useEffect } from 'react';
 
 import { AppHeader } from './components/AppHeader';
+import { StepRail } from './components/StepRail';
 import { useT } from './lib/locale';
 import { ExportScreen } from './screens/ExportScreen';
 import { PreviewScreen } from './screens/PreviewScreen';
@@ -32,6 +33,7 @@ function RootLayout() {
         {t('app.skip')}
       </a>
       <AppHeader />
+      <StepRail />
       <main id="main" key={pathname} className="kk-screen">
         <Outlet />
       </main>
