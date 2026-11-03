@@ -67,6 +67,9 @@ export interface CreateJobInput {
 /** Photos per bundled sample pack. */
 const SAMPLE_PACK_PHOTOS = 2;
 
+/** How long `createJob` waits for the server before it reports a network failure. */
+const CREATE_JOB_TIMEOUT_MS = 30_000;
+
 export interface SamplePackFiles {
   photos: File[];
   /** Contents of the pack's `captions.txt`; empty when the pack ships none. */
@@ -123,10 +126,17 @@ export async function createJob(input: CreateJobInput): Promise<string> {
   form.append('captions', JSON.stringify({ general: generalCaption, photos: photoCaptions }));
 
   let response: Response;
+  // A hung connection must not leave the CTA on "Memulai…" forever. After this window the client stops
+  // waiting and reports a network failure. The server is not told to stop: the job may still run, and the
+  // resume card lets the seller reopen it.
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), CREATE_JOB_TIMEOUT_MS);
   try {
-    response = await fetch('/api/jobs', { method: 'POST', body: form });
+    response = await fetch('/api/jobs', { method: 'POST', body: form, signal: controller.signal });
   } catch {
     throw new ApiError(0, null);
+  } finally {
+    window.clearTimeout(timer);
   }
   if (response.ok) {
     const state = (await response.json()) as JobState;

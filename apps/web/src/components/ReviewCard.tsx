@@ -1,4 +1,4 @@
-import { memo, useId } from 'react';
+import { memo, useId, useLayoutEffect, useRef } from 'react';
 
 import { gateState, hasPrice, type ReviewedProduct } from '../lib/catalog';
 import { formatRupiah, parseRupiahInput } from '../lib/format';
@@ -11,6 +11,41 @@ import { Switch } from './Switch';
 interface MergeTarget {
   sku: string;
   name: string;
+}
+
+/**
+ * The product-name field grows with its content. It starts at two rows and never shrinks below that,
+ * so a long name is read in full instead of scrolling inside a two-line box. The font size and the
+ * colours are unchanged: only the height follows `scrollHeight`.
+ */
+function NameField({ value, label, onCommit }: { value: string; label: string; onCommit: (next: string) => void }) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (el === null) return;
+    // The box is border-box: height must cover the content plus the 1px top and bottom borders.
+    el.style.height = 'auto';
+    const borders = el.offsetHeight - el.clientHeight;
+    el.style.height = `${el.scrollHeight + borders}px`;
+  }, [value]);
+
+  return (
+    <textarea
+      ref={ref}
+      rows={2}
+      className="kk-input resize-none px-3 py-2 font-display text-lg"
+      value={value}
+      aria-label={label}
+      onChange={(event) => onCommit(event.target.value.replace(/\s*\n\s*/g, ' '))}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          event.currentTarget.blur();
+        }
+      }}
+    />
+  );
 }
 
 interface ReviewCardProps {
@@ -65,20 +100,10 @@ export const ReviewCard = memo(function ReviewCard({
       <div className="flex gap-3">
         <ProductPhoto src={product.clean_url} className="h-[72px] w-[72px]" />
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
-          <textarea
-            rows={2}
-            className="kk-input resize-none px-3 py-2 font-display text-lg"
+          <NameField
             value={product.name}
-            aria-label={t('review.nameFor', { sku })}
-            onChange={(event) =>
-              editProduct(sku, { name: event.target.value.replace(/\s*\n\s*/g, ' ') }, 'debounced')
-            }
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                event.currentTarget.blur();
-              }
-            }}
+            label={t('review.nameFor', { sku })}
+            onCommit={(next) => editProduct(sku, { name: next }, 'debounced')}
           />
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="kk-pill" data-tone={gate === 'pass' ? 'pass' : 'fallback'}>

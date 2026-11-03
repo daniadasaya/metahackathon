@@ -252,8 +252,8 @@
     justify-content: center;
     width: 46px;
     min-height: 44px;
-    /* Rows stay 36px tall; the 44px hit area overlaps the row's own padding. */
-    margin: -4px 0;
+    /* No negative margin: each switch owns its 44px box, so neighbours never overlap. */
+    margin: 0;
     padding: 0;
     border: 0;
     background: transparent;
@@ -332,11 +332,24 @@
     cursor: pointer;
   }
 
-  /* 36px visual, 44px tap area. */
+  /* The visible segment keeps its approved size. Its tap area is a 44×44 overlay: each segment extends
+     only outward, away from its neighbour, so the two overlays never overlap a control. */
   .kk-seg > button::after {
     content: '';
     position: absolute;
-    inset: -4px -4px;
+    top: -1px;
+    bottom: -1px;
+    z-index: 1;
+  }
+
+  .kk-seg > button:first-child::after {
+    left: -8px;
+    right: 0;
+  }
+
+  .kk-seg > button:last-child::after {
+    left: 0;
+    right: -8px;
   }
 
   /* Theme menu: one native select carries its own 44px edge. The mode icon and caret sit over its

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Katalog Kilat">
+  <rect x="0" y="0" width="44" height="44" rx="9.7" fill="#B34300"/>
+  <rect x="0" y="52" width="44" height="44" rx="9.7" fill="#B34300"/>
+  <rect x="52" y="52" width="44" height="44" rx="9.7" fill="#B34300"/>
+  <path d="M74 0 Q78 18 96 22 Q78 26 74 44 Q70 26 52 22 Q70 18 74 0 Z" fill="#F5A524"/>
+</svg>
