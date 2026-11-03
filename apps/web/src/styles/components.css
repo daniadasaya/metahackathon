@@ -817,81 +817,147 @@
 }
 
 /*
- * Desktop staging (>= 768px). Additive: below 768px none of this applies, so the mobile layout is
- * untouched. The app stays one centered column (<= 520px) but sits ON a staged canvas: two soft
- * corner glows (alpha mixes of existing accent tokens) and an oversized Lightbox-Grid motif drawn
- * in CSS from the Logo geometry (three tiles + spark). Static: nothing here animates.
+ * Device staging. Below 768px every device wrapper is `display: contents` and the status strip
+ * and the frame are hidden, so the mobile tree lays out as it did before this block existed. From
+ * 768px up the app sits inside a centred iPhone frame on a blank canvas, and the screen is the scroll
+ * container. `kk-screen` already names the screen-enter animation on <main>, so the device classes
+ * live under `kk-device-*`.
  */
-@layer base {
+@layer components {
+  .kk-device,
+  .kk-device-phone,
+  .kk-device-view,
+  .kk-device-scroll {
+    display: contents;
+  }
+
+  .kk-device-status,
+  .kk-device-frame {
+    display: none;
+  }
+
   @media (min-width: 768px) {
-    html {
-      background-color: var(--bg-canvas);
-      background-image:
-        radial-gradient(
-          70vmax 55vmax at 0% 0%,
-          color-mix(in srgb, var(--accent-primary) 16%, transparent),
-          transparent 70%
-        ),
-        radial-gradient(
-          65vmax 50vmax at 100% 100%,
-          color-mix(in srgb, var(--accent-secondary) 12%, transparent),
-          transparent 70%
-        );
-      background-attachment: fixed;
-    }
-
-    body {
+    .kk-device {
+      display: grid;
+      place-items: center;
       box-sizing: border-box;
-      padding: 32px 24px;
-      background: transparent;
+      min-height: 100dvh;
+      padding: 24px;
     }
 
-    #root {
-      width: 100%;
-      max-width: 520px;
-      min-height: calc(100dvh - 64px);
-      margin: 0 auto;
-      background: var(--bg-canvas);
-      border: 1.5px solid var(--border-strong);
-      border-radius: var(--r-lg);
+    /* Aspect-ratio phone, no transform. `--kk-status-inset` is the single source for the strip height,
+       the scroller's top padding and the header's sticky offset. */
+    .kk-device-phone {
+      --phone-h: min(882px, calc(100dvh - 48px));
+      --kk-status-inset: calc(var(--phone-h) * 0.0593);
+      display: block;
+      position: relative;
+      height: var(--phone-h);
+      aspect-ratio: 433 / 882;
+      /* The bezel's outer corner (73 of 433 wide, 73 of 882 tall), so the shadow follows the body. */
+      border-radius: 16.86% / 8.28%;
       box-shadow: 0 24px 64px -24px color-mix(in srgb, var(--text-primary) 22%, transparent);
-      /* `clip`, not `hidden`: rounds the corners without becoming the scroll container, so the
-         sticky header and bar keep sticking to the viewport. */
-      overflow: clip;
     }
 
-    /* Oversized motif: tile 1 plus two shadow copies = the three soft tiles of the mark. */
-    body::before {
-      --tile: clamp(150px, 24vmin, 280px);
-      --gap: calc(var(--tile) * 0.18);
+    /* Screen rect from the Magic UI iPhone geometry (433 x 882 viewBox). `contain: paint` keeps the
+       fixed toast and skip link inside the screen box. */
+    .kk-device-view {
+      display: block;
+      position: absolute;
+      left: 4.907%;
+      top: 2.182%;
+      width: 89.953%;
+      height: 95.635%;
+      border-radius: 14.31% / 6.61%;
+      overflow: hidden;
+      contain: paint;
+      background: var(--bg-canvas);
+    }
+
+    /* The screen scrolls. The flex column keeps `main { flex: 1 }` and the `.kk-bar` margin-top: auto. */
+    .kk-device-scroll {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: none;
+    }
+
+    .kk-device-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* In-flow clearance under the status strip. Chromium adds a scroller's padding-top to the sticky
+       threshold, so padding plus a sticky `top` of the same inset double-counts (measured 101px
+       instead of 50.5px). The spacer carries the clearance; the header's sticky top stays literal. */
+    .kk-device-scroll::before {
       content: '';
-      position: fixed;
-      z-index: -1;
-      left: calc(var(--tile) * -0.35);
-      bottom: calc(var(--tile) * -0.3);
-      width: var(--tile);
-      height: var(--tile);
-      border-radius: calc(var(--tile) * 0.22);
-      background: color-mix(in srgb, var(--accent-secondary) 9%, transparent);
-      box-shadow:
-        0 calc(var(--tile) * -1 - var(--gap)) 0 0 color-mix(in srgb, var(--accent-secondary) 9%, transparent),
-        calc(var(--tile) + var(--gap)) 0 0 0 color-mix(in srgb, var(--accent-secondary) 9%, transparent);
+      display: block;
+      flex: none;
+      height: var(--kk-status-inset);
+    }
+
+    /* Opaque strip over the top of the screen: scrolled content passes under it and disappears. */
+    .kk-device-status {
+      display: flex;
+      position: absolute;
+      inset: 0 0 auto 0;
+      z-index: 11;
+      box-sizing: border-box;
+      height: var(--kk-status-inset);
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: calc(var(--kk-status-inset) * 0.4) 8.5% 0;
+      background: var(--bg-canvas);
+      color: var(--text-primary);
       pointer-events: none;
     }
 
-    /* The spark, top-right of the grid, in the primary accent. */
-    body::after {
-      --tile: clamp(150px, 24vmin, 280px);
-      content: '';
-      position: fixed;
-      z-index: -1;
-      right: calc(var(--tile) * -0.15);
-      top: calc(var(--tile) * 0.3);
-      width: var(--tile);
-      height: var(--tile);
-      background: color-mix(in srgb, var(--accent-primary) 13%, transparent);
-      clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+    .kk-device-time {
+      font-family: var(--ff-display);
+      font-size: 15px;
+      line-height: 18px;
+      font-weight: 700;
+    }
+
+    .kk-device-glyphs {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      height: 18px;
+    }
+
+    .kk-device-glyphs svg {
+      display: block;
+    }
+
+    .kk-device-frame {
+      display: block;
+      position: absolute;
+      inset: 0;
+      z-index: 12;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
+    }
+
+    .kk-device-bezel {
+      fill: var(--device-bezel);
+    }
+
+    .kk-device-inner {
+      fill: var(--device-frame);
+    }
+
+    .kk-device-island {
+      fill: var(--device-island);
+    }
+
+    .kk-device-ring {
+      fill: var(--device-bezel);
+      stroke: var(--device-bezel);
     }
   }
 }

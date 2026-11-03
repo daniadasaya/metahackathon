@@ -34,7 +34,7 @@ export function AppHeader() {
     theme === 'light' ? t('header.themeLight') : theme === 'dark' ? t('header.themeDark') : t('header.themeSystem');
 
   return (
-    <header className="sticky top-0 z-10 border-b border-line bg-canvas">
+    <header className="sticky top-(--kk-status-inset) z-10 border-b border-line bg-canvas">
       <div className="mx-auto flex min-h-12 w-full max-w-[420px] md:max-w-none items-center justify-between gap-2 px-4">
         <Link to="/" className="inline-flex min-h-11 items-center rounded-[12px]" aria-label={t('app.name')}>
           <Wordmark name={t('app.name')} />

@@ -165,11 +165,22 @@ padding 12–16. Every font size in `components.css` and the TSX reads this tabl
 
 ### Desktop staging (≥ 768px)
 
-Additive layer; below 768px none of it applies. The app stays one centered column, **max 520px**, rendered as a card
-(`--bg-canvas` fill, 1.5px `--border-strong`, `--r-lg` radius, soft diffuse lift only, no hard edge). The canvas behind it carries
-two fixed radial glows (`--accent-primary` 16% top-left, `--accent-secondary` 12% bottom-right) and an oversized
-Lightbox-Grid motif drawn in CSS (three `--accent-secondary` 9% tiles bottom-left, one `--accent-primary` 13% spark
-top-right), all `pointer-events: none`, static (no animated backdrop), alpha mixes of existing tokens only.
+Additive layer; below 768px none of it applies, and the mobile path is unchanged. At 768px and wider the app is shown
+as an iPhone mockup on a blank canvas: `--bg-canvas` fills the whole viewport (Warm Alabaster in light, Obsidian Slate in
+dark), with no glows, no motif and no card. The phone is centred, `aspect-ratio: 433 / 882`, `height: min(882px, 100dvh − 48px)`,
+with no transform and no scaling. Its bezel and Dynamic Island come from the Magic UI iPhone geometry (MIT, paths verbatim),
+and they are coloured with the device tokens in `tokens.css`, not with brand tokens. The screen rectangle is 4.907% left,
+2.182% top, 89.953% wide, 95.635% tall, with an elliptical corner radius of `14.31% / 6.61%`.
+
+The app scrolls inside the screen, and the window does not scroll. The screen clips and paints its contents (`contain: paint`),
+so the fixed toast and the skip link stay inside it. The header stays sticky under a faux status strip. That strip is
+`--kk-status-inset` tall, which is 5.93% of the phone height. It holds 9:41 and signal, Wi‑Fi and battery glyphs, all
+`aria-hidden`, and it is opaque canvas, so scrolled content passes under it. The island sits inside the strip's band.
+The status-inset variable feeds three things: the strip height, the scroller clearance, and the header's sticky top.
+Below 768px the variable is `0px`, and the strip and frame are hidden.
+
+Devices stay in a single shell at every width, so crossing 768px never remounts the app. The shadow is the one soft lift the
+phone carries (see §4).
 
 ## 4. Flat components
 
@@ -177,7 +188,7 @@ top-right), all `pointer-events: none`, static (no animated backdrop), alpha mix
 | :--- | :--- |
 | Radius | `--r-sm 10px` (inner photo crop, inputs) · `--r-md 16px` (cards) · `--r-lg 22px` (sheets) · buttons 12px, icon buttons 10px · chips 999px |
 | Border | 1px `--border-subtle` hairline on cards, chips, tiles, segmented switch; inputs 1.5px `--border-strong`; secondary button 1px `--border-strong`. Status outlines (failed tile 2px, price states) keep their weight |
-| **Surfaces & press** | Flat: no offset (`0 Npx 0`) shadow anywhere. Press feedback is a native dim, `opacity: .75` over 120ms (`.kk-tactile:active`), no movement, removed transition under reduced motion. Soft diffuse shadows only where elevation is real: sticky bar (`0 -8px 24px -12px`, 14% `--text-primary`), toast (`0 8px 24px -12px`, 18%), desktop frame (`0 24px 64px -24px`, 22%) |
+| **Surfaces & press** | Flat: no offset (`0 Npx 0`) shadow anywhere. Press feedback is a native dim, `opacity: .75` over 120ms (`.kk-tactile:active`), no movement, removed transition under reduced motion. Soft diffuse shadows only where elevation is real: sticky bar (`0 -8px 24px -12px`, 14% `--text-primary`), toast (`0 8px 24px -12px`, 18%), desktop phone frame (`0 24px 64px -24px`, 22%, ≥ 768px only) |
 | Primary button | 48px, label 15 / 20, `--accent-primary` fill, `--accent-primary-fg` label in Outfit 700, flat fill, no edge |
 | Secondary / success button | 44px, label 14 / 20, `--bg-surface` fill (success: `--status-success`), 1px `--border-strong`, flat. Ghost / compact: 44px, label 13 / 18 |
 | Chip | 32px pill, full-width variant 38px (tap area ≥ 44px via a `::after` overlay); selected = `--accent-primary` fill + `--accent-primary-fg` label + check |

@@ -7,6 +7,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import './index.css';
+import { DeviceStage } from './components/DeviceStage';
 import { router } from './routes';
 
 const container = document.getElementById('root');
@@ -21,8 +22,10 @@ const queryClient = new QueryClient({
 
 createRoot(container).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
+    <DeviceStage>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </DeviceStage>
   </StrictMode>,
 );

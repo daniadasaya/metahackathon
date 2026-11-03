@@ -32,6 +32,14 @@
   --gate-pass: #0b7a52;
   --gate-fallback: #a04a00;
 
+  /* Device frame: mockup colours for the >= 768px iPhone. Not brand colours. */
+  --device-bezel: #e4e0d8;
+  --device-frame: #ffffff;
+  --device-island: #f4f1ea;
+
+  /* Status strip height on mobile (no strip). The >= 768px staging overrides it on .kk-device-phone. */
+  --kk-status-inset: 0px;
+
   /* Radii (brandkit §4) */
   --r-sm: 10px;
   --r-md: 16px;
@@ -65,6 +73,11 @@
   --price-ai-hint: #9a9da5;
   --gate-pass: #34d399;
   --gate-fallback: #ff8533;
+
+  /* Device frame: Magic UI iPhone dark palette. */
+  --device-bezel: #404040;
+  --device-frame: #262626;
+  --device-island: #262626;
 }
 
 /*

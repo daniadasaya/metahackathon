@@ -19,6 +19,8 @@ function RootLayout() {
   // persisted), so each screen starts at the top.
   useEffect(() => {
     window.scrollTo(0, 0);
+    // At >= 768px the app scrolls inside the device screen. Below that the element is display: contents.
+    document.getElementById('kk-device-scroll')?.scrollTo(0, 0);
   }, [pathname]);
 
   return (
