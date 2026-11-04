@@ -194,6 +194,115 @@ def format_price_display(price: int) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Price prose — a description never carries a price the seller did not confirm
+# ---------------------------------------------------------------------------
+#
+# Stage E writes free-text descriptions that sometimes mention a price of their
+# own ("harga hemat hanya Rp 35.000"). That number is a guess at best and a
+# stale duplicate at worst: the seller may price the item differently, or sell
+# it via chat. Every price the buyer reads must be the one the seller confirmed,
+# so the prose is stripped where it enters the product (the pipeline's Stage E
+# normalisation) and again on every export surface and on the public page.
+#
+# The detection is deliberately conservative. A number is a price only when a
+# currency marker introduces it (``Rp 35.000``, ``IDR 35000``, ``$25``) or a
+# magnitude word follows it (``35 ribu``, ``1,5 juta``, ``35.000 rupiah``). A
+# bare ``35k`` counts only when the same clause already says ``harga``,
+# ``hanya`` or ``cuma`` — so ``30 ml``, ``256GB``, ``6.7 inch``, ``12 bulan
+# garansi``, ``iPhone 12`` and a year are all left alone.
+
+#: Currency marker that introduces an amount.
+_CURRENCY_MARKER = r"(?:rp\.?|idr|usd|sgd|myr|eur|gbp|\$|€|£)"
+
+#: A number, Indonesian or English spelling: ``35.000``, ``35000``, ``1,5``.
+_AMOUNT = r"(?:\d{1,3}(?:[.,]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?)"
+
+#: Magnitude or currency words that turn a bare number into a price.
+_MAGNITUDE = r"(?:ribu|ribuan|rb|juta|jutaan|jt|rupiah|idr|usd|sgd|myr|eur|gbp)"
+
+#: ``Rp 35.000``, ``Rp.35.000``, ``IDR 35000``, ``Rp35rb``, ``$25``, ``Rp 1.5jt``.
+_PRICE_PREFIX_RE = re.compile(
+    rf"(?<![A-Za-z]){_CURRENCY_MARKER}\s*{_AMOUNT}(?:\s*(?:{_MAGNITUDE}|k)(?![A-Za-z]))?",
+    re.IGNORECASE,
+)
+
+#: ``35 ribu``, ``1,5 juta``, ``35.000 rupiah``, ``35000 IDR``, ``25 USD``.
+_PRICE_SUFFIX_RE = re.compile(rf"(?<![\w.]){_AMOUNT}\s*{_MAGNITUDE}\b", re.IGNORECASE)
+
+#: ``35k`` — only a price next to a price word, see :data:`_PRICE_CONTEXT_RE`.
+_PRICE_BARE_K_RE = re.compile(rf"(?<![\w.]){_AMOUNT}\s*k\b", re.IGNORECASE)
+
+#: The clause words that license a bare ``35k`` reading.
+_PRICE_CONTEXT_RE = re.compile(r"\b(?:harga|hanya|cuma|rp)\b", re.IGNORECASE)
+
+#: Sentence boundary: newline, or terminal punctuation plus whitespace. ``Rp.``
+#: is a currency abbreviation, never a sentence end.
+_SENTENCE_SPLIT_RE = re.compile(r"\n+|(?<![Rr][Pp]\.)(?<=[.!?])\s+")
+
+
+def _mentions_a_price(sentence: str) -> bool:
+    """Whether ``sentence`` states an amount that reads as a price."""
+    if _PRICE_PREFIX_RE.search(sentence) or _PRICE_SUFFIX_RE.search(sentence):
+        return True
+    for match in _PRICE_BARE_K_RE.finditer(sentence):
+        if _PRICE_CONTEXT_RE.search(sentence[: match.start()]):
+            return True
+    return False
+
+
+def strip_price_mentions(text: str) -> str:
+    """Remove every price sentence from generated description prose.
+
+    A sentence that states a rupiah (or foreign-currency) amount is dropped
+    whole — never rewritten into a fragment — because a half-removed price
+    reads worse than none at all::
+
+        strip_price_mentions("harga hemat Rp 35.000. Chat sekarang")
+        # "Chat sekarang."
+
+    When every sentence carries a price the result is ``""`` and the caller
+    decides the fallback (the CSV uses the product name, the caption and the
+    public page omit the prose block). Text that mentions no price is returned
+    unchanged, byte for byte, so this is a no-op on clean prose and idempotent
+    on its own output.
+
+    Numbers that are not prices — sizes, capacities, screen inches, warranty
+    months, model numbers, years — are never touched: a price needs a currency
+    marker or a magnitude word (see the module note above).
+    """
+    if not text:
+        return ""
+    sentences = [part for part in _SENTENCE_SPLIT_RE.split(text) if part.strip()]
+    if not sentences:
+        return ""
+    kept = [part.strip() for part in sentences if not _mentions_a_price(part)]
+    if len(kept) == len(sentences):
+        return text
+    if not kept:
+        return ""
+    joined = " ".join(kept)
+    if not joined.endswith((".", "!", "?", "…")):
+        joined += "."
+    return joined
+
+
+def description_text(
+    description_id: str, description_en: str, *, fallback: str = ""
+) -> str:
+    """The description a buyer may read: price-free, ID first, then EN, then fallback.
+
+    Mirrors the catalog-feed rule (``description_id``, EN only when ID is
+    empty) and adds the Price Law strip on both. ``fallback`` is the product
+    name, used by the CSV whose ``description`` column may never be empty.
+    """
+    for candidate in (description_id, description_en):
+        cleaned = strip_price_mentions(candidate).strip()
+        if cleaned:
+            return cleaned
+    return fallback.strip()
+
+
+# ---------------------------------------------------------------------------
 # Slugification (hashtags must be slug-safe)
 # ---------------------------------------------------------------------------
 
@@ -426,7 +535,11 @@ def build_csv(
             # Should have been caught by validate_price_law; skip defensively.
             continue
         brand = p.brand if p.brand else seller.store_name
-        description = p.description_id if p.description_id.strip() else p.description_en
+        # Price Law: generated prose may not carry a price the seller did not
+        # confirm, and the column may never be empty — the name is the fallback.
+        description = description_text(
+            p.description_id, p.description_en, fallback=p.name or p.sku
+        )
         children = children_by_parent.get(p.sku, [])
         # The image is named by the URL, not the record: a promoted angle photo
         # means ``clean_url`` names another SKU (see :func:`photo_sku`).
@@ -486,9 +599,13 @@ def build_captions(
             price_line = format_price_display(p.price_idr)
         cat_slug = slugify_hashtag(p.category)
         brand_slug = slugify_hashtag(p.brand if p.brand else seller.store_name)
+        # Price-free prose only; an empty description omits the line entirely
+        # rather than leaving a blank gap in the caption.
+        prose = description_text(p.description_id, p.description_en)
+        prose_block = f"{prose}\n" if prose else ""
         block = (
             f"{p.name} — {price_line}\n"
-            f"{p.description_id if p.description_id.strip() else p.description_en}\n"
+            f"{prose_block}"
             f"📩 Order via WhatsApp: {seller.wa_number}\n"
             f"#jual{cat_slug} #{brand_slug} #katalogkilat\n"
             "———\n"

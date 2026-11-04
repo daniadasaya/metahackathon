@@ -23,7 +23,7 @@ import io
 from collections import deque
 from typing import Any
 
-from PIL import Image, ImageChops, ImageDraw, ImageFilter
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageOps
 
 __all__ = [
     "cut_out",
@@ -35,11 +35,24 @@ __all__ = [
     "decode_mask",
     "clean_mask",
     "gate_reference",
+    "normalise_upload",
     "iou",
 ]
 
 #: Studio background, the same off-white the composite paints.
 STUDIO_BG = (247, 247, 245)
+
+#: Longest side a photo of record may carry. Every mask coordinate, crop and
+#: cut-out is computed in this photo's pixels, so an upload is downscaled once,
+#: at the door, instead of every stage paying for a 24-megapixel frame.
+MAX_UPLOAD_SIDE = 2400
+
+#: JPEG quality for a re-encoded upload: high enough that the downscale is the
+#: only visible change.
+UPLOAD_JPEG_QUALITY = 90
+
+#: EXIF tag 274, the orientation flag a phone camera writes.
+_EXIF_ORIENTATION = 0x0112
 
 #: Threshold between mask background (0) and foreground (1).
 MASK_THRESHOLD = 127
@@ -827,3 +840,68 @@ def iou(a: tuple[int, int, int, int], b: tuple[int, int, int, int]) -> float:
     if union <= 0:
         return 0.0
     return inter / union
+
+
+# ---------------------------------------------------------------------------
+# Upload normalisation
+# ---------------------------------------------------------------------------
+
+
+class UnsupportedImage(ValueError):
+    """An upload Pillow cannot decode.
+
+    Raised on the request path so the whole job is rejected before a job folder
+    exists: a renamed text file, a truncated stream and a corrupt header are one
+    answer to the caller, never a half-created catalog.
+    """
+
+
+def normalise_upload(image_bytes: bytes) -> bytes:
+    """Decode an upload and return the JPEG that becomes the photo of record.
+
+    Everything downstream — the SAM masks, the crops, the cut-outs, the gate
+    references — is computed in this photo's pixels, so this is the one place
+    where the frame is decided:
+
+    * the bytes must decode, or :class:`UnsupportedImage` is raised and the
+      request is rejected;
+    * EXIF orientation is applied, so a portrait phone photo is stored the way
+      the seller saw it instead of lying on its side;
+    * the long side is capped at :data:`MAX_UPLOAD_SIDE` with LANCZOS and never
+      upscaled, because a 6400-pixel frame makes every pure-Pillow stage
+      several times more expensive for pixels the catalog never shows.
+
+    A JPEG that already fits and carries no rotation is returned **untouched**,
+    byte for byte: re-encoding it would change pixels for no benefit and would
+    move every recorded fixture.
+    """
+    try:
+        with Image.open(io.BytesIO(image_bytes)) as im:
+            im.load()  # force the decode: a truncated stream fails here
+            fmt = (im.format or "").upper()
+            orientation = int(im.getexif().get(_EXIF_ORIENTATION, 1) or 1)
+            width, height = im.size
+            if (
+                fmt == "JPEG"
+                and orientation == 1
+                and max(width, height) <= MAX_UPLOAD_SIDE
+            ):
+                return image_bytes
+            oriented = ImageOps.exif_transpose(im)
+            rgb = oriented.convert("RGB")
+    except Exception as exc:
+        raise UnsupportedImage(str(exc)) from exc
+
+    long_side = max(rgb.size)
+    if long_side > MAX_UPLOAD_SIDE:
+        scale = MAX_UPLOAD_SIDE / long_side
+        target = (
+            max(1, round(rgb.width * scale)),
+            max(1, round(rgb.height * scale)),
+        )
+        rgb = rgb.resize(target, Image.LANCZOS)
+
+    buf = io.BytesIO()
+    rgb.save(buf, format="JPEG", quality=UPLOAD_JPEG_QUALITY, optimize=True)
+    return buf.getvalue()
+

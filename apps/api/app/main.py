@@ -46,9 +46,10 @@ developer running bare ``uvicorn`` still gets a working ``/api/health``.
 
 from __future__ import annotations
 
+import asyncio
 import json
-import uuid
 import logging
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -60,6 +61,7 @@ from pydantic import BaseModel, ValidationError
 from pydantic.json_schema import models_json_schema
 
 from app import exporter
+from app import imaging
 from app import pipeline
 from app import schemas
 from app.exporter import PriceMissingError
@@ -219,6 +221,49 @@ async def health() -> HealthResponse:
     return HealthResponse(ok=True, mock=settings.meta_mock)
 
 
+def _read_multipart(
+    body: bytes, content_type: str
+) -> tuple[list[bytes], list[str], str | None]:
+    """Split a ``multipart/form-data`` body into photos, names and captions.
+
+    Standard library only, no extra dependency. This is pure CPU over the whole
+    upload, so :func:`create_job` runs it in a worker thread; the function itself
+    stays synchronous and testable. A body the parser cannot read raises, and the
+    caller answers 400 without creating a job.
+    """
+    from email import policy
+    from email.parser import BytesParser
+
+    header_block = ("Content-Type: " + content_type + "\r\nMIME-Version: 1.0\r\n\r\n").encode()
+    msg = BytesParser(policy=policy.default).parsebytes(header_block + body)
+
+    photo_bytes: list[bytes] = []
+    photo_names: list[str] = []
+    captions_raw: str | None = None
+    for part in (msg.get_payload() if msg.is_multipart() else []):
+        if not hasattr(part, "get_param"):
+            continue
+        disp = part.get("Content-Disposition", "")
+        name = None
+        filename = None
+        for token in disp.split(";"):
+            token = token.strip()
+            if token.startswith("name="):
+                name = token[5:].strip().strip('"')
+            elif token.startswith("filename="):
+                filename = token[9:].strip().strip('"')
+        payload = part.get_payload(decode=True)
+        if payload is None:
+            payload = b""
+        if name == "photos":
+            photo_bytes.append(payload)
+            # The name is what the seller recognises in a rejection message.
+            photo_names.append(filename or f"photo {len(photo_bytes)}")
+        elif name == "captions":
+            captions_raw = payload.decode("utf-8")
+    return photo_bytes, photo_names, captions_raw
+
+
 @app.post(
     "/api/jobs",
     response_model=JobState,
@@ -233,42 +278,17 @@ async def create_job(
     if "multipart/form-data" not in content_type:
         return _error(400, ErrorCode.INVALID_REQUEST, "Expected multipart/form-data.")
 
-    # Parse the multipart body with the standard library, no extra dependency.
-    from email import policy
-    from email.parser import BytesParser
-
     body = await request.body()
-    header_block = ("Content-Type: " + content_type + "\r\nMIME-Version: 1.0\r\n\r\n").encode()
     try:
-        msg = BytesParser(policy=policy.default).parsebytes(header_block + body)
+        # The parser walks every byte of the upload: ~300 ms on a 9 MB pack,
+        # long enough to freeze the poll route if it ran on the event loop.
+        photo_bytes, photo_names, captions_raw = await asyncio.to_thread(
+            _read_multipart, body, content_type
+        )
+    except UnicodeDecodeError:
+        return _error(400, ErrorCode.INVALID_REQUEST, "captions must be UTF-8.")
     except Exception:
         return _error(400, ErrorCode.INVALID_REQUEST, "Malformed multipart body.")
-
-    photo_bytes: list[bytes] = []
-    captions_raw: str | None = None
-    for part in (msg.get_payload() if msg.is_multipart() else []):
-        if not hasattr(part, "get_param"):
-            continue
-        disp = part.get("Content-Disposition", "")
-        # parse name
-        name = None
-        filename = None
-        for token in disp.split(";"):
-            token = token.strip()
-            if token.startswith("name="):
-                name = token[5:].strip().strip('"')
-            elif token.startswith("filename="):
-                filename = token[9:].strip().strip('"')
-        payload = part.get_payload(decode=True)
-        if payload is None:
-            payload = b""
-        if name == "photos":
-            photo_bytes.append(payload)
-        elif name == "captions":
-            try:
-                captions_raw = payload.decode("utf-8")
-            except UnicodeDecodeError:
-                return _error(400, ErrorCode.INVALID_REQUEST, "captions must be UTF-8.")
 
     if not photo_bytes:
         return _error(400, ErrorCode.INVALID_REQUEST, "At least one photo is required.")
@@ -296,6 +316,26 @@ async def create_job(
         return _error(400, ErrorCode.INVALID_REQUEST, "captions.photos must be a list.")
     photos_caps = [str(x) for x in photos_caps]
     captions_payload = {"general": general, "photos": photos_caps}
+
+    # The door: every upload is decoded, oriented and capped at MAX_UPLOAD_SIDE
+    # once, here, before a job folder exists. An undecodable file rejects the
+    # whole request — a job with one dead photo would spend minutes producing
+    # a catalog nobody can ship. The decode is Pillow work, so it runs off the
+    # event loop like every other CPU-bound call in this service.
+    normalised = await asyncio.gather(
+        *(asyncio.to_thread(imaging.normalise_upload, data) for data in photo_bytes),
+        return_exceptions=True,
+    )
+    photos_of_record: list[bytes] = []
+    for index, result in enumerate(normalised):
+        if isinstance(result, BaseException):
+            return _error(
+                400,
+                ErrorCode.INVALID_REQUEST,
+                f"Photo {index + 1} ({photo_names[index]}) is not a decodable image.",
+            )
+        photos_of_record.append(result)
+    photo_bytes = photos_of_record
 
     job_id = f"job-{uuid.uuid4().hex[:12]}"
     from datetime import datetime as _dt, timezone as _tz
@@ -458,7 +498,11 @@ async def export_job(job_id: str, body: ExportRequest) -> ExportResponse | JSONR
         if record_path is None or not record_path.is_file():
             return _error(404, ErrorCode.NOT_FOUND, f"No job record for {job_id!r}.")
     try:
-        files = exporter.run_export(job_id, body.products, body.seller, settings.base_url)
+        # Building four files is Pillow + zip work over the whole catalog: it
+        # runs off the event loop so a download never freezes the poll route.
+        files = await asyncio.to_thread(
+            exporter.run_export, job_id, body.products, body.seller, settings.base_url
+        )
     except PriceMissingError as exc:
         return _error(
             400,
@@ -757,52 +801,64 @@ async def get_product_page(job_id: str, sku: str) -> Response:
         seller = raw_seller if isinstance(raw_seller, dict) else {}
 
     if product is None:
-        html = _missing_product_page_html(job_id=job_id, sku=sku, base=base)
+        # A job or SKU with no export record is a missing page, not a live one:
+        # crawlers, link previews and a stale shared link must read the same
+        # answer. The body stays the styled "Produk belum tersedia" document,
+        # and it is never cached, so a later export makes the link work at once.
+        return Response(
+            content=_missing_product_page_html(job_id=job_id, sku=sku, base=base),
+            status_code=404,
+            media_type="text/html; charset=utf-8",
+            headers={"Cache-Control": "no-store"},
+        )
+    name = str(product.get("name") or sku)
+    price_idr = product.get("price_idr")
+    via_chat = bool(product.get("price_via_chat", False))
+    # Price Law: the seller's confirmed value, or the words "harga via chat".
+    # A hint, a suggestion and a zero never reach this page.
+    if via_chat or price_idr is None:
+        price_text = "harga via chat"
     else:
-        name = str(product.get("name") or sku)
-        price_idr = product.get("price_idr")
-        via_chat = bool(product.get("price_via_chat", False))
-        # Price Law: the seller's confirmed value, or the words "harga via chat".
-        # A hint, a suggestion and a zero never reach this page.
-        if via_chat or price_idr is None:
-            price_text = "harga via chat"
-        else:
-            price_text = exporter.format_price_display(int(price_idr))
-        store_name = str(seller.get("store_name") or "").strip()
-        wa_number = str(seller.get("wa_number") or "").strip()
-        wa_url = None
-        if wa_number:
-            text = f"Halo, saya mau tanya {name} ({sku})"
-            wa_url = f"https://wa.me/{wa_number}?text=" + _urlparse.quote(text, safe="")
-        attributes = product.get("attributes")
-        attributes = attributes if isinstance(attributes, dict) else {}
-        condition = {"new": "Baru", "used": "Bekas"}.get(str(product.get("condition") or ""))
-        candidates = (
-            product.get("category"),
-            product.get("brand"),
-            attributes.get("color"),
-            attributes.get("size"),
-            attributes.get("variant"),
-            condition,
-            "Stok habis" if product.get("availability") == "out of stock" else None,
-        )
-        facts = [str(value).strip() for value in candidates if value and str(value).strip()]
-        description = str(product.get("description_id") or "").strip() or str(
-            product.get("description_en") or ""
-        ).strip()
-        html = _product_page_html(
-            job_id=job_id,
-            sku=sku,
-            name=name,
-            price_text=price_text,
-            price_is_text=via_chat or price_idr is None,
-            store_name=store_name,
-            description=description,
-            facts=facts,
-            image_urls=[f"{base}/p/{job_id}/{img_sku}.jpg", *extra_image_urls],
-            wa_url=wa_url,
-            base=base,
-        )
+        price_text = exporter.format_price_display(int(price_idr))
+    store_name = str(seller.get("store_name") or "").strip()
+    wa_number = str(seller.get("wa_number") or "").strip()
+    wa_url = None
+    if wa_number:
+        text = f"Halo, saya mau tanya {name} ({sku})"
+        wa_url = f"https://wa.me/{wa_number}?text=" + _urlparse.quote(text, safe="")
+    attributes = product.get("attributes")
+    attributes = attributes if isinstance(attributes, dict) else {}
+    condition = {"new": "Baru", "used": "Bekas"}.get(str(product.get("condition") or ""))
+    candidates = (
+        product.get("category"),
+        product.get("brand"),
+        attributes.get("color"),
+        attributes.get("size"),
+        attributes.get("variant"),
+        condition,
+        "Stok habis" if product.get("availability") == "out of stock" else None,
+    )
+    facts = [str(value).strip() for value in candidates if value and str(value).strip()]
+    # Price Law: the prose is stripped of any price sentence, so the page
+    # shows the seller's confirmed value and nothing else. An empty result
+    # omits the description block rather than rendering a blank paragraph.
+    description = exporter.description_text(
+        str(product.get("description_id") or ""),
+        str(product.get("description_en") or ""),
+    )
+    html = _product_page_html(
+        job_id=job_id,
+        sku=sku,
+        name=name,
+        price_text=price_text,
+        price_is_text=via_chat or price_idr is None,
+        store_name=store_name,
+        description=description,
+        facts=facts,
+        image_urls=[f"{base}/p/{job_id}/{img_sku}.jpg", *extra_image_urls],
+        wa_url=wa_url,
+        base=base,
+    )
     return Response(content=html, media_type="text/html; charset=utf-8", headers={"Cache-Control": "public, max-age=3600"})
 
 

@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from PIL import Image
 from typing import Any
-from app import imaging, meta_client, schemas
+from app import exporter, imaging, meta_client, schemas
 from app.meta_client import MetaModelNotFound
 from app.schemas import (Concept, ErrorCode, ExtractContext, JobProgress, JobStage, JobState, JobStatus, MaskResult, Product, ProductEntry, StageError)
 
@@ -207,6 +207,19 @@ def _visible_text_for(product, concepts_per_photo):
                 return vt
     return None
 
+def _photo_area(photo_bytes: bytes) -> int | None:
+    """Pixel area of a photo, or ``None`` when it does not decode.
+
+    An unreadable photo must not disable the area filter for its own masks: the
+    caller keeps every mask in that case, exactly as before.
+    """
+    try:
+        with Image.open(io.BytesIO(photo_bytes)) as im:
+            return im.size[0] * im.size[1]
+    except Exception:
+        return None
+
+
 def _crop_bytes_for(job_id, sku):
     path = job_dir(job_id) / "crops" / f"{sku}-crop.png"
     if path.is_file():
@@ -290,12 +303,33 @@ async def _run_stage_d_one(job_id, product, crop_bytes, sem, deadline, prev_prod
     # failure, or a spent deadline — ends in the deterministic composite, which
     # cannot distort the product. The composite is built exactly once, outside
     # the try above, so a corrupt crop raises here and is boxed by the caller as
-    # ONE error instead of two.
-    cleaned_bytes = imaging.composite(crop_bytes)
+    # ONE error instead of two. It is Pillow work over a full cut-out, so it runs
+    # in a worker thread: the event loop must answer /api/health while a job is
+    # being built.
+    cleaned_bytes = await asyncio.to_thread(imaging.composite, crop_bytes)
     product.cleanup_method = schemas.CleanupMethod.COMPOSITE
     product.fidelity = verdict if verdict is not None else pre_verdict
     clean_path.write_bytes(cleaned_bytes)
     return product
+
+def _without_price_prose(entry: ProductEntry) -> ProductEntry:
+    """Return ``entry`` with price sentences removed from both descriptions.
+
+    Stage E sometimes restates a price inside the prose ("harga hemat hanya
+    Rp 35.000"). That number is never the seller's confirmed value, so it may
+    not reach ``entries.json``, Review, or any export. The strip runs here, at
+    the one point where an entry is applied to a product, so a cache hit and a
+    fresh extraction are normalised identically. Clean prose is returned
+    unchanged, so this is idempotent and cheap on the common path.
+    """
+    description_id = exporter.strip_price_mentions(entry.description_id)
+    description_en = exporter.strip_price_mentions(entry.description_en)
+    if description_id == entry.description_id and description_en == entry.description_en:
+        return entry
+    return entry.model_copy(
+        update={"description_id": description_id, "description_en": description_en}
+    )
+
 
 async def run_pipeline(job_id, photos, captions):
     job_dir(job_id).mkdir(parents=True, exist_ok=True)
@@ -433,12 +467,7 @@ async def run_pipeline(job_id, photos, captions):
     mask_to_photo = {}
     deduped = []
     for i, photo_masks in enumerate(masks_per_photo):
-        photo_area = None
-        try:
-            with Image.open(io.BytesIO(photos[i])) as im:
-                photo_area = im.size[0] * im.size[1]
-        except Exception:
-            photo_area = None
+        photo_area = await asyncio.to_thread(_photo_area, photos[i])
         area_kept = [
             m for m in photo_masks
             if photo_area is None or area_ok(m, photo_area)
@@ -463,7 +492,8 @@ async def run_pipeline(job_id, photos, captions):
             if crop_path.is_file():
                 crop_bytes = crop_path.read_bytes()
             else:
-                crop_bytes = imaging.cut_out(photo, mask)
+                # Pillow over the full frame: worker thread, never the loop.
+                crop_bytes = await asyncio.to_thread(imaging.cut_out, photo, mask)
                 crop_path.write_bytes(crop_bytes)
         except Exception:
             errors.append(StageError(photo_index=photo_index, stage=JobStage.CLEANUP, code=ErrorCode.CLEANUP_FAILED))
@@ -475,7 +505,11 @@ async def run_pipeline(job_id, photos, captions):
         ref_path = crops_dir / f"{sku}-ref.png"
         if not ref_path.is_file():
             try:
-                ref_path.write_bytes(imaging.gate_reference(photo, mask, crop_bytes))
+                ref_path.write_bytes(
+                    await asyncio.to_thread(
+                        imaging.gate_reference, photo, mask, crop_bytes
+                    )
+                )
             except Exception:
                 pass
         bbox = mask.bbox
@@ -558,7 +592,21 @@ async def run_pipeline(job_id, photos, captions):
                 clean_img_bytes = clean_img_path.read_bytes() if clean_img_path.is_file() else b""
                 if not clean_img_bytes:
                     clean_img_bytes = _crop_bytes_for(job_id, product.sku)
-                if time.monotonic() <= deadline:
+                # No deadline gate here. JOB_TIME_BUDGET_SECONDS exists to stop
+                # the expensive generative stage from running forever; Stage E
+                # is cheap, and killing it turned a slow job into a catalog of
+                # thirty untitled products. If the job is late, extraction still
+                # runs — an entry costs seconds, a nameless product costs the
+                # seller the whole catalog.
+                try:
+                    async with sem:
+                        extracted = await meta_client.extract_product(clean_img_bytes, context)
+                    if extracted:
+                        entry = extracted[0]
+                    else:
+                        raise ValueError("empty extraction")
+                except Exception:
+                    # One repair retry: re-invoke the adapter once.
                     try:
                         async with sem:
                             extracted = await meta_client.extract_product(clean_img_bytes, context)
@@ -566,22 +614,10 @@ async def run_pipeline(job_id, photos, captions):
                             entry = extracted[0]
                         else:
                             raise ValueError("empty extraction")
-                    except Exception:
-                        # One repair retry: re-invoke the adapter once.
-                        try:
-                            async with sem:
-                                extracted = await meta_client.extract_product(clean_img_bytes, context)
-                            if extracted:
-                                entry = extracted[0]
-                            else:
-                                raise ValueError("empty extraction")
-                        except Exception as second_exc:
-                            code = ErrorCode.MODEL_NOT_FOUND if isinstance(second_exc, MetaModelNotFound) else ErrorCode.EXTRACTION_FAILED
-                            errors.append(StageError(photo_index=product.source_photo_index, stage=JobStage.EXTRACT, code=code))
-                            entry = None
-                else:
-                    errors.append(StageError(photo_index=product.source_photo_index, stage=JobStage.EXTRACT, code=ErrorCode.EXTRACTION_FAILED))
-                    entry = None
+                    except Exception as second_exc:
+                        code = ErrorCode.MODEL_NOT_FOUND if isinstance(second_exc, MetaModelNotFound) else ErrorCode.EXTRACTION_FAILED
+                        errors.append(StageError(photo_index=product.source_photo_index, stage=JobStage.EXTRACT, code=code))
+                        entry = None
                 if entry is not None:
                     entries[product.sku] = entry
         except Exception:
@@ -589,6 +625,8 @@ async def run_pipeline(job_id, photos, captions):
             errors.append(StageError(photo_index=product.source_photo_index, stage=JobStage.EXTRACT, code=ErrorCode.EXTRACTION_FAILED))
             entry = None
         if entry is not None:
+            entry = _without_price_prose(entry)
+            entries[product.sku] = entry
             product.name = entry.name
             product.description_id = entry.description_id
             product.description_en = entry.description_en
@@ -650,7 +688,7 @@ async def toggle_cleanup_product(job_id, sku):
     clean_path = job_dir(job_id) / "clean" / f"{sku}.png"
     clean_path.parent.mkdir(parents=True, exist_ok=True)
     if product.cleanup_method == schemas.CleanupMethod.MUSE_IMAGE:
-        cleaned = imaging.composite(crop_bytes)
+        cleaned = await asyncio.to_thread(imaging.composite, crop_bytes)
         clean_path.write_bytes(cleaned)
         product.cleanup_method = schemas.CleanupMethod.COMPOSITE
     else:
@@ -675,17 +713,17 @@ async def toggle_cleanup_product(job_id, sku):
                     and verdict.color_match
                     and verdict.logo_text_match
                 ):
-                    cleaned = imaging.composite(crop_bytes)
+                    cleaned = await asyncio.to_thread(imaging.composite, crop_bytes)
                     product.cleanup_method = schemas.CleanupMethod.COMPOSITE
                 else:
                     product.cleanup_method = schemas.CleanupMethod.MUSE_IMAGE
             else:
                 # Pre-gate rejected the crop: no edit was attempted.
-                cleaned = imaging.composite(crop_bytes)
+                cleaned = await asyncio.to_thread(imaging.composite, crop_bytes)
                 product.cleanup_method = schemas.CleanupMethod.COMPOSITE
                 verdict = pre_verdict
         except Exception:
-            cleaned = imaging.composite(crop_bytes)
+            cleaned = await asyncio.to_thread(imaging.composite, crop_bytes)
             product.cleanup_method = schemas.CleanupMethod.COMPOSITE
         else:
             product.fidelity = verdict

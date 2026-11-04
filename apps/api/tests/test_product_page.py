@@ -298,21 +298,38 @@ def test_unknown_sku_on_a_known_job_renders_a_graceful_page(
 ) -> None:
     exporter.write_export_record("mock-1-2", [_product()], _seller())
 
-    body = _body(sku="KK-0007")
+    response = _page(sku="KK-0007")
+    body = response.body.decode()
 
+    # A missing product is a 404, not a soft 200: crawlers and link previews
+    # must read the same answer a buyer does.
+    assert response.status_code == 404
     assert "Produk belum tersedia" in body
     assert "KK-0007" in body
     assert "<style>" in body
     assert "wa.me" not in body  # a stale link offers nothing it cannot honour
     assert "harga via chat" not in body
+    # Never cached: the moment an export exists the same link must work.
+    assert response.headers["cache-control"] == "no-store"
 
 
 def test_unknown_job_renders_the_same_graceful_page(exports_dir: Path, base_url: str) -> None:
-    body = _body(job_id="job-absent", sku="KK-0001")
+    response = _page(job_id="job-absent", sku="KK-0001")
+    body = response.body.decode()
 
+    assert response.status_code == 404
     assert "Produk belum tersedia" in body
     assert "KK-0001" in body
     assert 'name="viewport"' in body
+
+
+def test_a_product_in_the_record_stays_a_200(exports_dir: Path, base_url: str) -> None:
+    exporter.write_export_record("mock-1-2", [_product()], _seller())
+
+    response = _page()
+
+    assert response.status_code == 200
+    assert "Produk belum tersedia" not in response.body.decode()
 
 
 # ---------------------------------------------------------------------------

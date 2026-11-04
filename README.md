@@ -30,12 +30,12 @@ Follow this step-by-step walkthrough to evaluate the complete end-to-end user ex
 
 2. **Progress Screen (`/jobs/{job_id}`)**:
    - The screen displays a live 5-stage progress timeline:
-     - **Stage A (Concepts)**: `muse-spark-1.3-contributor` discovers product concepts (`smartphone`, `earphones`, `charger`) and transcribes visible text.
-     - **Stage B (Segmentation)**: `sam-3.1` streams instance segmentation masks (one concept per request).
-     - **Stage C (Cut-out)**: Pillow extracts alpha crops with 8% padding and builds a two-panel reference.
-     - **Stage D (Studio Cleanup)**: Two-stage fidelity gate audits crops before and after `muse-image-1.0` studio edits; rejected edits fall back to deterministic composites.
-     - **Stage E (Grounded Extraction)**: `muse-spark-1.3-contributor` runs over Meta's Responses API with `web_search` grounding and `json_schema` output.
-   - For Pack A (2 photos, 16 products), live processing takes about 5 minutes (4.5–6 minutes). Smaller batches finish sooner.
+     - **A — Spotting products** (*"Mengenali produk"*): `muse-spark-1.3-contributor` discovers product concepts (`smartphone`, `earphones`, `charger`) and transcribes visible text.
+     - **B — Cutting each product out** (*"Memotong tiap produk"*): `sam-3.1` streams instance segmentation masks (one concept per request), followed by deterministic Pillow alpha cut-outs.
+     - **C — Tidying photos** (*"Merapikan foto"*): Two-stage fidelity gate audits crops before and after `muse-image-1.0` studio edits, falling back to deterministic composites on rejection.
+     - **D — Writing the catalog** (*"Menulis katalog"*): `muse-spark-1.3-contributor` runs search-grounded (`web_search`) structured extraction over Meta's Responses API into canonical categories.
+     - **E — Catalog result** (*"Hasil katalog"*): Aggregates tidied products into ready-to-review catalog cards.
+   - For Pack A (2 photos, 16 products), live processing takes about 5–6.5 minutes depending on the pack and API load.
    - Once completed, the screen indicates "Katalog siap" (Catalog ready) with 16 products and 0 errors. Tap **"Tinjau 16 produk"** ("Review 16 products").
 
 3. **Review Screen (`/review`) & The Strict Price Law Test**:
@@ -57,10 +57,10 @@ Follow this step-by-step walkthrough to evaluate the complete end-to-end user ex
      - **`katalog-kilat-images.zip` (Photo Archive)**: Contains clean studio JPEGs (`KK-0001.jpg`), clean crops (`KK-0001-crop.jpg`), and secondary angles, with `katalog-{job_id}.csv` bundled at the root.
      - **`katalog-…-captions.txt` (Instagram Captions)**: Ready-to-copy caption blocks containing product title, confirmed price (or `"harga via chat"`), description prose, WhatsApp ordering line with seller phone number, and slugified category/brand hashtags separated by dividers.
      - **`katalog-…-whatsapp.txt` (WhatsApp Broadcast List)**: Chat-ready broadcast text with Markdown formatting, confirmed prices, and direct inquiry links.
-     - **Public Product Page (`/p/{job_id}/{sku}`)**: Under "Tautan produk" ("Product links"), click one of the share links. It opens a clean, standalone mobile product storefront rendering the studio hero photo (with a scroll-snap carousel track and count badge for merged angles), store chip, product name, confirmed price (or `"harga via chat"`), description prose, category/condition chips, OpenGraph link-preview tags, system-matched light/dark styling, and a pinned bottom bar with a one-tap **"Pesan via WhatsApp"** order button pointing to `wa.me/{phone}` (or "Hubungi toko" when no WhatsApp number was entered).
+     - **Public Product Page (`/p/{job_id}/{sku}`)**: Under **"Tautan produk"** ("Product links", tap to expand), click one of the share links. It opens a clean, standalone mobile product storefront rendering the studio hero photo (with a scroll-snap carousel track and count badge for merged angles), store chip, product name, confirmed price (or `"harga via chat"`), description prose, category/condition chips, OpenGraph link-preview tags, system-matched light/dark styling, and a pinned bottom bar with a one-tap **"Pesan via WhatsApp"** order button pointing to `wa.me/{phone}`.
    - *Additional Sample Packs & Custom Photos*:
      - You can also upload your own multi-product photos (JPG, PNG, WebP) on the Upload screen. Processing time scales with the number of products.
-     - Sample packs are available on the Upload screen: **Paket B** (clothes rack), **Paket C** (snack shelf), and **Paket D** (two opposite-side photos of gadget accessories designed specifically to showcase multi-angle merging).
+     - Sample packs are available on the Upload screen: **Paket B** (clothing rack), **Paket C** (cardboard snack box / "Kardus snack"), and **Paket D** (two opposite-side photos of gadget accessories designed specifically to showcase multi-angle merging).
 
 ---
 
@@ -148,11 +148,11 @@ If you prefer to run services directly on your host machine:
 
 3. **Running the Test Suite**:
    ```bash
-   # Run backend offline test suite (256 tests) inside container:
+   # Run backend offline test suite inside container (the full offline suite passes):
    docker compose -p katalogkilat exec -e META_MOCK=true api pytest apps/api/tests -q
-   # (Or by container name: docker exec -e META_MOCK=true katalogkilat-api pytest apps/api/tests -q)
 
-   # Verify frontend TypeScript build:
+   # Verify frontend TypeScript build (install dependencies first if not already done):
+   npm --prefix apps/web install
    npm --prefix apps/web run build
    ```
    The backend test suite uses recorded fixtures and needs no key or network; it is not a live check.
@@ -167,7 +167,7 @@ If you prefer to run services directly on your host machine:
 | `404 model_not_found` | Account lacks model entitlement | Your Meta account lacks entitlement to `muse-spark-1.3-contributor`, `sam-3.1`, or `muse-image-1.0`. The service surfaces this access problem immediately and does not retry. |
 | CSV image links broken / dead | Mismatched `BASE_URL` | The exported CSV builds absolute image URLs from `BASE_URL`. For local testing, ensure `BASE_URL=http://localhost:8180` in `.env`. Re-export the catalog after correcting. |
 | Port 8180 or container name conflict | Another process binds port 8180, or a container named `katalogkilat-api` already exists | Change the host port in `docker-compose.yml` (e.g. `"127.0.0.1:8182:8000"`) AND update `BASE_URL` in `.env` to match (`http://localhost:8182`). If a container named `katalogkilat-api` already exists from an earlier run, remove it with `docker rm -f katalogkilat-api` or remove the pinned `container_name: katalogkilat-api` line in `docker-compose.yml`. |
-| Long processing time (~5 min) | High model count and sequential audits | Pack A processes 16 products across 2 photos with streaming segmentation and two-stage fidelity audits per item (about 4.5–6 minutes live). This is normal. Do not reload the progress page during processing. |
+| Long processing time (~5–6.5 min) | High model count and sequential audits | Live processing involves streaming segmentation, two-stage fidelity audits, and grounded extraction per item (about 5–6.5 minutes live depending on the pack and API load). This is normal. |
 | Images fail to load on `/p/` | Data volume permission or missing job | Check that `./data` exists and is writable. Healthy jobs serve verified JPEG artifacts (`image/jpeg`); missing artifacts return a deterministic 1024×1024 JPEG placeholder. |
 | `mock: true` in `/api/health` | `META_MOCK` is not `false` | When `META_MOCK` is unset or not `false`, the server runs in mock mode using fixtures. Ensure `META_MOCK=false` in `.env` and restart the container. |
 
@@ -326,7 +326,7 @@ The FastAPI backend exposes 9 REST routes with contracts defined in `apps/api/op
 
 | Method | Endpoint | Purpose |
 | :--- | :--- | :--- |
-| `GET` | `/api/health` | Service health probe and Meta Model API connectivity check |
+| `GET` | `/api/health` | Service liveness probe reporting server status and mode (`mock: true/false`) |
 | `POST` | `/api/jobs` | Create multi-photo extraction job from uploaded photos and captions |
 | `GET` | `/api/jobs/{job_id}` | Poll job status, pipeline progress, and extracted product records |
 | `POST` | `/api/jobs/{job_id}/products/{sku}/retry-cleanup` | Retry generative studio cleanup for a specific SKU |
@@ -358,6 +358,7 @@ metahackathon/
 │   ├── api/                      # FastAPI backend service, pipeline, schemas, and tests
 │   └── web/                      # Vite + React SPA, components, routes, locales, and design system
 ├── docs/                         # Model prompts and specifications
+├── scripts/                      # Optional server deployment teardown scripts
 ├── .dockerignore                 # Container build exclusions
 ├── .env.example                  # Environment configuration template
 ├── .gitignore                    # Git tracking exclusions
