@@ -47,6 +47,14 @@ export function CloseIcon(props: IconProps) {
   );
 }
 
+export function SettingsIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 7h16M4 17h16M8 4v6M16 14v6" />
+    </Svg>
+  );
+}
+
 export function PlusIcon(props: IconProps) {
   return (
     <Svg {...props}>

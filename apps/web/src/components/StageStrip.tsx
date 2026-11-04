@@ -12,15 +12,15 @@ interface StageStripProps {
   states: readonly TileState[];
 }
 
-/** Full-width stepper: five 40×40 tiles; the rules between them flex to fill the row (min 6px). */
+/** Each stage has a visible name and state in addition to its status icon. */
 export function StageStrip({ stageNames, stateNames, label, states }: StageStripProps) {
   return (
-    <ol className="m-0 flex w-full list-none items-center p-0" aria-label={label}>
+    <ol className="kk-stage-list" aria-label={label}>
       {STAGE_LETTERS.map((letter, index) => {
         const state = states[index] ?? 'pending';
         const ruleState = states[index - 1] === 'done' ? 'done' : 'pending';
         return (
-          <li key={letter} className={`m-0 flex items-center p-0 ${index > 0 ? 'flex-1' : 'flex-none'}`}>
+          <li key={letter} className="kk-stage-row">
             {index > 0 ? <span className="kk-rule" data-state={ruleState} aria-hidden="true" /> : null}
             <span
               className="kk-tile"
@@ -32,6 +32,7 @@ export function StageStrip({ stageNames, stateNames, label, states }: StageStrip
               {state === 'failed' ? <RetryIcon size={18} /> : null}
               {state === 'active' || state === 'pending' ? letter : null}
             </span>
+            <span className="kk-stage-copy"><strong>{stageNames[index]}</strong><small>{stateNames[state]}</small></span>
           </li>
         );
       })}

@@ -17,7 +17,7 @@ export function EmptyState({ text, icon, children }: EmptyStateProps) {
           {icon}
         </span>
       ) : null}
-      <p className="max-w-[28ch] text-base text-fg-2">{text}</p>
+      <p className="max-w-(--empty-copy-width) text-base text-fg-2">{text}</p>
       {children}
     </div>
   );

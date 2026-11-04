@@ -4,7 +4,7 @@ import { PhotoIcon } from './Icons';
 
 interface ProductPhotoProps {
   src: string;
-  /** Tailwind sizing for the frame, e.g. "h-[104px] w-[104px]". */
+  /** Tailwind sizing for the frame. */
   className: string;
 }
 

@@ -1,6 +1,3 @@
-import '@fontsource-variable/outfit';
-import '@fontsource-variable/plus-jakarta-sans';
-import '@fontsource-variable/jetbrains-mono';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';

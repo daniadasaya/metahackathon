@@ -86,8 +86,8 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
         <div className="mt-5">
           <EmptyState text={t('progress.loadFailed')} icon={<AlertIcon size={24} />}>
             {code !== null ? <p className="text-sm text-danger">{errorText(code)}</p> : null}
-            <button type="button" className="kk-btn kk-btn-secondary kk-tactile" onClick={uploadAgain}>
-              {t('progress.uploadAgain')}
+            <button type="button" className="kk-btn kk-btn-secondary kk-tactile" onClick={() => void query.refetch()}>
+              {t('common.retry')}
             </button>
           </EmptyState>
         </div>
@@ -98,7 +98,7 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
   if (job === undefined) {
     return (
       <Column>
-        <h1 className="text-2xl">{t('progress.title')}</h1>
+        <h1 className="text-2xl">{t('common.loading')}</h1>
         <div className="mt-5 flex flex-col gap-3" role="status" aria-label={t('common.loading')}>
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-5 w-2/3" />
@@ -135,13 +135,13 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
         : t('progress.titleDone')
       : job.status === 'failed'
         ? t('progress.titleFailed')
-        : t('progress.title');
+        : caption;
   const clean = finished && errors.length === 0 && productCount > 0;
 
   return (
     <>
       <Column>
-        <h1 className="text-2xl">{title}</h1>
+        <h1 className="text-2xl" aria-live="polite">{title}</h1>
         {finished && errors.length > 0 && productCount > 0 ? (
           <p className="mt-2 text-base text-fg-2">{t('progress.doneWithNotes', { n: productCount })}</p>
         ) : null}
@@ -153,12 +153,6 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
             stateNames={stateNames}
             states={states}
           />
-          {caption !== '' ? (
-            <p className="text-sm font-bold text-fg-2" aria-live="polite">
-              {caption}
-            </p>
-          ) : null}
-
           {clean ? (
             <div className="flex items-center gap-3 pt-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success text-surface">
@@ -225,6 +219,10 @@ export function ProgressScreen({ jobId }: { jobId: string }) {
                       >
                         <RetryIcon size={16} />
                         {busy ? t('progress.retrying') : t('progress.retryItem', { n: photoNumber(error.photo_index) })}
+                      </button>
+                    ) : error.code !== 'model_not_found' ? (
+                      <button type="button" className="kk-btn kk-btn-secondary kk-tactile mt-3" onClick={uploadAgain}>
+                        {t('progress.uploadAgain')}
                       </button>
                     ) : null}
                   </li>

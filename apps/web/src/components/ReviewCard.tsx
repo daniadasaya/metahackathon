@@ -1,4 +1,4 @@
-import { memo, useId, useLayoutEffect, useRef } from 'react';
+import { memo, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import { gateState, hasPrice, type ReviewedProduct } from '../lib/catalog';
 import { formatRupiah, parseRupiahInput } from '../lib/format';
@@ -7,6 +7,7 @@ import { editProduct, mergeSkuInto, promoteSkuPhoto, unmergeSku } from '../lib/s
 import { AlertIcon, ChatIcon, CheckIcon, LayersIcon } from './Icons';
 import { ProductPhoto } from './ProductPhoto';
 import { Switch } from './Switch';
+import { BottomSheet } from './BottomSheet';
 
 interface MergeTarget {
   sku: string;
@@ -24,17 +25,32 @@ function NameField({ value, label, onCommit }: { value: string; label: string; o
   useLayoutEffect(() => {
     const el = ref.current;
     if (el === null) return;
-    // The box is border-box: height must cover the content plus the 1px top and bottom borders.
-    el.style.height = 'auto';
-    const borders = el.offsetHeight - el.clientHeight;
-    el.style.height = `${el.scrollHeight + borders}px`;
+    function resize() {
+      if (el === null) return;
+      el.style.height = 'auto';
+      const borders = el.offsetHeight - el.clientHeight;
+      el.style.height = `${el.scrollHeight + borders}px`;
+    }
+    resize();
+    let previousWidth = el.parentElement?.clientWidth;
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      const width = el.parentElement?.clientWidth;
+      if (width !== previousWidth) {
+        previousWidth = width;
+        window.cancelAnimationFrame(frame);
+        frame = window.requestAnimationFrame(resize);
+      }
+    });
+    if (el.parentElement !== null) observer.observe(el.parentElement);
+    return () => { observer.disconnect(); window.cancelAnimationFrame(frame); };
   }, [value]);
 
   return (
     <textarea
       ref={ref}
       rows={2}
-      className="kk-input resize-none px-3 py-2 font-display text-lg"
+      className="kk-input kk-name resize-none"
       value={value}
       aria-label={label}
       onChange={(event) => onCommit(event.target.value.replace(/\s*\n\s*/g, ' '))}
@@ -61,7 +77,7 @@ interface ReviewCardProps {
   mergeTargets: readonly MergeTarget[];
 }
 
-/** Brandkit §4 Review Card. Name, price, availability, inclusion are editable; the rest is read-only. */
+/** Name, price, availability and inclusion are editable; the rest is read-only. */
 export const ReviewCard = memo(function ReviewCard({
   product,
   suggestion,
@@ -71,7 +87,7 @@ export const ReviewCard = memo(function ReviewCard({
   const { t, locale } = useT();
   const uid = useId();
   const { sku } = product;
-  const mergeSelectId = `${uid}-merge`;
+  const [mergeOpen, setMergeOpen] = useState(false);
 
   const gate = gateState(product);
   const viaChat = product.price_via_chat;
@@ -98,7 +114,7 @@ export const ReviewCard = memo(function ReviewCard({
       data-price-state={priceState}
     >
       <div className="flex gap-3">
-        <ProductPhoto src={product.clean_url} className="h-[72px] w-[72px]" />
+        <ProductPhoto src={product.clean_url} className="h-18 w-18" />
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
           <NameField
             value={product.name}
@@ -127,7 +143,7 @@ export const ReviewCard = memo(function ReviewCard({
       </div>
 
       {mergedPhotos.length > 0 ? (
-        <section className="flex flex-col gap-2 rounded-[12px] border border-line p-2">
+        <section className="flex flex-col gap-2 rounded-(--r-sm) border border-line p-2">
           <h3 className="m-0 text-xs font-bold text-fg-muted">
             {t('review.mergedPhotosTitle', { n: mergedPhotos.length })}
           </h3>
@@ -208,7 +224,7 @@ export const ReviewCard = memo(function ReviewCard({
         {t('review.viaChat')}
       </button>
 
-      <div className="flex flex-col gap-1 pt-2">
+      <div className="kk-review-switches flex flex-col">
         <div className="flex items-center justify-between gap-3">
           <span id={`${uid}-stock`} className="text-sm font-bold">
             {t('review.inStock')}
@@ -232,25 +248,13 @@ export const ReviewCard = memo(function ReviewCard({
       </div>
 
       {mergeTargets.length > 0 ? (
-        <div className="flex flex-col gap-1">
-          <label htmlFor={mergeSelectId} className="text-sm font-bold">
-            {t('review.mergeLabel')}
-          </label>
-          <select
-            id={mergeSelectId}
-            className="kk-input min-h-11 w-full"
-            value=""
-            onChange={(event) => {
-              if (event.target.value !== '') mergeSkuInto(sku, event.target.value);
-            }}
-          >
-            <option value="">{t('review.mergePlaceholder')}</option>
-            {mergeTargets.map((target) => (
-              <option key={target.sku} value={target.sku}>
-                {target.sku} — {target.name}
-              </option>
-            ))}
-          </select>
+        <div>
+          <button type="button" className="kk-btn kk-btn-secondary w-full" aria-haspopup="dialog" onClick={() => setMergeOpen(true)}>{t('review.mergeLabel')}</button>
+          {mergeOpen ? <BottomSheet title={t('review.mergePlaceholder')} onClose={() => setMergeOpen(false)}>
+            <div className="kk-sheet-list flex flex-col gap-2">
+              {mergeTargets.map((target) => <button key={target.sku} type="button" className="kk-btn kk-btn-secondary w-full" onClick={() => { mergeSkuInto(sku, target.sku); setMergeOpen(false); }}>{target.sku} — {target.name}</button>)}
+            </div>
+          </BottomSheet> : null}
         </div>
       ) : null}
 

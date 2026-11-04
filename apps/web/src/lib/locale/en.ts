@@ -16,6 +16,7 @@ export const en = {
     loading: 'Loading…',
   },
   header: {
+    settings: 'Settings',
     language: 'Language',
     languageId: 'Bahasa Indonesia',
     languageEn: 'English',
@@ -100,7 +101,7 @@ export const en = {
     segment: 'Cutting each product out',
     cleanup: 'Tidying photos',
     extract: 'Writing the catalog',
-    done: 'Done',
+    done: 'Catalog result',
   },
   review: {
     title: 'Review products',
@@ -133,6 +134,7 @@ export const en = {
     summary: '{n} products ready · {m} missing a price',
     blockedList: '{list} missing a price',
     blockedMore: '{list} and {n} more missing a price',
+    blockersTitle: 'Products missing a price',
     details: 'Product details',
     category: 'Category',
     brand: 'Brand',
@@ -143,13 +145,16 @@ export const en = {
     attrSize: 'Size',
     attrVariant: 'Variant',
     noneIncluded: 'Include at least one product to export.',
-    exportCta: 'Continue to export',
+    exportCta: 'Continue',
     stillRunning: 'Products are still being processed.',
     seeProgress: 'See progress',
     empty: 'There are no products to review yet.',
     loadFailed: 'The products could not be loaded.',
   },
   preview: {
+    openProduct: 'View details for {name}',
+    productDetails: 'Product details',
+    continueExport: 'Continue to export',
     lead: 'This is how your catalog looks. It is built from what you reviewed.',
     backToReview: 'Back to review',
     sellerTools: 'Set up your store',
@@ -168,6 +173,8 @@ export const en = {
     empty: 'There are no products to preview yet.',
   },
   export: {
+    shareTitle: 'Product links',
+    sellerNeeded: 'Enter the store name and WhatsApp number first.',
     title: 'Export catalog',
     lead: 'Fill in your store details, then export. You get four files, ready to use.',
     sellerTitle: 'Store details',
@@ -194,20 +201,20 @@ export const en = {
     downloadsHint: 'Download buttons turn on once the export is done.',
     kind: {
       catalog_csv: {
-        label: 'Catalog CSV',
-        desc: 'For Commerce Manager: Facebook Shop, Instagram Shop, WhatsApp catalog.',
+        label: 'Meta catalog (CSV)',
+        desc: 'For Commerce Manager.',
       },
       images_zip: {
         label: 'Product photos (ZIP)',
-        desc: 'Every tidied product photo.',
+        desc: 'Your product photos.',
       },
       captions_instagram: {
         label: 'Instagram captions',
-        desc: 'Copy-and-paste text for each product.',
+        desc: 'Text for each product.',
       },
       price_list_whatsapp: {
         label: 'WhatsApp price list',
-        desc: 'Price list text to send in chat or post as a status.',
+        desc: 'A list ready to share.',
       },
     },
     empty: 'There is no catalog to export yet.',

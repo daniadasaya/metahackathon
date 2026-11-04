@@ -5,5 +5,5 @@ interface SkeletonProps {
 
 /** Loading placeholder block. Decorative: hidden from assistive tech. */
 export function Skeleton({ className = 'h-14 w-full' }: SkeletonProps) {
-  return <div aria-hidden="true" className={`rounded-[12px] bg-subtle ${className}`} />;
+  return <div aria-hidden="true" className={`kk-skeleton rounded-(--r-sm) bg-subtle ${className}`} />;
 }

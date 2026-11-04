@@ -210,7 +210,12 @@ export function useJob(jobId: string | null): UseQueryResult<JobState, ApiError>
     queryKey: ['job', jobId],
     queryFn: () => getJob(jobId ?? ''),
     enabled: jobId !== null,
-    refetchInterval: (query) => (isJobActive(query.state.data) ? POLL_INTERVAL_MS : false),
+    refetchInterval: (query) =>
+      query.state.status === 'error' && query.state.data === undefined
+        ? false
+        : isJobActive(query.state.data) ? POLL_INTERVAL_MS : false,
+    refetchOnReconnect: (query) => query.state.status !== 'error' || query.state.data !== undefined,
+    retryOnMount: false,
     retry: (failureCount, error) => (error.status === 0 || error.status >= 500) && failureCount < 2,
   });
 }

@@ -2,7 +2,6 @@ import { Outlet, createRootRoute, createRoute, createRouter, useRouterState } fr
 import { useEffect } from 'react';
 
 import { AppHeader } from './components/AppHeader';
-import { StepRail } from './components/StepRail';
 import { useT } from './lib/locale';
 import { ExportScreen } from './screens/ExportScreen';
 import { PreviewScreen } from './screens/PreviewScreen';
@@ -16,7 +15,7 @@ function RootLayout() {
   const { t } = useT();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
-  // Router scroll restoration is off (it writes sessionStorage; only the six `kk:*` keys may be
+  // Router scroll restoration is off (it writes sessionStorage; only the five `kk:*` keys may be
   // persisted), so each screen starts at the top.
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -24,16 +23,25 @@ function RootLayout() {
     document.getElementById('kk-device-scroll')?.scrollTo(0, 0);
   }, [pathname]);
 
+  useEffect(() => {
+    function revealField(event: FocusEvent) {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement)) return;
+      window.setTimeout(() => { if (document.activeElement === target) target.scrollIntoView({ block: 'center', inline: 'nearest' }); }, 250);
+    }
+    document.addEventListener('focusin', revealField);
+    return () => document.removeEventListener('focusin', revealField);
+  }, []);
+
   return (
     <>
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-30 focus:rounded-[12px] focus:bg-surface focus:px-3 focus:py-2"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-30 focus:rounded-(--r-sm) focus:bg-surface focus:px-3 focus:py-2"
       >
         {t('app.skip')}
       </a>
       <AppHeader />
-      <StepRail />
       <main id="main" key={pathname} className="kk-screen">
         <Outlet />
       </main>

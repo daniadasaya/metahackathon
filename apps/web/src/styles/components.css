@@ -1,1154 +1,154 @@
-/*
- * Hand-rolled component recipes (brandkit §4). Colours come from tokens only.
- * Layout lives in Tailwind classes in the TSX; this file owns the tactile surfaces.
- */
-
 @layer base {
-  html {
-    background: var(--bg-canvas);
-    color: var(--text-primary);
-    font-family: var(--ff-body);
-    font-size: 15px;
-    line-height: 22px;
-    font-weight: 500;
-    -webkit-text-size-adjust: 100%;
+  html { background: var(--bg-canvas); color: var(--text-primary); font-family: var(--ff-body); font-size: var(--unit-16); line-height: 1.45; -webkit-text-size-adjust: 100%; }
+  body { margin: 0; min-height: 100dvh; background: var(--bg-canvas); }
+  #root { display: flex; flex-direction: column; min-height: 100dvh; }
+  main { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; }
+  h1, h2, h3, p { margin: 0; }
+  h1, h2, h3 { font-family: var(--ff-display); }
+  button, input, textarea, select { font: inherit; }
+  button, a, summary { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: var(--unit-3) solid var(--accent-secondary); outline-offset: var(--unit-2); }
+  ::placeholder { color: var(--text-muted); opacity: 1; }
+}
+
+@layer components {
+  .kk-header { position: sticky; top: var(--kk-status-inset); z-index: 20; background: var(--bg-canvas); border-bottom: var(--unit-1) solid var(--border-subtle); padding-top: env(safe-area-inset-top); }
+  .kk-header-row { display: flex; align-items: center; gap: var(--unit-8); min-height: var(--unit-60); padding: 0 var(--space-page); }
+  .kk-header-title { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--unit-16); font-weight: 750; }
+  .kk-header-back { margin-left: calc(-1 * var(--unit-8)); }
+  .kk-header-settings { margin-right: calc(-1 * var(--unit-8)); }
+  .kk-rail { display: flex; align-items: center; gap: var(--unit-7); flex: none; }
+  .kk-rail-list { display: flex; align-items: center; gap: var(--unit-3); margin: 0; padding: 0; list-style: none; }
+  .kk-rail-step { display: block; width: var(--unit-12); }
+  .kk-rail-bar { display: block; height: var(--unit-4); border-radius: var(--r-pill); background: var(--border-subtle); }
+  .kk-rail-step[data-state='current'] .kk-rail-bar, .kk-rail-step[data-state='done'] .kk-rail-bar { background: var(--accent-primary); }
+  .kk-rail-count { color: var(--text-secondary); font-size: var(--unit-12); font-weight: 700; white-space: nowrap; }
+  .kk-sheet-backdrop { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; background: var(--scrim); }
+  .kk-sheet { width: 100%; max-height: min(85dvh, var(--sheet-max-height)); overflow-y: auto; padding: var(--unit-12) var(--space-page) calc(var(--unit-20) + env(safe-area-inset-bottom)); border-radius: var(--r-lg) var(--r-lg) 0 0; background: var(--bg-elevated); color: var(--text-primary); animation: kk-sheet-in 200ms ease-out; }
+  .kk-sheet-grabber { width: var(--unit-40); height: var(--unit-4); margin: 0 auto var(--unit-12); border-radius: var(--r-pill); background: var(--border-strong); }
+  .kk-sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--unit-16); }
+  .kk-sheet-title { font-size: var(--unit-20); font-weight: 750; }
+  .kk-sheet-list .kk-btn { min-height: var(--unit-52); padding: var(--unit-8) var(--unit-12); justify-content: flex-start; text-align: left; }
+  .kk-setting-group + .kk-setting-group { margin-top: var(--unit-20); }
+  .kk-setting-label { display: block; margin-bottom: var(--unit-8); color: var(--text-secondary); font-size: var(--unit-13); font-weight: 700; }
+  .kk-seg { display: flex; gap: var(--unit-4); padding: var(--unit-4); border-radius: var(--r-sm); background: var(--bg-subtle); }
+  .kk-seg > button { flex: 1; min-width: var(--size-touch); min-height: var(--size-touch); padding: 0 var(--unit-6); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-secondary); font-size: var(--unit-14); font-weight: 650; cursor: pointer; }
+  .kk-seg > button[aria-pressed='true'] { background: var(--accent-primary); color: var(--accent-primary-fg); }
+  @keyframes kk-sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .kk-skeleton { animation: kk-skeleton-pulse 1.8s ease-in-out infinite; }
+    @keyframes kk-skeleton-pulse { 50% { opacity: .6; } }
   }
 
-  body {
-    margin: 0;
-    min-height: 100dvh;
-    background: var(--bg-canvas);
-  }
+  .kk-card, .kk-card-flat { background: var(--bg-subtle); border: var(--unit-1) solid var(--border-subtle); border-radius: var(--r-md); }
+  .kk-card-tap { cursor: pointer; }
+  .kk-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--unit-8); min-height: var(--size-touch); border: 0; border-radius: var(--r-sm); font-weight: 700; text-decoration: none; cursor: pointer; }
+  .kk-btn-primary { min-height: var(--size-action); padding: 0 var(--unit-20); background: var(--accent-primary); color: var(--accent-primary-fg); font-size: var(--unit-16); }
+  .kk-btn-secondary { padding: 0 var(--unit-16); background: var(--bg-surface); color: var(--text-primary); border: var(--unit-1) solid var(--border-subtle); font-size: var(--unit-14); }
+  .kk-btn-ghost { min-width: var(--size-touch); padding: 0 var(--unit-10); background: transparent; color: var(--text-primary); font-size: var(--unit-14); }
+  .kk-btn-icon, .kk-btn-quiet { width: var(--size-touch); min-width: var(--size-touch); height: var(--size-touch); padding: 0; }
+  .kk-btn-quiet { background: var(--bg-surface); color: var(--text-secondary); }
+  .kk-btn-success { padding: 0 var(--unit-16); background: var(--status-success-bg); color: var(--status-success); }
+  .kk-btn:disabled, .kk-btn[aria-disabled='true'] { background: var(--bg-subtle); color: var(--text-secondary); border: var(--unit-1) solid var(--border-strong); cursor: not-allowed; opacity: 1; }
+  .kk-chip { display: inline-flex; align-items: center; justify-content: center; gap: var(--unit-8); min-height: var(--size-touch); padding: 0 var(--unit-12); border: var(--unit-1) solid var(--border-strong); border-radius: var(--r-pill); background: var(--bg-surface); color: var(--text-primary); font-size: var(--unit-14); font-weight: 650; cursor: pointer; }
+  .kk-chip[aria-pressed='true'] { background: var(--accent-soft); border-color: var(--accent-secondary); color: var(--accent-secondary); }
+  .kk-chip-wide { display: flex; width: 100%; }
+  .kk-input, .kk-price-input { box-sizing: border-box; width: 100%; min-height: var(--unit-48); padding: var(--unit-10) var(--unit-12); border: var(--unit-1) solid var(--border-strong); border-radius: var(--r-sm); background: var(--bg-surface); color: var(--text-primary); font-size: var(--unit-16); line-height: var(--unit-24); }
+  .kk-switch { flex: none; display: inline-flex; align-items: center; justify-content: center; width: var(--unit-52); min-height: var(--size-touch); margin: 0; padding: 0; border: 0; background: transparent; cursor: pointer; }
+  .kk-switch-track { position: relative; display: block; width: var(--unit-46); height: var(--unit-28); border-radius: var(--r-pill); background: var(--border-strong); }
+  .kk-switch-knob { position: absolute; top: var(--unit-3); left: var(--unit-3); width: var(--unit-22); height: var(--unit-22); border-radius: var(--r-pill); background: var(--bg-surface); transition: transform 160ms ease; }
+  .kk-switch[aria-checked='true'] .kk-switch-track { background: var(--accent-primary); }
+  .kk-switch[aria-checked='true'] .kk-switch-knob { background: var(--accent-primary-fg); transform: translateX(var(--unit-18)); }
+  .kk-toast { background: var(--bg-elevated); color: var(--text-primary); border: var(--unit-1) solid var(--status-danger); border-radius: var(--r-md); }
+  .kk-bar { position: sticky; bottom: 0; z-index: 10; margin-top: auto; padding: var(--unit-12) var(--space-page) calc(var(--unit-12) + env(safe-area-inset-bottom)); background: var(--bg-canvas); border-top: var(--unit-1) solid var(--border-subtle); }
+  .kk-screen { min-height: calc(100dvh - var(--unit-60)); }
 
-  /* Column shell: the header is sticky, <main> takes the remaining height so a sticky bar
-     (margin-top:auto) rests at the bottom of short screens too. */
-  #root {
-    display: flex;
-    flex-direction: column;
-    min-height: 100dvh;
-  }
+  .kk-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--unit-6); min-height: var(--upload-min-height); padding: var(--unit-20) var(--unit-16); text-align: center; border: var(--unit-1) dashed var(--border-strong); border-radius: var(--r-md); background: var(--bg-subtle); cursor: pointer; }
+  .kk-drop:focus-within { outline: var(--unit-3) solid var(--accent-secondary); outline-offset: var(--unit-2); }
+  .kk-drop[data-filled='true'] { min-height: var(--unit-80); flex-direction: row; text-align: left; }
+  .kk-drop-title { font-size: var(--unit-16); font-weight: 750; }
+  .kk-drop-hint { color: var(--text-secondary); font-size: var(--unit-13); }
+  .kk-photo-strip { overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: var(--unit-4); }
+  .kk-photo-strip-item { flex: 0 0 min(var(--photo-strip-width), 85%); }
+  .kk-resume { padding: var(--unit-16); border-radius: var(--r-md); background: var(--bg-subtle); }
+  .kk-resume-icon, .kk-icon-tile, .kk-empty-icon { flex: none; display: flex; align-items: center; justify-content: center; width: var(--unit-44); height: var(--unit-44); border-radius: var(--r-sm); background: var(--bg-subtle); color: var(--text-secondary); }
+  .kk-drop .kk-icon-tile { background: var(--bg-surface); }
+  .kk-pack { position: relative; display: flex; flex-direction: column; gap: var(--unit-8); min-width: 0; padding: 0; border: 0; background: transparent; color: var(--text-primary); text-align: left; cursor: pointer; }
+  .kk-pack-media { position: relative; display: block; width: 100%; aspect-ratio: 3 / 2; overflow: hidden; border-radius: var(--r-sm); background: var(--bg-subtle); }
+  .kk-pack-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .kk-pack-meta { display: flex; flex-direction: column; gap: var(--unit-1); min-width: 0; }
+  .kk-pack-tag { color: var(--text-secondary); font-size: var(--unit-12); font-weight: 700; }
+  .kk-pack-name { color: var(--text-primary); font-size: var(--unit-14); font-weight: 650; }
+  .kk-pack[aria-pressed='true'] .kk-pack-media { outline: var(--unit-3) solid var(--accent-primary); outline-offset: var(--unit-2); }
+  .kk-pack-check { position: absolute; top: var(--unit-8); right: var(--unit-8); display: none; align-items: center; justify-content: center; width: var(--unit-24); height: var(--unit-24); border-radius: var(--r-pill); background: var(--accent-primary); color: var(--accent-primary-fg); }
+  .kk-pack[aria-pressed='true'] .kk-pack-check { display: flex; }
 
-  main {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-  }
+  .kk-count { display: inline-flex; align-items: center; gap: var(--unit-6); color: var(--text-secondary); font-size: var(--unit-13); font-weight: 700; }
+  .kk-count[data-tone='warning'] { color: var(--status-warning); }
+  .kk-count[data-tone='ready'] { color: var(--status-success); }
+  .kk-meter { height: var(--unit-6); overflow: hidden; border-radius: var(--r-pill); background: var(--border-subtle); }
+  .kk-meter > span { display: block; width: 100%; height: 100%; border-radius: inherit; background: var(--accent-primary); transform-origin: left center; transition: transform 160ms ease; }
+  .kk-meter[data-state='done'] > span { background: var(--status-success); }
+  .kk-stage-list { display: flex; flex-direction: column; gap: var(--unit-4); margin: 0; padding: 0; list-style: none; }
+  .kk-stage-row { position: relative; display: flex; align-items: center; gap: var(--unit-12); min-height: var(--unit-58); }
+  .kk-rule { position: absolute; left: calc((var(--unit-36) - var(--unit-1)) / 2); top: calc(-1 * var(--unit-15)); width: var(--unit-1); height: var(--unit-26); background: var(--border-subtle); }
+  .kk-rule[data-state='done'] { background: var(--status-success); }
+  .kk-tile { z-index: 1; display: flex; flex: none; align-items: center; justify-content: center; width: var(--unit-36); height: var(--unit-36); border-radius: var(--r-pill); background: var(--bg-surface); color: var(--text-secondary); font-size: var(--unit-14); font-weight: 750; }
+  .kk-tile[data-state='done'] { background: var(--status-success-bg); color: var(--status-success); }
+  .kk-tile[data-state='active'] { background: var(--accent-primary); color: var(--accent-primary-fg); }
+  .kk-tile[data-state='failed'] { color: var(--status-danger); border: var(--unit-1) solid var(--status-danger); }
+  .kk-stage-copy { display: flex; min-width: 0; flex-direction: column; }
+  .kk-stage-copy strong { font-size: var(--unit-15); }
+  .kk-stage-copy small { color: var(--text-secondary); font-size: var(--unit-13); }
 
-  h1,
-  h2,
-  h3 {
-    margin: 0;
-    font-family: var(--ff-display);
-  }
+  .kk-review[data-included='false'] { border-style: dashed; }
+  .kk-review[data-included='false'] .kk-photo img { opacity: .45; }
+  .kk-review { background: var(--bg-subtle); }
+  .kk-name { min-height: var(--unit-44); padding: 0; border: 0; background: transparent; font-size: var(--unit-16); font-weight: 750; line-height: var(--unit-22); }
+  .kk-review-switches > div { min-height: var(--unit-52); border-top: var(--unit-1) solid var(--border-subtle); }
+  .kk-photo { position: relative; flex: none; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--bg-surface); color: var(--text-muted); border-radius: var(--r-sm); }
+  .kk-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .kk-pill { display: inline-flex; align-items: center; gap: var(--unit-4); min-height: var(--unit-24); padding: var(--unit-2) var(--unit-8); border-radius: var(--r-pill); background: var(--bg-surface); color: var(--text-secondary); font-size: var(--unit-12); line-height: var(--unit-16); font-weight: 700; }
+  .kk-pill[data-tone='pass'] { background: var(--status-success-bg); color: var(--gate-pass); }
+  .kk-pill[data-tone='fallback'] { background: var(--status-warning-bg); color: var(--gate-fallback); }
+  .kk-price { position: relative; }
+  .kk-price-input { padding-right: var(--unit-48); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .kk-price[data-state='confirmed'] .kk-price-input { border-color: var(--price-verified); }
+  .kk-price[data-state='missing'] .kk-price-input { border-color: var(--status-warning); }
+  .kk-disc { position: absolute; top: var(--unit-14); right: var(--unit-12); display: flex; align-items: center; justify-content: center; width: var(--unit-20); height: var(--unit-20); border-radius: var(--r-pill); background: var(--status-success-bg); color: var(--status-success); pointer-events: none; }
+  .kk-details > summary { display: flex; align-items: center; justify-content: space-between; min-height: var(--size-touch); list-style: none; cursor: pointer; color: var(--text-secondary); font-size: var(--unit-14); font-weight: 700; }
+  .kk-details > summary::-webkit-details-marker { display: none; }
+  .kk-details > summary::after { content: ''; width: var(--unit-8); height: var(--unit-8); margin-right: var(--unit-8); border-right: var(--unit-2) solid currentColor; border-bottom: var(--unit-2) solid currentColor; transform: translateY(calc(-1 * var(--unit-2))) rotate(45deg); transition: transform 160ms ease; }
+  .kk-details[open] > summary::after { transform: translateY(var(--unit-2)) rotate(-135deg); }
+  .kk-preview-tile { display: flex; flex-direction: column; gap: var(--unit-8); min-width: 0; padding: 0; border: 0; background: transparent; color: var(--text-primary); text-align: left; cursor: pointer; }
+  .kk-preview-tile .kk-photo { background: var(--bg-subtle); }
+  .kk-export-row { background: var(--bg-subtle); }
 
-  p {
-    margin: 0;
-  }
-
-  :focus-visible {
-    outline: 3px solid var(--text-primary);
-    outline-offset: 2px;
-  }
-
-  ::placeholder {
-    color: var(--text-muted);
-    opacity: 1;
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
   }
 }
 
 @layer components {
-  /* ---- Card ------------------------------------------------------------ */
-  .kk-card {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--r-md);
-  }
-
-  .kk-card-flat {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--r-md);
-  }
-
-  .kk-card-tap {
-    cursor: pointer;
-  }
-
-  .kk-card-tap:focus-within {
-    outline: 3px solid var(--text-primary);
-    outline-offset: 2px;
-  }
-
-  /* ---- Buttons --------------------------------------------------------- */
-  .kk-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    border: 0;
-    border-radius: 12px;
-    font-family: var(--ff-display);
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    text-decoration: none;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .kk-btn-primary {
-    min-height: 48px;
-    padding: 0 20px;
-    border: 1.5px solid transparent;
-    font-size: 15px;
-    line-height: 20px;
-    background: var(--accent-primary);
-    color: var(--accent-primary-fg);
-  }
-
-  .kk-btn-secondary {
-    min-height: 44px;
-    padding: 0 16px;
-    font-size: 14px;
-    line-height: 20px;
-    background: var(--bg-surface);
-    color: var(--text-primary);
-    border: 1px solid var(--border-strong);
-  }
-
-  .kk-btn-ghost {
-    min-height: 44px;
-    min-width: 44px;
-    padding: 0 12px;
-    font-size: 13px;
-    line-height: 18px;
-    background: transparent;
-    color: var(--text-primary);
-  }
-
-  /* Square 44px icon button (theme cycle, remove photo). */
-  .kk-btn-icon {
-    min-height: 44px;
-    min-width: 44px;
-    padding: 0;
-    border-radius: 10px;
-  }
-
-  /* Quiet remove target: a 32px soft fill; the ::after overlay makes the tap area 44px. */
-  .kk-btn-quiet {
-    position: relative;
-    min-height: 32px;
-    min-width: 32px;
-    padding: 0;
-    border-radius: 10px;
-    background: var(--bg-subtle);
-    color: var(--text-secondary);
-  }
-
-  .kk-btn-quiet::after {
-    content: '';
-    position: absolute;
-    inset: -6px;
-  }
-
-  /* Compact secondary (44px) for demoted actions beside a list. */
-  .kk-btn-compact {
-    min-height: 44px;
-    padding: 0 14px;
-    font-size: 13px;
-    line-height: 18px;
-  }
-
-  /* Success-tinted action: a finished export. White-on-success passes 5.36 (light) / 8.77 (dark). */
-  .kk-btn-success {
-    min-height: 44px;
-    padding: 0 16px;
-    font-size: 14px;
-    line-height: 20px;
-    background: var(--status-success);
-    color: var(--bg-surface);
-  }
-
-  .kk-btn:disabled,
-  .kk-btn[aria-disabled='true'] {
-    background: var(--bg-subtle);
-    color: var(--text-secondary);
-    cursor: not-allowed;
-  }
-
-  /* Disabled primary stays a visible button: quiet fill, outlined edge, label 7.6:1. Never a dimmed saffron. */
-  .kk-btn-primary:disabled,
-  .kk-btn-primary[aria-disabled='true'] {
-    border-color: var(--border-strong);
-  }
-
-  /* ---- Chip ------------------------------------------------------------ */
-  .kk-chip {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 32px;
-    padding: 0 12px;
-    border-radius: 999px;
-    border: 1px solid var(--border-strong);
-    background: var(--bg-surface);
-    color: var(--text-primary);
-    font-family: var(--ff-body);
-    font-size: 13px;
-    line-height: 18px;
-    font-weight: 600;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* 32px visual, 44px tap area. */
-  .kk-chip::after {
-    content: '';
-    position: absolute;
-    inset: -6px 0;
-  }
-
-  .kk-chip[aria-pressed='true'] {
-    background: var(--accent-primary);
-    color: var(--accent-primary-fg);
-    border-color: var(--accent-secondary);
-  }
-
-  /* Full-width 38px chip (Review Card "Harga via chat"); selected fills --bg-subtle, not saffron. */
-  .kk-chip-wide {
-    display: flex;
-    width: 100%;
-    min-height: 38px;
-    justify-content: center;
-  }
-
-  .kk-chip-wide[aria-pressed='true'] {
-    background: var(--bg-subtle);
-    color: var(--text-primary);
-    border-color: var(--border-strong);
-  }
-
-  /* ---- Input ----------------------------------------------------------- */
-  .kk-input {
-    box-sizing: border-box;
-    width: 100%;
-    min-height: 44px;
-    padding: 8px 12px;
-    border: 1.5px solid var(--border-strong);
-    border-radius: var(--r-sm);
-    background: var(--bg-surface);
-    color: var(--text-primary);
-    font-family: var(--ff-body);
-    font-size: 16px;
-    line-height: 24px;
-    font-weight: 500;
-  }
-
-  /* ---- Switch ---------------------------------------------------------- */
-  .kk-switch {
-    flex: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 46px;
-    min-height: 44px;
-    /* No negative margin: each switch owns its 44px box, so neighbours never overlap. */
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .kk-switch-track {
-    position: relative;
-    display: block;
-    width: 42px;
-    height: 24px;
-    border-radius: 999px;
-    border: 2px solid var(--border-strong);
-    background: var(--bg-subtle);
-    box-sizing: border-box;
-  }
-
-  .kk-switch-knob {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 16px;
-    height: 16px;
-    border-radius: 999px;
-    background: var(--text-secondary);
-    transition: transform 120ms ease-out;
-  }
-
-  .kk-switch[aria-checked='true'] .kk-switch-track {
-    background: var(--status-success);
-    border-color: var(--status-success);
-  }
-
-  .kk-switch[aria-checked='true'] .kk-switch-knob {
-    background: var(--bg-surface);
-    transform: translateX(16px);
-  }
-
-  .kk-switch:focus-visible .kk-switch-track {
-    outline: 3px solid var(--text-primary);
-    outline-offset: 2px;
-  }
-
-  /* ---- Segmented locale switch ---------------------------------------- */
-  .kk-seg {
-    display: inline-flex;
-    border: 1px solid var(--border-strong);
-    border-radius: 10px;
-    background: var(--bg-surface);
-  }
-
-  /* No overflow clip: it would cut the 44px hit area. The end buttons round themselves instead. */
-  .kk-seg > button:first-child {
-    border-radius: 8px 0 0 8px;
-  }
-
-  .kk-seg > button:last-child {
-    border-radius: 0 8px 8px 0;
-  }
-
-  .kk-seg > button {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 36px;
-    min-height: 42px;
-    padding: 0 8px;
-    border: 0;
-    background: transparent;
-    color: var(--text-primary);
-    font-family: var(--ff-display);
-    font-weight: 700;
-    font-size: 13px;
-    cursor: pointer;
-  }
-
-  /* The visible segment keeps its approved size. Its tap area is a 44×44 overlay: each segment extends
-     only outward, away from its neighbour, so the two overlays never overlap a control. */
-  .kk-seg > button::after {
-    content: '';
-    position: absolute;
-    top: -1px;
-    bottom: -1px;
-    z-index: 1;
-  }
-
-  .kk-seg > button:first-child::after {
-    left: -8px;
-    right: 0;
-  }
-
-  .kk-seg > button:last-child::after {
-    left: 0;
-    right: -8px;
-  }
-
-  /* Theme menu: one native select carries its own 44px edge. The mode icon and caret sit over its
-     padding, so the whole control is the hit area and the label stays a real <select>. */
-  .kk-theme {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .kk-theme-icon {
-    position: absolute;
-    top: 50%;
-    left: 12px;
-    display: flex;
-    transform: translateY(-50%);
-    color: var(--text-primary);
-    pointer-events: none;
-  }
-
-  .kk-theme-field {
-    appearance: none;
-    -webkit-appearance: none;
-    box-sizing: border-box;
-    min-height: 44px;
-    padding: 0 24px 0 32px;
-    border: 1px solid var(--border-strong);
-    border-radius: 10px;
-    background: var(--bg-surface);
-    color: var(--text-primary);
-    font-family: var(--ff-display);
-    font-size: 16px;
-    line-height: 18px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  .kk-theme-field option {
-    background: var(--bg-elevated);
-    color: var(--text-primary);
-  }
-
-  .kk-theme-caret {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    width: 6px;
-    height: 6px;
-    border-right: 2px solid var(--text-secondary);
-    border-bottom: 2px solid var(--text-secondary);
-    transform: translateY(-70%) rotate(45deg);
-    pointer-events: none;
-  }
-
-  /* Active segment is ink on paper, so saffron stays reserved for the next action. */
-  .kk-seg > button[aria-pressed='true'] {
-    background: var(--text-primary);
-    color: var(--bg-canvas);
-  }
-
-  .kk-seg > button + button {
-    box-shadow: inset 1px 0 0 var(--border-subtle);
-  }
-
-  /* ---- Stage tiles (brandkit §4 Stage A–E strip) ----------------------- */
-  .kk-tile {
-    position: relative;
-    flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    width: 40px;
-    height: 40px;
-    border-radius: 11px;
-    font-family: var(--ff-display);
-    font-weight: 800;
-    font-size: 17px;
-    line-height: 22px;
-    letter-spacing: -0.02em;
-  }
-
-  .kk-tile[data-state='pending'] {
-    background: var(--bg-subtle);
-    color: var(--text-muted);
-    border: 1px solid var(--border-subtle);
-  }
-
-  .kk-tile[data-state='done'] {
-    background: var(--status-success);
-    color: var(--bg-surface);
-  }
-
-  .kk-tile[data-state='active'] {
-    background: var(--accent-primary);
-    color: var(--accent-primary-fg);
-  }
-
-  .kk-tile[data-state='failed'] {
-    background: var(--bg-surface);
-    color: var(--status-danger);
-    border: 2px solid var(--status-danger);
-  }
-
-  .kk-rule {
-    flex: 1 1 auto;
-    min-width: 6px;
-    height: 4px;
-    border-radius: 2px;
-    background: var(--border-subtle);
-  }
-
-  .kk-rule[data-state='done'] {
-    background: var(--status-success);
-  }
-
-  .kk-rule[data-state='active'] {
-    background: var(--accent-primary);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .kk-switch-knob {
-      transition: none;
-    }
-
-    .kk-details > summary::after {
-      transition: none;
-    }
-  }
-
-  /* ---- Toast ----------------------------------------------------------- */
-  .kk-toast {
-    background: var(--bg-elevated);
-    color: var(--text-primary);
-    border: 1.5px solid var(--status-danger);
-    border-radius: var(--r-md);
-    box-shadow: 0 8px 24px -12px color-mix(in srgb, var(--text-primary) 18%, transparent);
-  }
-
-  /* ---- Sticky bottom bar (summary + primary action) ---------------------- */
-  .kk-bar {
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
-    margin-top: auto;
-    padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
-    background: var(--bg-surface);
-    border-top: 1px solid var(--border-strong);
-    border-radius: var(--r-md) var(--r-md) 0 0;
-    /* Floating layer: a soft diffuse lift, no hard edge. */
-    box-shadow: 0 -8px 24px -12px color-mix(in srgb, var(--text-primary) 14%, transparent);
-  }
-
-  /* No fade above the bar: surfaces stay flat (brandkit §4). */
-
-  /* Screen enter (S3): fade + 4px rise, once per route. transform/opacity only, 160ms.
-     `backwards` (not `both`): no transform lingers afterwards, so fixed children (toast) keep the viewport. */
-  .kk-screen {
-    animation: kk-enter 160ms ease-out backwards;
-  }
-
-  @keyframes kk-enter {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* ---- Step rail: five named steps under the header; scrolls with the page ----- */
-
-  .kk-rail-list {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 4px;
-    margin: 0;
-    padding: 8px 16px;
-    list-style: none;
-  }
-
-  .kk-rail-step {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-    margin: 0;
-    padding: 0;
-  }
-
-  .kk-rail-bar {
-    display: block;
-    height: 3px;
-    border-radius: 2px;
-    background: var(--border-subtle);
-  }
-
-  .kk-rail-step[data-state='done'] .kk-rail-bar {
-    background: var(--accent-secondary);
-  }
-
-  .kk-rail-step[data-state='current'] .kk-rail-bar {
-    background: var(--accent-primary);
-  }
-
-  .kk-rail-label {
-    display: block;
-    min-width: 0;
-    overflow: hidden;
-    color: var(--text-muted);
-    font-size: 11px;
-    line-height: 14px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  .kk-rail-step[data-state='done'] .kk-rail-label {
-    color: var(--text-secondary);
-  }
-
-  .kk-rail-step[data-state='current'] .kk-rail-label {
-    color: var(--text-primary);
-    font-weight: 700;
-  }
-
-  /* ---- Drop zone (Upload): the one dominant control on the screen -------------- */
-  .kk-drop {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    min-height: 120px;
-    padding: 16px 16px;
-    text-align: center;
-    border: 1.5px dashed var(--border-strong);
-    border-radius: var(--r-md);
-    background: var(--bg-surface);
-    cursor: pointer;
-  }
-
-  .kk-drop .kk-icon-tile {
-    width: 52px;
-    height: 52px;
-    margin-bottom: 4px;
-    border-radius: 16px;
-  }
-
-  .kk-drop-title {
-    font-family: var(--ff-display);
-    font-size: 18px;
-    line-height: 24px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: var(--text-primary);
-  }
-
-  .kk-drop-hint {
-    font-size: 13px;
-    line-height: 18px;
-    font-weight: 500;
-    color: var(--text-secondary);
-  }
-
-  /* Drop zone: the file input is visually hidden, so the zone shows the focus ring itself. */
-  .kk-drop:focus-within {
-    outline: 3px solid var(--text-primary);
-    outline-offset: 2px;
-  }
-
-  /* Once photos are picked the zone shrinks to one row: icon left, the two lines right. */
-  .kk-drop[data-filled='true'] {
-    display: grid;
-    grid-template-columns: 40px minmax(0, 1fr);
-    column-gap: 12px;
-    align-items: center;
-    justify-items: start;
-    min-height: 0;
-    padding: 12px 16px;
-    text-align: left;
-    border-style: solid;
-    border-color: var(--border-subtle);
-  }
-
-  .kk-drop[data-filled='true'] .kk-icon-tile {
-    grid-row: 1 / span 2;
-    width: 40px;
-    height: 40px;
-    margin: 0;
-    border-radius: 10px;
-  }
-
-  .kk-drop[data-filled='true'] .kk-drop-title {
-    grid-column: 2;
-    font-size: 16px;
-    line-height: 22px;
-  }
-
-  .kk-drop[data-filled='true'] .kk-drop-hint {
-    grid-column: 2;
-  }
-
-  /* ---- Resume (Upload): an earlier run, two actions, no third competitor ----------- */
-  .kk-resume {
-    padding: 16px;
-    border-radius: var(--r-md);
-    background: var(--bg-subtle);
-  }
-
-  .kk-resume-icon {
-    flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    background: var(--bg-surface);
-    color: var(--text-secondary);
-  }
-
-  .kk-icon-tile {
-    flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: var(--bg-subtle);
-    color: var(--text-primary);
-  }
-
-  /* Saffron marks the next action: the drop zone wears it until photos are picked. */
-  .kk-drop:not([data-filled='true']) .kk-icon-tile {
-    background: var(--accent-primary);
-    color: var(--accent-primary-fg);
-  }
-
-  /* ---- Sample pack (Upload): a real photo from the pack, a short name, a selected ring ---- */
-  .kk-pack {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 0;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--text-primary);
-    text-align: left;
-    font-family: var(--ff-body);
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .kk-pack-media {
-    position: relative;
-    display: block;
-    aspect-ratio: 3 / 2;
-    overflow: hidden;
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--r-sm);
-    background: var(--bg-subtle);
-  }
-
-  .kk-pack-media img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .kk-pack-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-  }
-
-  .kk-pack-tag {
-    font-family: var(--ff-display);
-    font-size: 13px;
-    line-height: 18px;
-    font-weight: 700;
-    color: var(--text-muted);
-  }
-
-  .kk-pack-name {
-    font-family: var(--ff-body);
-    font-size: 15px;
-    line-height: 22px;
-    font-weight: 600;
-    color: var(--text-secondary);
-  }
-
-  .kk-pack[aria-pressed='true'] .kk-pack-media {
-    outline: 2px solid var(--accent-secondary);
-    outline-offset: 2px;
-  }
-
-  .kk-pack[aria-pressed='true'] .kk-pack-tag {
-    color: var(--accent-secondary);
-  }
-
-  .kk-pack[aria-pressed='true'] .kk-pack-name {
-    color: var(--text-primary);
-    font-weight: 700;
-  }
-
-  .kk-pack-check {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    z-index: 1;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 999px;
-    background: var(--accent-secondary);
-    color: var(--bg-surface);
-  }
-
-  .kk-pack[aria-pressed='true'] .kk-pack-check {
-    display: flex;
-  }
-
-  /* ---- Status chip (non-interactive): counts and the review summary ------------ */
-  .kk-count {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 26px;
-    padding: 0 12px;
-    border-radius: 999px;
-    background: var(--bg-subtle);
-    color: var(--text-primary);
-    font-size: 13px;
-    line-height: 18px;
-    font-weight: 700;
-  }
-
-  .kk-count[data-tone='warning'] {
-    background: var(--bg-surface);
-    border: 1.5px solid var(--status-warning);
-    color: var(--status-warning);
-  }
-
-  .kk-count[data-tone='ready'] {
-    background: var(--bg-surface);
-    border: 1.5px solid var(--price-verified);
-    color: var(--price-verified);
-  }
-
-  /* ---- Progress bar (P1): determinate, token-coloured --------------------- */
-  .kk-meter {
-    height: 6px;
-    border-radius: 999px;
-    background: var(--bg-subtle);
-    overflow: hidden;
-  }
-
-  .kk-meter > span {
-    display: block;
-    height: 100%;
-    width: 100%;
-    border-radius: inherit;
-    background: var(--accent-primary);
-    transform-origin: left center;
-    transition: transform 160ms ease-out;
-  }
-
-  .kk-meter[data-state='done'] > span {
-    background: var(--status-success);
-  }
-
-  /* ---- Empty state icon disc ------------------------------------------------ */
-  .kk-empty-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    background: var(--bg-subtle);
-    color: var(--text-secondary);
-  }
-
-  /* ---- Review card (brandkit §4) ---------------------------------------- */
-  .kk-review[data-included='false'] {
-    border-style: dashed;
-  }
-
-  .kk-review[data-included='false'] .kk-photo img {
-    opacity: 0.45;
-  }
-
-  .kk-photo {
-    position: relative;
-    flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    background: var(--bg-subtle);
-    color: var(--text-muted);
-    border-radius: var(--r-sm);
-  }
-
-  .kk-photo img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .kk-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    min-height: 20px;
-    padding: 0 7px;
-    border-radius: 999px;
-    border: 1px solid currentColor;
-    background: var(--bg-surface);
-    font-size: 11px;
-    line-height: 14px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-
-  .kk-pill[data-tone='pass'] {
-    color: var(--gate-pass);
-  }
-
-  .kk-pill[data-tone='fallback'] {
-    color: var(--gate-fallback);
-  }
-
-  .kk-pill[data-tone='neutral'] {
-    color: var(--text-secondary);
-  }
-
-  .kk-price {
-    position: relative;
-  }
-
-  .kk-price-input {
-    box-sizing: border-box;
-    width: 100%;
-    height: 44px;
-    padding: 0 48px 0 14px;
-    border: 1.5px solid var(--border-strong);
-    border-radius: var(--r-sm);
-    background: var(--bg-surface);
-    color: var(--text-primary);
-    font-family: var(--ff-mono);
-    font-size: 17px;
-    line-height: 22px;
-    font-weight: 700;
-  }
-
-  .kk-price-input::placeholder {
-    font-family: var(--ff-body);
-    font-size: 14px;
-    font-weight: 500;
-  }
-
-  .kk-price[data-state='confirmed'] .kk-price-input {
-    border-color: var(--price-verified);
-  }
-
-  .kk-price[data-state='missing'] .kk-price-input {
-    border-color: var(--status-warning);
-  }
-
-  .kk-disc {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 999px;
-    background: var(--price-verified);
-    color: var(--bg-surface);
-    pointer-events: none;
-  }
-
-  .kk-details > summary {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 44px;
-    list-style: none;
-    cursor: pointer;
-    font-size: 13px;
-    line-height: 18px;
-    font-weight: 700;
-    color: var(--text-secondary);
-  }
-
-  /* 36px visual, 44px tap area — the chevron already owns ::after, so ::before is the extender. */
-  .kk-details > summary::before {
-    content: '';
-    position: absolute;
-    inset: -4px 0;
-  }
-
-  .kk-details > summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .kk-details > summary::after {
-    content: '';
-    width: 8px;
-    height: 8px;
-    margin-right: 8px;
-    border-right: 2.5px solid currentColor;
-    border-bottom: 2.5px solid currentColor;
-    transform: translateY(-2px) rotate(45deg);
-    transition: transform 120ms ease-out;
-  }
-
-  .kk-details[open] > summary::after {
-    transform: translateY(2px) rotate(-135deg);
-  }
-
-  /* ---- Store preview tile ------------------------------------------------ */
-  .kk-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* Declared after every rule it overrides (same specificity: order decides). */
-  @media (prefers-reduced-motion: reduce) {
-    .kk-screen {
-      animation: none;
-    }
-
-    .kk-meter > span {
-      transition: none;
-    }
-  }
-}
-
-/*
- * Device staging. Below 768px every device wrapper is `display: contents` and the status strip
- * and the frame are hidden, so the mobile tree lays out as it did before this block existed. From
- * 768px up the app sits inside a centred iPhone frame on a blank canvas, and the screen is the scroll
- * container. `kk-screen` already names the screen-enter animation on <main>, so the device classes
- * live under `kk-device-*`.
- */
-@layer components {
-  .kk-device,
-  .kk-device-phone,
-  .kk-device-view,
-  .kk-device-scroll {
-    display: contents;
-  }
-
-  .kk-device-status,
-  .kk-device-frame {
-    display: none;
-  }
-
+  .kk-device, .kk-device-phone, .kk-device-view, .kk-device-scroll { display: contents; }
+  .kk-device-status, .kk-device-frame { display: none; }
   @media (min-width: 768px) {
-    .kk-device {
-      display: grid;
-      place-items: center;
-      box-sizing: border-box;
-      min-height: 100dvh;
-      padding: 24px;
-    }
-
-    /* Aspect-ratio phone, no transform. `--kk-status-inset` is the single source for the strip height,
-       the scroller's top padding and the header's sticky offset. */
-    .kk-device-phone {
-      --phone-h: min(882px, calc(100dvh - 48px));
-      --kk-status-inset: calc(var(--phone-h) * 0.0593);
-      display: block;
-      position: relative;
-      height: var(--phone-h);
-      aspect-ratio: 433 / 882;
-      /* The bezel's outer corner (73 of 433 wide, 73 of 882 tall), so the shadow follows the body. */
-      border-radius: 16.86% / 8.28%;
-      box-shadow: 0 24px 64px -24px color-mix(in srgb, var(--text-primary) 22%, transparent);
-    }
-
-    /* Screen rect from the Magic UI iPhone geometry (433 x 882 viewBox). `contain: paint` keeps the
-       fixed toast and skip link inside the screen box. */
-    .kk-device-view {
-      display: block;
-      position: absolute;
-      left: 4.907%;
-      top: 2.182%;
-      width: 89.953%;
-      height: 95.635%;
-      border-radius: 14.31% / 6.61%;
-      overflow: hidden;
-      contain: paint;
-      background: var(--bg-canvas);
-    }
-
-    /* The screen scrolls. The flex column keeps `main { flex: 1 }` and the `.kk-bar` margin-top: auto. */
-    .kk-device-scroll {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      overflow-x: hidden;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      scrollbar-width: none;
-    }
-
-    .kk-device-scroll::-webkit-scrollbar {
-      display: none;
-    }
-
-    /* In-flow clearance under the status strip. Chromium adds a scroller's padding-top to the sticky
-       threshold, so padding plus a sticky `top` of the same inset double-counts (measured 101px
-       instead of 50.5px). The spacer carries the clearance; the header's sticky top stays literal. */
-    .kk-device-scroll::before {
-      content: '';
-      display: block;
-      flex: none;
-      height: var(--kk-status-inset);
-    }
-
-    /* Opaque strip over the top of the screen: scrolled content passes under it and disappears. */
-    .kk-device-status {
-      display: flex;
-      position: absolute;
-      inset: 0 0 auto 0;
-      z-index: 11;
-      box-sizing: border-box;
-      height: var(--kk-status-inset);
-      align-items: flex-start;
-      justify-content: space-between;
-      padding: calc(var(--kk-status-inset) * 0.4) 8.5% 0;
-      background: var(--bg-canvas);
-      color: var(--text-primary);
-      pointer-events: none;
-    }
-
-    .kk-device-time {
-      font-family: var(--ff-display);
-      font-size: 15px;
-      line-height: 18px;
-      font-weight: 700;
-    }
-
-    .kk-device-glyphs {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      height: 18px;
-    }
-
-    .kk-device-glyphs svg {
-      display: block;
-    }
-
-    .kk-device-frame {
-      display: block;
-      position: absolute;
-      inset: 0;
-      z-index: 12;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-
-    .kk-device-bezel {
-      fill: var(--device-bezel);
-    }
-
-    .kk-device-inner {
-      fill: var(--device-frame);
-    }
-
-    .kk-device-island {
-      fill: var(--device-island);
-    }
-
-    .kk-device-ring {
-      fill: var(--device-bezel);
-      stroke: var(--device-bezel);
-    }
+    .kk-device { display: grid; place-items: center; box-sizing: border-box; height: 100dvh; overflow: hidden; padding: var(--unit-24); }
+    .kk-device-phone { --phone-h: min(var(--device-max-height), calc(100dvh - var(--unit-48))); --kk-status-inset: calc(var(--phone-h) * .0593); display: block; position: relative; height: var(--phone-h); aspect-ratio: var(--device-aspect); border-radius: var(--device-phone-radius); box-shadow: 0 var(--unit-24) var(--unit-64) calc(-1 * var(--unit-24)) color-mix(in srgb, var(--text-primary) 22%, transparent); }
+    .kk-device-view { display: block; position: absolute; left: 4.907%; top: 2.182%; width: 89.953%; height: 95.635%; border-radius: var(--device-view-radius); overflow: hidden; contain: paint; background: var(--bg-canvas); }
+    .kk-device-scroll { display: flex; flex-direction: column; height: 100%; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+    .kk-device-scroll::-webkit-scrollbar { display: none; }
+    .kk-device-scroll::before { content: ''; display: block; flex: none; height: var(--kk-status-inset); }
+    .kk-device-scroll .kk-screen { min-height: 0; }
+    .kk-device-status { display: flex; position: absolute; inset: 0 0 auto; z-index: 21; box-sizing: border-box; height: var(--kk-status-inset); align-items: flex-start; justify-content: space-between; padding: calc(var(--kk-status-inset) * .4) 8.5% 0; background: var(--bg-canvas); color: var(--text-primary); pointer-events: none; }
+    .kk-device-time { font-size: var(--unit-15); line-height: var(--unit-18); font-weight: 700; }
+    .kk-device-glyphs { display: flex; align-items: center; gap: var(--unit-5); height: var(--unit-18); }
+    .kk-device-glyphs svg { display: block; }
+    .kk-device-frame { display: block; position: absolute; inset: 0; z-index: 22; width: 100%; height: 100%; pointer-events: none; }
+    .kk-device-bezel { fill: var(--device-bezel); }
+    .kk-device-inner { fill: var(--device-frame); }
+    .kk-device-island { fill: var(--device-island); }
+    .kk-device-ring { fill: var(--device-bezel); stroke: var(--device-bezel); }
   }
 }

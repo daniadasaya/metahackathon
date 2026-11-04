@@ -2,7 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import { Column } from '../components/Column';
-import { AlertIcon, ArrowLeftIcon, CheckIcon, DownloadIcon, PhotoIcon, SheetIcon, TextIcon, ChatIcon, UploadIcon } from '../components/Icons';
+import { AlertIcon, ArrowRightIcon, CheckIcon, DownloadIcon, PhotoIcon, SheetIcon, TextIcon, ChatIcon, UploadIcon } from '../components/Icons';
 import { EmptyState } from '../components/EmptyState';
 import { StickyBar } from '../components/StickyBar';
 import { ApiError, exportJob, type ExportKind, type ExportResponse } from '../lib/api';
@@ -71,7 +71,6 @@ export function ExportScreen() {
   if (scope === null) {
     return (
       <Column>
-        <h1 className="text-2xl">{t('export.title')}</h1>
         <div className="mt-5">
           <EmptyState text={t('export.empty')} icon={<UploadIcon size={24} />}>
             <button
@@ -142,22 +141,10 @@ export function ExportScreen() {
   return (
     <>
       <Column>
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="text-2xl">{t('export.title')}</h1>
-          <Link
-            to="/review"
-            className="kk-btn kk-btn-ghost shrink-0 px-2 text-fg-2"
-            aria-label={t('export.backToReview')}
-          >
-            <ArrowLeftIcon size={16} />
-            {t('common.back')}
-          </Link>
-        </div>
-        <p className="mt-2 text-base text-fg-2">{t('export.lead')}</p>
         {scope.mixed ? <p className="mt-2 text-sm text-warning">{t('export.mixedJobs')}</p> : null}
 
         <section className="mt-3 flex flex-col gap-3" aria-labelledby="export-seller">
-          <h2 id="export-seller" className="sr-only">
+          <h2 id="export-seller" className="text-sm font-bold text-fg-2">
             {t('export.sellerTitle')}
           </h2>
           <div>
@@ -241,8 +228,8 @@ export function ExportScreen() {
           </div>
         ) : null}
 
-        <section className="mt-3 flex flex-col gap-2" aria-labelledby="export-files">
-          <h2 id="export-files" className="sr-only">
+        <section className="mt-5 flex flex-col gap-2" aria-labelledby="export-files">
+          <h2 id="export-files" className="text-sm font-bold text-fg-2">
             {t('export.downloadsTitle')}
           </h2>
           <p
@@ -267,11 +254,11 @@ export function ExportScreen() {
               return (
                 <li
                   key={kind}
-                  className="kk-card m-0 flex min-h-14 items-center gap-3 py-2 pr-2 pl-3"
+                  className="kk-card kk-export-row m-0 flex min-h-14 items-center gap-3 p-4"
                 >
                   <span
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ${
-                      file !== undefined ? 'bg-success text-surface' : 'bg-subtle text-fg-2'
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-(--r-sm) ${
+                      file !== undefined ? 'bg-surface text-success' : 'bg-surface text-fg-2'
                     }`}
                   >
                     {file !== undefined ? <CheckIcon size={20} /> : <Icon size={20} />}
@@ -309,7 +296,16 @@ export function ExportScreen() {
           </ul>
         </section>
 
-        <details className="kk-details kk-card-flat mt-3 px-4">
+        {done !== null ? <details className="kk-details kk-card-flat mt-4 px-4">
+          <summary>{t('export.shareTitle')}</summary>
+          <ul className="m-0 flex list-none flex-col gap-2 pb-4">
+            {scope.products.filter((product) => product.included).map((product) => (
+              <li key={product.sku}><a className="flex min-h-11 items-center gap-2 text-sm font-bold text-fg-2" href={`/p/${encodeURIComponent(scope.jobId)}/${encodeURIComponent(product.sku)}`} target="_blank" rel="noopener noreferrer"><span className="shrink-0"><ArrowRightIcon size={16} /></span><span className="min-w-0 break-words">{product.name} · {product.sku}</span></a></li>
+            ))}
+          </ul>
+        </details> : null}
+
+        <details className="kk-details kk-card-flat mt-3 px-4" open>
           <summary>{t('export.guide.title')}</summary>
           <div className="flex flex-col gap-3 py-3 text-base text-fg-2">
             <ol className="m-0 flex list-decimal flex-col gap-2 pl-5">
@@ -326,6 +322,7 @@ export function ExportScreen() {
       </Column>
 
       <StickyBar>
+        {!ready && !busy ? <p className="text-center text-sm text-fg-2">{!exportable ? t('export.blockedIntro') : t('export.sellerNeeded')}</p> : null}
         <button
           type="button"
           className="kk-btn kk-btn-primary kk-tactile w-full"

@@ -32,7 +32,7 @@ function Thumb({ file }: { file: File }) {
   }, [file]);
 
   return (
-    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-subtle text-fg-muted">
+    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-(--r-sm) bg-subtle text-fg-muted">
       {url === null ? (
         <PhotoIcon />
       ) : (
@@ -108,8 +108,7 @@ export function UploadScreen() {
   return (
     <>
       <Column>
-        <h1 className="max-w-[18ch] text-2xl">{t('upload.title')}</h1>
-        <p className="mt-2 text-base text-fg-2">{t('upload.lead')}</p>
+        <h1 className="text-2xl">{t('upload.title')}</h1>
 
         {storedJobId !== null ? (
           <section className="kk-resume mt-4" aria-labelledby="resume-title">
@@ -169,9 +168,9 @@ export function UploadScreen() {
                 {t('upload.photosCount', { n: photos.length })}
               </span>
             </div>
-            <ul className="m-0 mt-3 flex list-none flex-col gap-3 p-0">
+            <ul className="kk-photo-strip m-0 mt-3 flex list-none gap-3 p-0">
               {photos.map((photo, index) => (
-                <li key={photo.id} className="kk-card-flat m-0 p-3">
+                <li key={photo.id} className="kk-card-flat kk-photo-strip-item m-0 p-4">
                   <div className="flex items-center gap-3">
                     <Thumb file={photo.file} />
                     <div className="min-w-0 flex-1">
@@ -205,7 +204,7 @@ export function UploadScreen() {
           <h2 id="samples-title" className="text-xl">
             {t('samples.title')}
           </h2>
-          <p id="samples-hint" className="mt-1 text-base text-fg-muted">
+          <p id="samples-hint" className="mt-1 text-sm text-fg-muted">
             {t('samples.hint')}
           </p>
           <div className="mt-3 grid grid-cols-2 gap-3">

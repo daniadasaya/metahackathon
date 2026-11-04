@@ -17,6 +17,7 @@ export const id = {
     loading: 'Memuat…',
   },
   header: {
+    settings: 'Pengaturan',
     language: 'Bahasa',
     languageId: 'Bahasa Indonesia',
     languageEn: 'English',
@@ -101,7 +102,7 @@ export const id = {
     segment: 'Memotong tiap produk',
     cleanup: 'Merapikan foto',
     extract: 'Menulis katalog',
-    done: 'Selesai',
+    done: 'Hasil katalog',
   },
   review: {
     title: 'Tinjau produk',
@@ -134,6 +135,7 @@ export const id = {
     summary: '{n} produk siap · {m} belum ada harga',
     blockedList: '{list} belum ada harga',
     blockedMore: '{list} dan {n} lainnya belum ada harga',
+    blockersTitle: 'Produk belum ada harga',
     details: 'Detail produk',
     category: 'Kategori',
     brand: 'Merek',
@@ -144,13 +146,16 @@ export const id = {
     attrSize: 'Ukuran',
     attrVariant: 'Varian',
     noneIncluded: 'Pilih minimal satu produk untuk diekspor.',
-    exportCta: 'Lanjut ke ekspor',
+    exportCta: 'Lanjut',
     stillRunning: 'Produk masih diproses.',
     seeProgress: 'Lihat proses',
     empty: 'Belum ada produk untuk ditinjau.',
     loadFailed: 'Produk tidak bisa dimuat.',
   },
   preview: {
+    openProduct: 'Lihat detail {name}',
+    productDetails: 'Detail produk',
+    continueExport: 'Lanjut ke ekspor',
     lead: 'Begini katalogmu tampil. Isinya diambil dari hasil tinjauanmu.',
     backToReview: 'Kembali ke tinjau',
     sellerTools: 'Atur tokomu',
@@ -169,6 +174,8 @@ export const id = {
     empty: 'Belum ada produk untuk dipratinjau.',
   },
   export: {
+    shareTitle: 'Tautan produk',
+    sellerNeeded: 'Isi nama toko dan nomor WhatsApp dulu.',
     title: 'Ekspor katalog',
     lead: 'Isi data tokomu, lalu ekspor. Kamu dapat empat file yang siap dipakai.',
     sellerTitle: 'Data toko',
@@ -195,20 +202,20 @@ export const id = {
     downloadsHint: 'Tombol unduh aktif setelah ekspor selesai.',
     kind: {
       catalog_csv: {
-        label: 'Katalog CSV',
-        desc: 'Untuk Commerce Manager: Facebook Shop, Instagram Shop, katalog WhatsApp.',
+        label: 'Katalog Meta (CSV)',
+        desc: 'Untuk Commerce Manager.',
       },
       images_zip: {
         label: 'Foto produk (ZIP)',
-        desc: 'Semua foto produk yang sudah dirapikan.',
+        desc: 'Foto produk yang rapi.',
       },
       captions_instagram: {
         label: 'Caption Instagram',
-        desc: 'Teks siap tempel untuk tiap produk.',
+        desc: 'Teks untuk tiap produk.',
       },
       price_list_whatsapp: {
         label: 'Daftar harga WhatsApp',
-        desc: 'Teks daftar harga untuk dikirim lewat chat atau status.',
+        desc: 'Daftar untuk dibagikan.',
       },
     },
     empty: 'Belum ada katalog untuk diekspor.',

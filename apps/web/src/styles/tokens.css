@@ -1,109 +1,151 @@
-/*
- * Design tokens — brandkit.md §2, copied verbatim.
- *
- * `:root` is the Light theme (Warm Alabaster); `[data-theme="dark"]` is Obsidian Slate.
- * There is deliberately no `prefers-color-scheme` rule here: the theme is resolved in JS
- * (inline script in index.html + lib/store.ts), which sets `data-theme` on <html>.
- * `system` mode follows the OS live through a matchMedia listener, not through CSS.
- *
- * This file and components.css are the only places a colour literal may appear.
- */
-
+/* Semantic appearance, type, geometry and device staging tokens. */
 :root {
   color-scheme: light;
-
-  --bg-canvas: #faf7f2;
+  --bg-canvas: #ffffff;
   --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
-  --bg-subtle: #f1ebe0;
-  --text-primary: #1b1a17;
-  --text-secondary: #4c4943;
-  --text-muted: #615d55;
-  --border-subtle: #e6dfd1;
-  --border-strong: #857d6d;
-  --accent-primary: #f5a524;
-  --accent-primary-fg: #1b1a17;
-  --accent-secondary: #b34300;
-  --status-success: #0b7a52;
-  --status-warning: #8f5b00;
-  --status-danger: #c0301f;
-  --price-verified: #0b7a52;
-  --price-ai-hint: #67635b;
-  --gate-pass: #0b7a52;
-  --gate-fallback: #a04a00;
-
-  /* Device frame: mockup colours for the >= 768px iPhone. Not brand colours. */
-  --device-bezel: #e4e0d8;
-  --device-frame: #ffffff;
-  --device-island: #f4f1ea;
-
-  /* Status strip height on mobile (no strip). The >= 768px staging overrides it on .kk-device-phone. */
+  --bg-subtle: #f3f4f7;
+  --text-primary: #111218;
+  --text-secondary: #505560;
+  --text-muted: #5a5f6b;
+  --border-subtle: #e6e8ee;
+  --border-strong: #777d88;
+  --accent-primary: #4f46ef;
+  --accent-primary-fg: #ffffff;
+  --accent-secondary: #453bdc;
+  --accent-soft: #eeedff;
+  --status-success: #147b50;
+  --status-success-bg: #e4f5ec;
+  --status-warning: #875300;
+  --status-warning-bg: #fff4dd;
+  --status-danger: #b52f3c;
+  --price-verified: #147b50;
+  --price-ai-hint: #5a5f6b;
+  --gate-pass: #147b50;
+  --gate-fallback: #875300;
+  --device-bezel: #bfc1c9;
+  --device-frame: #f8f8fa;
+  --device-island: #17181c;
+  --scrim: #00000080;
   --kk-status-inset: 0px;
-
-  /* Radii (brandkit §4) */
-  --r-sm: 10px;
+  --r-sm: 12px;
   --r-md: 16px;
-  --r-lg: 22px;
+  --r-lg: 20px;
+  --r-pill: 999px;
+  --unit-1: 1px;
+  --unit-2: 2px;
+  --unit-3: 3px;
+  --unit-4: 4px;
+  --unit-5: 5px;
+  --unit-6: 6px;
+  --unit-7: 7px;
+  --unit-8: 8px;
+  --unit-10: 10px;
+  --unit-12: 12px;
+  --unit-13: 13px;
+  --unit-14: 14px;
+  --unit-15: 15px;
+  --unit-16: 16px;
+  --unit-18: 18px;
+  --unit-20: 20px;
+  --unit-22: 22px;
+  --unit-24: 24px;
+  --unit-26: 26px;
+  --unit-28: 28px;
+  --unit-36: 36px;
+  --unit-40: 40px;
+  --unit-44: 44px;
+  --unit-46: 46px;
+  --unit-48: 48px;
+  --unit-52: 52px;
+  --unit-58: 58px;
+  --unit-60: 60px;
+  --unit-64: 64px;
+  --unit-80: 80px;
+  --device-max-height: 882px;
+  --device-aspect: 433 / 882;
+  --device-phone-radius: 16.86% / 8.28%;
+  --device-view-radius: 14.31% / 6.61%;
+  --upload-min-height: 150px;
+  --photo-strip-width: 264px;
+  --sheet-max-height: 620px;
+  --content-max-width: 420px;
+  --action-max-width: 388px;
+  --empty-copy-width: 28ch;
+  --space-page: 16px;
+  --size-touch: 44px;
+  --size-action: 52px;
+  --ff-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --ff-display: var(--ff-body);
+  --ff-mono: var(--ff-body);
+}
 
-  /* Font stacks (brandkit §3) */
-  --ff-display: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif;
-  --ff-body: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
-  --ff-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+/* Tailwind's spacing and type utilities share the same scale as the components. */
+@theme {
+  --spacing: 4px;
+  --text-xs: 11px;
+  --text-xs--line-height: 14px;
+  --text-xs--letter-spacing: 0.02em;
+  --text-xs--font-weight: 600;
+  --text-sm: 13px;
+  --text-sm--line-height: 18px;
+  --text-sm--font-weight: 500;
+  --text-base: 15px;
+  --text-base--line-height: 22px;
+  --text-base--font-weight: 400;
+  --text-lg: 16px;
+  --text-lg--line-height: 22px;
+  --text-lg--letter-spacing: -0.015em;
+  --text-lg--font-weight: 700;
+  --text-xl: 18px;
+  --text-xl--line-height: 24px;
+  --text-xl--letter-spacing: -0.02em;
+  --text-xl--font-weight: 800;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 30px;
+  --text-2xl--letter-spacing: -0.02em;
+  --text-2xl--font-weight: 800;
+  --text-price: 17px;
+  --text-price--line-height: 22px;
+  --text-price--font-weight: 700;
+  --text-price-sm: 15px;
+  --text-price-sm--line-height: 20px;
+  --text-price-sm--font-weight: 700;
 }
 
 [data-theme='dark'] {
   color-scheme: dark;
-
-  --bg-canvas: #121316;
-  --bg-surface: #1b1d22;
-  --bg-elevated: #25282f;
-  --bg-subtle: #2c3038;
-  --text-primary: #faf7f2;
-  --text-secondary: #c7c8cc;
-  --text-muted: #9a9da5;
-  --border-subtle: #2a2d34;
-  --border-strong: #6d727d;
-  --accent-primary: #f5a524;
-  --accent-primary-fg: #121316;
-  --accent-secondary: #ff8533;
-  --status-success: #34d399;
-  --status-warning: #f5a524;
-  --status-danger: #ff7a66;
-  --price-verified: #34d399;
-  --price-ai-hint: #9a9da5;
-  --gate-pass: #34d399;
-  --gate-fallback: #ff8533;
-
-  /* Device frame: Magic UI iPhone dark palette. */
-  --device-bezel: #404040;
-  --device-frame: #262626;
-  --device-island: #262626;
+  --bg-canvas: #0e0f13;
+  --bg-surface: #1a1c22;
+  --bg-elevated: #24262e;
+  --bg-subtle: #1a1c22;
+  --text-primary: #f5f5f8;
+  --text-secondary: #c4c6d0;
+  --text-muted: #b4b6c1;
+  --border-subtle: #343741;
+  --border-strong: #858995;
+  --accent-primary: #a6a1ff;
+  --accent-primary-fg: #111125;
+  --accent-secondary: #b6b2ff;
+  --accent-soft: #30304d;
+  --status-success: #80dfae;
+  --status-success-bg: #173b2c;
+  --status-warning: #f3c26e;
+  --status-warning-bg: #44341e;
+  --status-danger: #ff9ca2;
+  --price-verified: #80dfae;
+  --price-ai-hint: #b4b6c1;
+  --gate-pass: #80dfae;
+  --gate-fallback: #f3c26e;
+  --device-bezel: #41434b;
+  --device-frame: #22242a;
+  --device-island: #050506;
 }
 
-/*
- * Money and SKU (brandkit §3): JetBrains Mono, tabular figures, slashed zero.
- * Body copy never sets slashed-zero.
- */
-.kk-money {
-  font-family: var(--ff-mono);
-  font-variant-numeric: tabular-nums slashed-zero;
-  font-feature-settings: 'tnum' 1, 'zero' 1;
-}
-
-/*
- * Press feedback: a native-style dim — no edge, no movement.
- * Opacity only, ≤160ms, removed under reduced motion.
- */
-.kk-tactile {
-  transition: opacity 120ms ease-out;
-}
-
-.kk-tactile:active:not(:disabled):not([aria-disabled='true']) {
-  opacity: 0.75;
-}
-
+.kk-money { font-variant-numeric: tabular-nums; }
+.kk-tactile { transition: opacity 160ms ease, transform 160ms ease; }
+.kk-tactile:active:not(:disabled):not([aria-disabled='true']) { opacity: .8; transform: scale(.99); }
 @media (prefers-reduced-motion: reduce) {
-  .kk-tactile {
-    transition: none;
-  }
+  .kk-tactile { transition: none; }
+  .kk-tactile:active { transform: none; }
 }
