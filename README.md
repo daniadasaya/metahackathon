@@ -8,6 +8,170 @@
 
 ---
 
+## 🚀 Try It Now
+
+> [!IMPORTANT]
+> **Live Web Application**: **[https://metahackathon.my.id](https://metahackathon.my.id)**  
+> **API Health Probe**: `https://metahackathon.my.id/api/health` → `{"ok":true,"mock":false}`  
+> **Viewing Mode**: Mobile device or browser window resized to phone width (360–430 px) is recommended for the full-screen native mobile experience. On wider desktop viewports (≥768 px), the application is automatically presented inside a centered iPhone device frame.  
+> **Hosting Duration**: The live deployment is hosted on an isolated cloud server through **2026-11-14**.
+
+---
+
+## 📱 Judge Walkthrough (about 6 minutes)
+
+Follow this step-by-step walkthrough to evaluate the complete end-to-end user experience on the live deployment:
+
+1. **Upload Screen (`/`)**:
+   - Open [https://metahackathon.my.id](https://metahackathon.my.id). By default, the interface is in Indonesian (`id`), the primary language of Indonesian social commerce sellers.
+   - *(Optional: Settings Sheet)* Tap the gear icon in the top bar to open the settings sheet. You can toggle between Indonesian (`id`) and English (`en`), or switch the appearance between System (default), Light, and Dark mode. Switching is instant and persists across sessions.
+   - Tap sample pack **"Paket A"** (two smartphone counter photos with chat price notes). The photo thumbnails appear.
+   - Tap the dominant bottom action button **"Proses Katalog"** ("Process Catalog") to submit the job to the live pipeline.
+
+2. **Progress Screen (`/jobs/{job_id}`)**:
+   - The screen displays a live 5-stage progress timeline:
+     - **Stage A (Concepts)**: `muse-spark-1.3-contributor` discovers product concepts (`smartphone`, `earphones`, `charger`) and transcribes visible text.
+     - **Stage B (Segmentation)**: `sam-3.1` streams instance segmentation masks (one concept per request).
+     - **Stage C (Cut-out)**: Pillow extracts alpha crops with 8% padding and builds a two-panel reference.
+     - **Stage D (Studio Cleanup)**: Two-stage fidelity gate audits crops before and after `muse-image-1.0` studio edits; rejected edits fall back to deterministic composites.
+     - **Stage E (Grounded Extraction)**: `muse-spark-1.3-contributor` runs over Meta's Responses API with `web_search` grounding and `json_schema` output.
+   - For Pack A (2 photos, 16 products), live processing takes roughly 4–5 minutes (~270 seconds).
+   - Once completed, the screen indicates "Katalog siap" (Catalog ready) with 16 products and 0 errors. Tap **"Tinjau 16 produk"** ("Review 16 products").
+
+3. **Review Screen (`/review`) & The Strict Price Law Test**:
+   - The review screen displays cards for all extracted products, showing studio photos, fidelity badges (`Lolos cek` for passed `muse-image-1.0` edits or `Foto standar` for composite fallbacks), bilingual descriptions, and canonical categories.
+   - **Test the Strict Price Law**:
+     - Products whose price was explicitly visible in the source photo or chat note (e.g. `Rp 1.500.000` on printed signs) are prefilled.
+     - Products with only an AI market suggestion display grey helper text **"Saran AI: Rp... — periksa lagi"** while their price input field remains **strictly empty**.
+     - Scroll to the bottom: the primary action button **"Lanjut"** ("Continue") is **strictly blocked** (`aria-disabled="true"`), explicitly listing which SKUs are missing prices (e.g., *"KK-0007 and 8 others have no price"*).
+     - Tapping the blocked button automatically focuses the first unpriced product.
+     - Type a price for each product (e.g., `150000`) or toggle **"Harga via chat"** ("Price via chat") for items sold upon customer inquiry. Once all products have a confirmed price or via-chat status, the blocked button immediately unlocks.
+   - *(Multi-Angle Merging)*: Notice the **"Gabung foto ke produk lain"** dropdown. When a seller captures multiple angles of the same item, secondary photos can be merged into a single SKU, with controls to promote a new primary angle or split them apart.
+   - Tap **"Lanjut"** to open the Store Preview (`/review/preview`), then tap **"Lanjut ke ekspor"** to proceed.
+
+4. **Export Screen (`/export`) & File Verification**:
+   - Enter a store name (e.g. `Toko Demo`) and a WhatsApp phone number with international digits only (e.g. `6281234567890`).
+   - Tap **"Ekspor katalog"** ("Export catalog"). In about 3 seconds, all four export files and public share links are compiled.
+   - **What to verify in each export deliverable**:
+     - **`katalog-meta.csv` (Meta Commerce Catalog Feed)**: Open the downloaded CSV. It contains exactly 11 canonical columns (`id,title,description,availability,condition,price,link,image_link,brand,product_type,additional_image_link`). All prices are formatted strictly as `{integer} IDR` (e.g. `150000 IDR`). Products marked "Harga via chat" are **excluded from the CSV** (no `0 IDR` placeholders). No AI-suggested price appears anywhere.
+     - **`katalog-kilat-images.zip` (Photo Archive)**: Contains clean studio JPEGs (`KK-0001.jpg`), clean crops (`KK-0001-crop.jpg`), and secondary angles, with the CSV bundled at the root.
+     - **`katalog-…-captions.txt` (Instagram Captions)**: Ready-to-copy captions formatted with specifications, confirmed prices (or `"harga via chat"`), and slugified hashtags.
+     - **`katalog-…-whatsapp.txt` (WhatsApp Broadcast List)**: Chat-ready broadcast text with Markdown formatting, confirmed prices, and direct inquiry links.
+     - **Public Product Page (`/p/{job_id}/{sku}`)**: Under "Tautan produk" ("Product links"), click one of the share links. It opens a clean, public mobile product storefront displaying the studio photo, confirmed price, specifications, and a one-tap **"Pesan via WhatsApp"** order button pointing to `wa.me/{phone}`.
+   - *Additional Sample Packs & Custom Photos*:
+     - You can also upload your own multi-product photos (JPG, PNG, WebP) on the Upload screen. Processing time scales with the number of products.
+     - Sample packs are available on the Upload screen: **Paket B** (clothes rack), **Paket C** (snack shelf), and **Paket D** (two opposite-side photos of gadget accessories designed specifically to showcase multi-angle merging).
+
+---
+
+## 🛠️ Run It Yourself
+
+Follow these instructions to run the entire stack locally using Docker Compose or bare-metal development.
+
+### Prerequisites
+
+- **Docker & Docker Compose v2**: Docker Engine 24+ with Compose v2.
+- **Meta Model API Key**: An active API key with access to:
+  - `muse-spark-1.3-contributor` (concept discovery, fidelity audit, grounded catalog extraction)
+  - `sam-3.1` (streaming instance segmentation)
+  - `muse-image-1.0` (generative studio lighting & cleanup)
+- No other dependencies: the container multi-stage build compiles the React SPA with Node 26 and serves it alongside the Python 3.12 FastAPI backend. First build takes about 2–3 minutes.
+
+### Step-by-Step Setup with Docker Compose
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/daniadasaya/metahackathon.git
+   cd metahackathon
+   ```
+
+2. **Configure environment variables**:
+   ```bash
+   cp .env.example .env
+   ```
+   Open `.env` and set:
+   - `MODEL_API_KEY`: Your Meta Model API key (server-side only; never sent to the client).
+   - `BASE_URL`: Public origin used to build absolute `image_link` and `link` URLs in the exported Meta Commerce CSV. Use `http://localhost:8180` for local runs.
+   - `META_MOCK`: Set to `false` for live inference against `api.meta.ai`.
+   
+   > [!NOTE]
+   > `docker-compose.yml` defaults `META_MOCK` to `true` when unset so a bare clone boots without a key, while `.env.example` explicitly sets `META_MOCK=false`. When `META_MOCK=false`, the container executes live against the Meta Model API. When `mock: true`, the pipeline runs offline against recorded test fixtures (useful for offline plumbing tests, but not a live demo).
+
+3. **Build and start the container**:
+   ```bash
+   docker compose -p katalogkilat up -d --build api
+   ```
+   *Note*: Specifying `api` starts only the web & API container and omits the optional Cloudflare `tunnel` service, which requires a Cloudflare token not needed for local evaluation.
+
+4. **Verify service health**:
+   ```bash
+   curl -s http://localhost:8180/api/health
+   # Expected output for live mode:
+   # {"ok":true,"mock":false}
+   ```
+
+5. **Open in browser**:
+   Navigate to [http://localhost:8180](http://localhost:8180). Processed jobs and catalog exports persist in `./data` on your host.
+
+6. **Stop and clean**:
+   ```bash
+   docker compose -p katalogkilat down
+   ```
+
+---
+
+### Local Development Without Docker
+
+If you prefer to run services directly on your host machine:
+
+- **Requirements**: Python 3.12, Node.js 20+
+
+1. **Terminal 1 — FastAPI Backend (port 8100)**:
+   ```bash
+   cd apps/api
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements-dev.txt
+   export MODEL_API_KEY="your_meta_api_key"
+   export BASE_URL="http://localhost:4100"
+   export META_MOCK="false"
+   uvicorn app.main:app --host 127.0.0.1 --port 8100 --reload
+   ```
+
+2. **Terminal 2 — Vite Web App (port 4100)**:
+   ```bash
+   cd apps/web
+   npm install
+   npm run dev
+   ```
+   Open [http://localhost:4100](http://localhost:4100) (Vite proxies `/api` and `/p` requests directly to `http://127.0.0.1:8100`).
+
+3. **Running the Test Suite**:
+   ```bash
+   # Run backend offline test suite (256 tests) inside container:
+   docker exec -e META_MOCK=true katalogkilat-api pytest apps/api/tests -q
+
+   # Verify frontend TypeScript build:
+   npm --prefix apps/web run build
+   ```
+   The backend test suite uses recorded fixtures and needs no key or network; it is not a live check.
+
+---
+
+## 🔧 Troubleshooting
+
+| Issue | Cause | Solution |
+| :--- | :--- | :--- |
+| `401 invalid_api_key` | Invalid or expired Meta Model API key | The pipeline fails at Stage A (`concepts_failed`). Check `MODEL_API_KEY` in `.env` for typos, extra quotes, or leading/trailing whitespace. Test the key directly: `curl -H "Authorization: Bearer $MODEL_API_KEY" https://api.meta.ai/v1/models`. |
+| `404 model_not_found` | Account lacks model entitlement | Your Meta account lacks entitlement to `muse-spark-1.3-contributor`, `sam-3.1`, or `muse-image-1.0`. The service surfaces this access problem immediately and does not retry. |
+| CSV image links broken / dead | Mismatched `BASE_URL` | The exported CSV builds absolute image URLs from `BASE_URL`. For local testing, ensure `BASE_URL=http://localhost:8180` in `.env`. Re-export the catalog after correcting. |
+| Port 8180 already in use | Another process binds 8180 | Update the port binding in `docker-compose.yml` (e.g. `"127.0.0.1:8182:8000"`) and update `BASE_URL` to match (`http://localhost:8182`). |
+| Long processing time (~4–5 min) | High model count and sequential audits | Pack A processes 16 products across 2 photos with streaming segmentation and two-stage fidelity audits per item (~270 seconds). This is normal. Do not reload the progress page during processing. |
+| Images fail to load on `/p/` | Data volume permission or missing job | Check that `./data` exists and is writable. Healthy jobs serve verified JPEG artifacts (`image/jpeg`); missing artifacts return an SVG placeholder. |
+| `mock: true` in `/api/health` | `META_MOCK` is not `false` | When `META_MOCK` is unset or not `false`, the server runs in mock mode using fixtures. Ensure `META_MOCK=false` in `.env` and restart the container. |
+
+---
+
 ## The Problem vs. Katalog Kilat
 
 Social-commerce sellers across Indonesia run high-volume retail businesses entirely inside WhatsApp, Instagram, and Facebook chats. Their products are photographed in raw, cluttered batches on shop counters, display racks, and cardboard boxes, while their pricing lives in casual chat messages — making traditional catalog creation impossibly tedious.
@@ -177,47 +341,11 @@ The FastAPI backend exposes 9 REST routes with contracts defined in `apps/api/op
 
 | Layer | Technology | Description |
 | :--- | :--- | :--- |
-| **Frontend** | React 19, TypeScript, Vite, TanStack Router & Query, Tailwind CSS | Single Page Application with Lightbox Pasar design system, mobile-first density, bilingual interface (`id`/`en`), and 3 theme states (`system`, `light`, `dark`). |
+| **Frontend** | React 19, TypeScript, Vite, TanStack Router & Query, Tailwind CSS | Phone-first Single Page Application with native mobile app anatomy (compact top bar with back navigation and 5-step progress indicator, bottom settings sheet for language and appearance, single pinned primary action, 44px touch targets), bilingual interface (`id` default, `en`), and 3 theme states (`system`, `light`, `dark`). Desktop view renders inside a centered iPhone device frame. |
 | **Backend** | Python 3.12, FastAPI, Pydantic v2, Uvicorn | High-performance asynchronous REST backend with strict schema validation and OpenAPI contract generation. |
 | **Imaging** | Pillow, `meta-sam-parser` | Non-generative image processing, mask raster decoding, connected-component filtering, alpha extraction, and deterministic compositing. |
 | **AI Models** | `muse-spark-1.3-contributor`, `sam-3.1`, `muse-image-1.0` | Meta Model API orchestration for vision concept discovery, instance segmentation, generative cleanup, fidelity inspection, and search-grounded catalog extraction. |
 | **Packaging** | Docker, Docker Compose | Unified multi-stage container hosting both compiled frontend static assets and FastAPI backend service. |
-
----
-
-## Quickstart
-
-Clone the repository and set up environment configuration:
-
-```bash
-cp .env.example .env
-```
-
-Set your `MODEL_API_KEY` in `.env`, then start the unified container:
-
-### Run with Docker Compose (recommended)
-
-```bash
-docker compose -p katalogkilat up -d --build
-```
-
-Open `http://localhost:8180` in your browser (health check at `http://localhost:8180/api/health`).
-
-### Run for local development
-
-```bash
-# Terminal 1 — FastAPI backend (port 8100)
-uvicorn app.main:app --app-dir apps/api --port 8100 --reload
-
-# Terminal 2 — Vite web app (port 4100)
-npm --prefix apps/web run dev
-```
-
-### Run test suite
-
-```bash
-docker exec katalogkilat-api pytest apps/api/tests -q
-```
 
 ---
 
@@ -245,7 +373,7 @@ metahackathon/
 | :--- | :--- |
 | [`docs/prompts-final.md`](docs/prompts-final.md) | Final prompt versions and execution specifications for Meta Model API calls. |
 | [`apps/api/openapi.json`](apps/api/openapi.json) | Committed OpenAPI contract specifying all 9 routes and 28 schema components. |
-| [`apps/web/design/brandkit.md`](apps/web/design/brandkit.md) | Lightbox Pasar design system tokens, typography, and density specifications. |
+| [`apps/web/design/brandkit.md`](apps/web/design/brandkit.md) | Interface notes, design tokens, responsive behavior, and native mobile layout guidelines. |
 | [`LICENSE`](LICENSE) | Proprietary License & Hackathon Evaluation Grant terms. |
 
 ---
