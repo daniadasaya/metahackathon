@@ -25,7 +25,7 @@ Follow this step-by-step walkthrough to evaluate the complete end-to-end user ex
 1. **Upload Screen (`/`)**:
    - Open [https://metahackathon.my.id](https://metahackathon.my.id). By default, the interface is in Indonesian (`id`), the primary language of Indonesian social commerce sellers.
    - *(Optional: Settings Sheet)* Tap the gear icon in the top bar to open the settings sheet. You can toggle between Indonesian (`id`) and English (`en`), or switch the appearance between System (default), Light, and Dark mode. Switching is instant and persists across sessions.
-   - Tap sample pack **"Paket A"** (two smartphone counter photos with printed price cards). The photo thumbnails appear.
+   - Tap sample pack **"Paket A"** (two smartphone counter photos with printed price cards). A check badge appears on the selected pack card and a status line confirms *"Paket A dipilih. Foto unggahan diabaikan."* (*"Pack A selected. Uploaded photos are ignored."*).
    - Tap the dominant bottom action button **"Proses Katalog"** ("Process Catalog") to submit the job to the live pipeline.
 
 2. **Progress Screen (`/jobs/{job_id}`)**:
@@ -35,15 +35,16 @@ Follow this step-by-step walkthrough to evaluate the complete end-to-end user ex
      - **C — Tidying photos** (*"Merapikan foto"*): Two-stage fidelity gate audits crops before and after `muse-image-1.0` studio edits, falling back to deterministic composites on rejection.
      - **D — Writing the catalog** (*"Menulis katalog"*): `muse-spark-1.3-contributor` runs search-grounded (`web_search`) structured extraction over Meta's Responses API into canonical categories.
      - **E — Catalog result** (*"Hasil katalog"*): Aggregates tidied products into ready-to-review catalog cards.
-   - For Pack A (2 photos, 16 products), live processing takes about 5–6.5 minutes depending on the pack and API load.
-   - Once completed, the screen indicates "Katalog siap" (Catalog ready) with 16 products and 0 errors. Tap **"Tinjau 16 produk"** ("Review 16 products").
+   - For Pack A (2 photos, roughly sixteen products), live processing takes about 4.5–6.5 minutes depending on API load.
+   - Once completed, the screen indicates *"Katalog siap"* (*"Catalog ready"*) with roughly sixteen products (typically 14–18) and 0 errors. Tap the primary review button (e.g. **"Tinjau {N} produk"** / *"Review {N} products"*) to proceed.
 
 3. **Review Screen (`/review`) & The Strict Price Law Test**:
    - The review screen displays cards for all extracted products, showing studio photos, fidelity badges (`Lolos cek` for passed `muse-image-1.0` edits or `Foto standar` for composite fallbacks), bilingual descriptions, and canonical categories.
    - **Test the Strict Price Law**:
-     - `price_hint_idr` pre-fills only when the amount is printed in that product's own photo (visible text) or written in the caption attached to that product's own photo; a price that appears only in the general caption never pre-fills. For Pack A, four products carrying the printed `Rp 1.500.000` tag in the photo (KK-0004, KK-0005, KK-0006, KK-0011) are pre-filled with that price. Five products whose cut-out was incomplete (acrylic display stand fused into the phone's silhouette, bite out of the body, or partial mask) are switched OFF by default by the composite guard and shown as excluded (`Tidak dimasukkan`); the seller can inspect them and toggle them back on at any time.
-     - Products with an AI market suggestion or general-caption price display grey helper text **"Saran AI: Rp... — periksa lagi"** while their price input field remains **strictly empty**.
-     - Scroll to the sticky bottom bar: a summary counter reports progress reflecting active items (for Pack A at initial review: *"3 produk siap · 8 belum ada harga"* / *"3 products ready · 8 missing a price"*, because three of the four pre-filled phones are among the 11 active items). When any included item lacks a price, a warning button lists the unpriced items (*"KK-0003 · HP Smartphone Second Gold Kondisi Normal Siap… dan 7 lainnya belum ada harga"*) and opens a bottom sheet listing every unpriced SKU.
+     - `price_hint_idr` pre-fills only when the amount is printed in that product's own photo (visible text) or written in the caption attached to that product's own photo; a price that appears only in the general caption never pre-fills. For Pack A, the phones standing next to the printed price card are pre-filled at `Rp1.500.000` (roughly four phones, identified by visible text). A pre-filled phone whose cut-out happens to be switched off still displays its price on its card in Review, but will not be included in the final export unless toggled back on.
+     - A few products (typically between about five and seven in our runs) have an incomplete cut-out (acrylic display stand fused into the phone's silhouette, bite out of the body, or partial mask) and are switched OFF by default by the composite guard with the badge *"Tidak dimasukkan"* (*"Left out"*); the seller can inspect them and tap *"Masukkan ke katalog"* (*"Include in catalog"*) to toggle them back on at any time.
+     - The grey helper text **"Saran AI: Rp... — periksa lagi"** (*"AI suggestion: Rp... — double-check"*) appears on items where the price field is empty, and may also appear beneath a pre-filled price when the model suggested an estimate alongside a printed tag. The essential rule: AI suggestion text never fills or alters the price field.
+     - Scroll to the sticky bottom bar: the summary counter reports progress reflecting only active (included) items, reading **"N produk siap · M belum ada harga"** (*"N products ready · M missing a price"*), where *N* and *M* vary run to run depending on segmentation and exclusion decisions. When any included item lacks a price, a warning button lists the unpriced items (e.g. showing the first unpriced product and *"dan M-1 lainnya belum ada harga"*) and opens a bottom sheet titled *"Produk belum ada harga"* (*"Products missing a price"*) listing every unpriced SKU. Rather than matching fixed numbers across runs, read the bar and blocker line to verify the invariant: *N* ready items plus *M* items missing a price equals the total active included items.
      - The primary action button **"Lanjut"** ("Continue") is **strictly blocked** (`aria-disabled="true"`). Tapping it automatically moves focus to the price input of the first unpriced product.
      - Type a price for each product (e.g., `150000`) or toggle **"Harga via chat"** ("Price via chat") for items sold upon customer inquiry. Once all products have a confirmed price or via-chat status, the blocked button immediately unlocks.
    - *(Multi-Angle Merging)*: Notice the **"Gabung foto ke produk lain"** ("Merge photo into another product") button on product cards. Tapping it opens an inline picker sheet to select a target product. When secondary photos of the same item are merged into a single SKU, the card gains controls to promote a secondary angle to primary ("Utama") or unmerge ("Pisahkan").
@@ -51,10 +52,10 @@ Follow this step-by-step walkthrough to evaluate the complete end-to-end user ex
 
 4. **Export Screen (`/export`) & File Verification**:
    - Enter a store name (e.g. `Toko Demo`) and a WhatsApp phone number with international digits only (e.g. `6281234567890`).
-   - Tap **"Ekspor katalog"** ("Export catalog"). In about 2–3 seconds, all four export files and public share links are compiled (for Pack A: 16 found, 11 exported by default; the 5 switched-off items remain excluded unless toggled on by the seller).
+   - Tap **"Ekspor katalog"** (*"Export catalog"*). In about 2–3 seconds, all four export files and public share links are compiled. The export summary confirms the counts on screen (e.g. *"N produk diekspor, M di antaranya harga via chat · K dikecualikan"*); any switched-off items remain excluded unless toggled on by the seller.
    - **What to verify in each export deliverable**:
-     - **`katalog-meta.csv` (Meta Commerce Catalog Feed)**: Open the downloaded CSV. It contains exactly 11 canonical columns (`id,title,description,availability,condition,price,link,image_link,brand,product_type,additional_image_link`), with 11 rows for Pack A's included items. All prices are formatted strictly as `{integer} IDR` (e.g. `150000 IDR`). Products marked "Harga via chat" are **excluded from the CSV** (no `0 IDR` placeholders). No AI-suggested price appears anywhere.
-     - **`katalog-kilat-images.zip` (Photo Archive)**: Contains clean studio JPEGs (`KK-0003.jpg`), clean crops (`KK-0003-crop.jpg`), and secondary angles (23 items total: 11 studio shots + 11 crops + 1 CSV for Pack A), with `katalog-{job_id}.csv` bundled at the root.
+     - **`katalog-meta.csv` (Meta Commerce Catalog Feed)**: Open the downloaded CSV. It contains exactly 11 canonical columns (`id,title,description,availability,condition,price,link,image_link,brand,product_type,additional_image_link`), with exactly one row per exported product. All prices are formatted strictly as `{integer} IDR` (e.g. `150000 IDR`). Products marked "Harga via chat" are **strictly absent from the CSV** (no `0 IDR` placeholders). No AI-suggested price appears anywhere.
+     - **`katalog-kilat-images.zip` (Photo Archive)**: Contains clean studio JPEGs, clean crops, and any secondary angles, with `katalog-{job_id}.csv` bundled at the root. The archive contains exactly `2 × products + 1` members for single-angle products (one studio JPEG + one crop JPEG per exported product, plus the CSV manifest).
      - **`katalog-…-captions.txt` (Instagram Captions)**: Ready-to-copy caption blocks containing product title, confirmed price (or `"harga via chat"`), description prose, WhatsApp ordering line with seller phone number, and slugified category/brand hashtags separated by dividers.
      - **`katalog-…-whatsapp.txt` (WhatsApp Broadcast List)**: Chat-ready broadcast text with Markdown formatting, confirmed prices, and direct inquiry links.
      - **Public Product Page (`/p/{job_id}/{sku}`)**: Under **"Tautan produk"** ("Product links", tap to expand), click one of the share links. It opens a clean, standalone mobile product storefront rendering the studio hero photo (with a scroll-snap carousel track and count badge for merged angles), store chip, product name, confirmed price (or `"harga via chat"`), description prose, category/condition chips, OpenGraph link-preview tags, system-matched light/dark styling, and a pinned bottom bar with a one-tap **"Pesan via WhatsApp"** order button pointing to `wa.me/{phone}`.
@@ -161,9 +162,9 @@ If you prefer to run services directly on your host machine:
 
 ## Known Limitations
 
-- **Processing time scales with product count**: Processing duration grows directly with the number of detected products and model calls. Pack A (2 photos, 16 products) takes about 5–6.5 minutes on the live pipeline, while a heavier run of six large photos took about 12–13 minutes.
+- **Processing time scales with product count**: Processing duration grows directly with the number of detected products and model calls. Pack A (2 photos, roughly sixteen products) takes about 4.5–6.5 minutes on the live pipeline, while a heavier run of six large photos took about 12–13 minutes.
 - **Upload constraints and normalization**: At most 30 photos are accepted per job, capped at 10 MB per file. Uploaded images are resized to a maximum of 2,400 px on the long side (using Lanczos downsampling) and re-encoded as JPEG (quality 90). Any undecodable file causes the entire upload to be rejected with the specific filename identified.
-- **Incomplete cut-out guard**: When the fidelity pre-gate or post-gate falls back to a deterministic composite, any cut-out with alpha coverage below the 80% threshold (`COMPOSITE_MIN_COVERAGE = 0.80`) is automatically switched OFF by default in the Review screen, leaving the seller to inspect the crop and toggle it on manually if acceptable. In the Pack A run, five of sixteen products were switched off due to incomplete cut-outs (acrylic display stand fused into the silhouette or bites out of the body), and one of those five carried a printed tag price.
+- **Incomplete cut-out guard**: When the fidelity pre-gate or post-gate falls back to a deterministic composite, any cut-out with alpha coverage below the 80% threshold (`COMPOSITE_MIN_COVERAGE = 0.80`) is automatically switched OFF by default in the Review screen, leaving the seller to inspect the crop and toggle it on manually if acceptable. Across live Pack A runs, a few products (typically five to seven of roughly sixteen) are switched off due to incomplete cut-outs (such as an acrylic display stand fused into the silhouette, a bite out of the body, or a partial mask), and one of those switched-off products may carry a printed tag price.
 - **Echoed product names**: Extracted product names can echo a product line from the caption or a neighbouring product (observed in testing: ten unbranded cosmetic bottles labeled "MOCK-UP" in the photo were named "Skincare Endless Pure …" when that phrase appeared in the general caption). Sellers should review product names before export.
 - **Model extraction accuracy**: Extracted product names and brands can occasionally be swapped or misattributed when multiple visually similar items appear in the same photo (observed in testing when two similar Glossier cosmetic products swapped names). Product condition (`new` or `used`) is an AI estimate from visual cues and should be reviewed before export.
 - **Commerce Manager feed validation**: The generated 11-column catalog feed CSV has been validated against the documented Meta Commerce Manager feed specification by automated tests, but has not been imported into a live Meta Commerce Manager account in this project.
@@ -181,7 +182,7 @@ If you prefer to run services directly on your host machine:
 | `404 model_not_found` | Account lacks model entitlement | Your Meta account lacks entitlement to `muse-spark-1.3-contributor`, `sam-3.1`, or `muse-image-1.0`. The service surfaces this access problem immediately and does not retry. |
 | CSV image links broken / dead | Mismatched `BASE_URL` | The exported CSV builds absolute image URLs from `BASE_URL`. For local testing, ensure `BASE_URL=http://localhost:8180` in `.env`. Re-export the catalog after correcting. |
 | Port 8180 or container name conflict | Another process binds port 8180, or a container named `katalogkilat-api` already exists | Change the host port in `docker-compose.yml` (e.g. `"127.0.0.1:8182:8000"`) AND update `BASE_URL` in `.env` to match (`http://localhost:8182`). If a container named `katalogkilat-api` already exists from an earlier run, remove it with `docker rm -f katalogkilat-api` or remove the pinned `container_name: katalogkilat-api` line in `docker-compose.yml`. |
-| Long processing time (~5–6.5 min) | High model count and sequential audits | Live processing involves streaming segmentation, two-stage fidelity audits, and grounded extraction per item (about 5–6.5 minutes live depending on the pack and API load). This is normal. |
+| Long processing time (~4.5–6.5 min) | High model count and sequential audits | Live processing involves streaming segmentation, two-stage fidelity audits, and grounded extraction per item (about 4.5–6.5 minutes live depending on the pack and API load). This is normal. |
 | Images fail to load on `/p/` | Data volume permission or missing job | Check that `./data` exists and is writable. Healthy jobs serve verified JPEG artifacts (`image/jpeg`); missing artifacts return a deterministic 1024×1024 JPEG placeholder. |
 | `mock: true` in `/api/health` | `META_MOCK` is not `false` | When `META_MOCK` is unset or not `false`, the server runs in mock mode using fixtures. Ensure `META_MOCK=false` in `.env` and restart the container. |
 
@@ -210,10 +211,10 @@ Katalog Kilat detects individual items from cluttered counter photos, runs gener
 
 | Raw Multi-Product Seller Photo | Pipeline Step | Output Image | Fidelity Inspection & Result |
 | :---: | :---: | :---: | :--- |
-| <img src="apps/web/public/samples/a/photo1.jpg" width="220" alt="Raw Seller Photo" /> | **Stage C: Cut-out**<br>*(KK-0004)* | <img src="apps/web/public/samples/showcase/a-kk0004-crop.jpg" width="220" alt="Cut-out Crop" /> | **Input to Fidelity Gate**: Segmented smartphone instance with clean edges and transparent background. |
-| *(Raw counter photo: 6 smartphones, cables, earbuds, and Rp 1.500.000 price card)* | **Stage D: Studio Shot**<br>*(Fidelity PASS)* | <img src="apps/web/public/samples/showcase/a-kk0004-studio.jpg" width="220" alt="Studio Cleaned" /> | **Fidelity Gate PASS (`muse-image-1.0`)**: 1:1 off-white studio lighting. Inspector audits confirm `same_product: true`, `color_match: true`, `logo_text_match: true`. |
-| <img src="apps/web/public/samples/a/photo1.jpg" width="220" alt="Raw Seller Photo" /> | **Stage C: Cut-out**<br>*(KK-0006)* | <img src="apps/web/public/samples/showcase/a-kk0006-crop.jpg" width="220" alt="Occluded Cut-out" /> | **Input to Fidelity Gate**: Smartphone cut-out notched on the bottom-left corner by the price sign. |
-| *(Occluded item detected)* | **Stage D: Fallback**<br>*(Fidelity REJECT)* | <img src="apps/web/public/samples/showcase/a-kk0006-composite.jpg" width="220" alt="Composite Fallback" /> | **Fidelity Pre-Gate REJECT → Pillow Composite**: Pre-gate catches the missing corner before calling generative edit. Deterministic composite prevents AI hallucination. |
+| <img src="apps/web/public/samples/a/photo1.jpg" width="220" alt="Raw Seller Photo" /> | **Stage B: Cut-out**<br>*(KK-0004)* | <img src="apps/web/public/samples/showcase/a-kk0004-crop.jpg" width="220" alt="Cut-out Crop" /> | **Input to Fidelity Gate**: Segmented smartphone instance with clean edges and transparent background. |
+| *(Raw counter photo: 6 smartphones, cables, earbuds, and Rp 1.500.000 price card)* | **Stage C: Studio Shot**<br>*(Fidelity PASS)* | <img src="apps/web/public/samples/showcase/a-kk0004-studio.jpg" width="220" alt="Studio Cleaned" /> | **Fidelity Gate PASS (`muse-image-1.0`)**: 1:1 off-white studio lighting. Inspector audits confirm `same_product: true`, `color_match: true`, `logo_text_match: true`. |
+| <img src="apps/web/public/samples/a/photo1.jpg" width="220" alt="Raw Seller Photo" /> | **Stage B: Cut-out**<br>*(KK-0006)* | <img src="apps/web/public/samples/showcase/a-kk0006-crop.jpg" width="220" alt="Occluded Cut-out" /> | **Input to Fidelity Gate**: Smartphone cut-out notched on the bottom-left corner by the price sign. |
+| *(Occluded item detected)* | **Stage C: Fallback**<br>*(Fidelity REJECT)* | <img src="apps/web/public/samples/showcase/a-kk0006-composite.jpg" width="220" alt="Composite Fallback" /> | **Fidelity Pre-Gate REJECT → Pillow Composite**: Pre-gate catches the missing corner before calling generative edit. Deterministic composite prevents AI hallucination. |
 
 ### 2. Multi-Angle SKU Merging (Opposite-Side Photos → Single SKU)
 
@@ -239,18 +240,18 @@ flowchart TD
 
     subgraph Pipeline ["2. Five-Stage Meta AI Pipeline"]
         direction TB
-        StageA["<b>Stage A: Concept Discovery</b>\nmuse-spark-1.3-contributor\n• Foreground concept phrases\n• Scene context & visible price text"]
-        StageB["<b>Stage B: Instance Segmentation</b>\nsam-3.1 (Streamed Responses)\n• 1 concept per request\n• Foreground-only retry & IoU deduplication"]
-        StageC["<b>Stage C: Deterministic Cut-out</b>\nPillow (Non-Generative)\n• Alpha mask cleanup & 8% bbox padding\n• Two-panel ground-truth reference"]
+        StageA["<b>Stage A: Spotting Products</b>\n(<i>Mengenali produk</i>)\nmuse-spark-1.3-contributor\n• Foreground concept phrases\n• Scene context & visible price text"]
+        StageB["<b>Stage B: Cutting Each Product Out</b>\n(<i>Memotong tiap produk</i>)\nsam-3.1 (Streamed Responses) & Pillow\n• 1 concept per request\n• Alpha cut-out & 8% bbox padding"]
         
-        subgraph StageD ["Stage D: Two-Stage Fidelity Gate"]
+        subgraph StageC ["Stage C: Tidying Photos (<i>Merapikan foto</i>)"]
             PreGate{"Pre-Gate Check\nmuse-spark-1.3-contributor\n(Is crop intact?)"}
             MuseImage["Generative Cleanup\nmuse-image-1.0\n(1:1 Studio Lighting)"]
             PostGate{"Post-Gate Audit\nmuse-spark-1.3-contributor\n(Geometry/Color/Logo match?)"}
             CompositeFallback["Deterministic Composite\nPillow (Guaranteed Zero Hallucination)"]
         end
 
-        StageE["<b>Stage E: Grounded Extraction</b>\nmuse-spark-1.3-contributor\n• POST /v1/responses + web_search\n• json_schema structured output\n• Canonical 14-value category taxonomy"]
+        StageD["<b>Stage D: Writing the Catalog</b>\n(<i>Menulis katalog</i>)\nmuse-spark-1.3-contributor\n• POST /v1/responses + web_search\n• json_schema structured output\n• Canonical 14-value category taxonomy"]
+        StageE["<b>Stage E: Catalog Result</b>\n(<i>Hasil katalog</i>)\nAggregates tidied products into\nready-to-review catalog cards"]
     end
 
     subgraph Review ["3. Interactive Mobile Review"]
@@ -269,14 +270,14 @@ flowchart TD
     Photos --> StageA
     Captions --> StageA
     StageA --> StageB
-    StageB --> StageC
-    StageC --> PreGate
+    StageB --> PreGate
     PreGate -- "Intact (Pass)" --> MuseImage
     PreGate -- "Occluded (Reject)" --> CompositeFallback
     MuseImage --> PostGate
-    PostGate -- "Fidelity Pass" --> StageE
+    PostGate -- "Fidelity Pass" --> StageD
     PostGate -- "Fidelity Reject" --> CompositeFallback
-    CompositeFallback --> StageE
+    CompositeFallback --> StageD
+    StageD --> StageE
     StageE --> PriceLaw
     PriceLaw --> AngleMerge
     AngleMerge --> CSV
@@ -290,11 +291,11 @@ flowchart TD
 
 | Stage | Owner Model / Engine | API Surface | Input → Output | Engineering Guardrail |
 | :--- | :--- | :--- | :--- | :--- |
-| **Stage A: Concept Discovery** | `muse-spark-1.3-contributor` | Vision Chat Completion | Raw multi-product photo + seller captions → Noun concept phrases, scene notes, visible text | Foreground-only focus; ignores display stands, mannequins, hands, and background clutter |
-| **Stage B: Instance Segmentation** | `sam-3.1` | Streamed Responses (`meta-sam-parser`) | Single concept phrase + photo → Binary instance segmentation masks | 1 concept per request; automatic `foreground {concept}` retry on zero-mask results; IoU & containment deduplication |
-| **Stage C: Deterministic Cut-out** | Pillow (Non-generative) | Local Python image processing | Binary mask + raw photo → Alpha cut-out with 8% bounding-box padding | Largest Connected Component (LCC) filtering; pinhole hole-filling; 2-panel ground-truth visual reference generation |
-| **Stage D: Studio Cleanup & Fidelity Gate** | `muse-image-1.0` + `muse-spark-1.3-contributor` | Image Editing (`POST /v1/images/generations/edits`) + Vision Audit | Alpha cut-out + 2-panel reference → 1:1 studio JPEG or deterministic Pillow composite | **Two-Stage Fidelity Gate**: Pre-Gate rejects occluded crops; Post-Gate verifies `same_product`, `color_match`, `logo_text_match`; automatic fallback to deterministic composite |
-| **Stage E: Grounded Extraction** | `muse-spark-1.3-contributor` | Responses API (`POST /v1/responses`) | Clean image + visible text + captions → Structured `ProductEntry` JSON | Search Grounding (`web_search`) in Indonesian region; `json_schema` output; 14 canonical Indonesian categories; zero price invention |
+| **Stage A: Spotting Products** (*Mengenali produk*) | `muse-spark-1.3-contributor` | Vision Chat Completion | Raw multi-product photo + seller captions → Noun concept phrases, scene notes, visible text | Foreground-only focus; ignores display stands, mannequins, hands, and background clutter |
+| **Stage B: Cutting Each Product Out** (*Memotong tiap produk*) | `sam-3.1` + Pillow (Non-generative) | Streamed Responses (`meta-sam-parser`) + Local Python | Single concept phrase + photo → Binary masks → Alpha cut-outs with 8% bbox padding | 1 concept per request; automatic retry on zero-mask results; IoU deduplication; pinhole hole-filling |
+| **Stage C: Tidying Photos** (*Merapikan foto*) | `muse-image-1.0` + `muse-spark-1.3-contributor` + Pillow | Image Editing (`POST /v1/images/generations/edits`) + Vision Audit | Alpha cut-out + 2-panel reference → 1:1 studio JPEG or deterministic Pillow composite | **Two-Stage Fidelity Gate**: Pre-Gate rejects occluded crops; Post-Gate verifies `same_product`, `color_match`, `logo_text_match`; automatic fallback to deterministic composite |
+| **Stage D: Writing the Catalog** (*Menulis katalog*) | `muse-spark-1.3-contributor` | Responses API (`POST /v1/responses`) | Clean image + visible text + captions → Structured `ProductEntry` JSON | Search Grounding (`web_search`) in Indonesian region; `json_schema` output; 14 canonical Indonesian categories; zero price invention |
+| **Stage E: Catalog Result** (*Hasil katalog*) | Backend Pipeline Engine | Internal aggregation | Verified images + extracted product entries → Review-ready catalog cards | Consistency verification; SKU assignment; composite guard coverage checks |
 
 ---
 
