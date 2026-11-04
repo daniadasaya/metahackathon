@@ -18,14 +18,14 @@
 
 ---
 
-## 📱 Judge Walkthrough (about 6 minutes)
+## 📱 Judge Walkthrough (about 10 minutes including the processing wait)
 
 Follow this step-by-step walkthrough to evaluate the complete end-to-end user experience on the live deployment:
 
 1. **Upload Screen (`/`)**:
    - Open [https://metahackathon.my.id](https://metahackathon.my.id). By default, the interface is in Indonesian (`id`), the primary language of Indonesian social commerce sellers.
    - *(Optional: Settings Sheet)* Tap the gear icon in the top bar to open the settings sheet. You can toggle between Indonesian (`id`) and English (`en`), or switch the appearance between System (default), Light, and Dark mode. Switching is instant and persists across sessions.
-   - Tap sample pack **"Paket A"** (two smartphone counter photos with chat price notes). The photo thumbnails appear.
+   - Tap sample pack **"Paket A"** (two smartphone counter photos with printed price cards). The photo thumbnails appear.
    - Tap the dominant bottom action button **"Proses Katalog"** ("Process Catalog") to submit the job to the live pipeline.
 
 2. **Progress Screen (`/jobs/{job_id}`)**:
@@ -35,18 +35,18 @@ Follow this step-by-step walkthrough to evaluate the complete end-to-end user ex
      - **Stage C (Cut-out)**: Pillow extracts alpha crops with 8% padding and builds a two-panel reference.
      - **Stage D (Studio Cleanup)**: Two-stage fidelity gate audits crops before and after `muse-image-1.0` studio edits; rejected edits fall back to deterministic composites.
      - **Stage E (Grounded Extraction)**: `muse-spark-1.3-contributor` runs over Meta's Responses API with `web_search` grounding and `json_schema` output.
-   - For Pack A (2 photos, 16 products), live processing takes roughly 4–5 minutes (~270 seconds).
+   - For Pack A (2 photos, 16 products), live processing takes about 5 minutes (4.5–6 minutes). Smaller batches finish sooner.
    - Once completed, the screen indicates "Katalog siap" (Catalog ready) with 16 products and 0 errors. Tap **"Tinjau 16 produk"** ("Review 16 products").
 
 3. **Review Screen (`/review`) & The Strict Price Law Test**:
    - The review screen displays cards for all extracted products, showing studio photos, fidelity badges (`Lolos cek` for passed `muse-image-1.0` edits or `Foto standar` for composite fallbacks), bilingual descriptions, and canonical categories.
    - **Test the Strict Price Law**:
-     - Products whose price was explicitly visible in the source photo or chat note (e.g. `Rp 1.500.000` on printed signs) are prefilled.
+     - Products whose price was explicitly visible on printed price tags in the photo (specifically, the 4 phones next to the visible "Rp 1.500.000" card) are prefilled.
      - Products with only an AI market suggestion display grey helper text **"Saran AI: Rp... — periksa lagi"** while their price input field remains **strictly empty**.
-     - Scroll to the bottom: the primary action button **"Lanjut"** ("Continue") is **strictly blocked** (`aria-disabled="true"`), explicitly listing which SKUs are missing prices (e.g., *"KK-0007 and 8 others have no price"*).
-     - Tapping the blocked button automatically focuses the first unpriced product.
+     - Scroll to the sticky bottom bar: a summary counter reports progress (e.g. *"4 produk siap · 12 belum ada harga"* / *"4 products ready · 12 missing a price"*). When any item lacks a price, a warning button lists the unpriced items (e.g. *"KK-0001 · HP Second… dan 11 lainnya belum ada harga"*) and opens a bottom sheet listing every unpriced SKU.
+     - The primary action button **"Lanjut"** ("Continue") is **strictly blocked** (`aria-disabled="true"`). Tapping it automatically moves focus to the price input of the first unpriced product.
      - Type a price for each product (e.g., `150000`) or toggle **"Harga via chat"** ("Price via chat") for items sold upon customer inquiry. Once all products have a confirmed price or via-chat status, the blocked button immediately unlocks.
-   - *(Multi-Angle Merging)*: Notice the **"Gabung foto ke produk lain"** dropdown. When a seller captures multiple angles of the same item, secondary photos can be merged into a single SKU, with controls to promote a new primary angle or split them apart.
+   - *(Multi-Angle Merging)*: Notice the **"Gabung foto ke produk lain"** ("Merge photo into another product") button on product cards. Tapping it opens an inline picker sheet to select a target product. When secondary photos of the same item are merged into a single SKU, the card gains controls to promote a secondary angle to primary ("Utama") or unmerge ("Pisahkan").
    - Tap **"Lanjut"** to open the Store Preview (`/review/preview`), then tap **"Lanjut ke ekspor"** to proceed.
 
 4. **Export Screen (`/export`) & File Verification**:
@@ -54,10 +54,10 @@ Follow this step-by-step walkthrough to evaluate the complete end-to-end user ex
    - Tap **"Ekspor katalog"** ("Export catalog"). In about 3 seconds, all four export files and public share links are compiled.
    - **What to verify in each export deliverable**:
      - **`katalog-meta.csv` (Meta Commerce Catalog Feed)**: Open the downloaded CSV. It contains exactly 11 canonical columns (`id,title,description,availability,condition,price,link,image_link,brand,product_type,additional_image_link`). All prices are formatted strictly as `{integer} IDR` (e.g. `150000 IDR`). Products marked "Harga via chat" are **excluded from the CSV** (no `0 IDR` placeholders). No AI-suggested price appears anywhere.
-     - **`katalog-kilat-images.zip` (Photo Archive)**: Contains clean studio JPEGs (`KK-0001.jpg`), clean crops (`KK-0001-crop.jpg`), and secondary angles, with the CSV bundled at the root.
-     - **`katalog-…-captions.txt` (Instagram Captions)**: Ready-to-copy captions formatted with specifications, confirmed prices (or `"harga via chat"`), and slugified hashtags.
+     - **`katalog-kilat-images.zip` (Photo Archive)**: Contains clean studio JPEGs (`KK-0001.jpg`), clean crops (`KK-0001-crop.jpg`), and secondary angles, with `katalog-{job_id}.csv` bundled at the root.
+     - **`katalog-…-captions.txt` (Instagram Captions)**: Ready-to-copy caption blocks containing product title, confirmed price (or `"harga via chat"`), description prose, WhatsApp ordering line with seller phone number, and slugified category/brand hashtags separated by dividers.
      - **`katalog-…-whatsapp.txt` (WhatsApp Broadcast List)**: Chat-ready broadcast text with Markdown formatting, confirmed prices, and direct inquiry links.
-     - **Public Product Page (`/p/{job_id}/{sku}`)**: Under "Tautan produk" ("Product links"), click one of the share links. It opens a clean, public mobile product storefront displaying the studio photo, confirmed price, specifications, and a one-tap **"Pesan via WhatsApp"** order button pointing to `wa.me/{phone}`.
+     - **Public Product Page (`/p/{job_id}/{sku}`)**: Under "Tautan produk" ("Product links"), click one of the share links. It opens a clean, standalone mobile product storefront rendering the studio hero photo (with a scroll-snap carousel track and count badge for merged angles), store chip, product name, confirmed price (or `"harga via chat"`), description prose, category/condition chips, OpenGraph link-preview tags, system-matched light/dark styling, and a pinned bottom bar with a one-tap **"Pesan via WhatsApp"** order button pointing to `wa.me/{phone}` (or "Hubungi toko" when no WhatsApp number was entered).
    - *Additional Sample Packs & Custom Photos*:
      - You can also upload your own multi-product photos (JPG, PNG, WebP) on the Upload screen. Processing time scales with the number of products.
      - Sample packs are available on the Upload screen: **Paket B** (clothes rack), **Paket C** (snack shelf), and **Paket D** (two opposite-side photos of gadget accessories designed specifically to showcase multi-angle merging).
@@ -75,7 +75,7 @@ Follow these instructions to run the entire stack locally using Docker Compose o
   - `muse-spark-1.3-contributor` (concept discovery, fidelity audit, grounded catalog extraction)
   - `sam-3.1` (streaming instance segmentation)
   - `muse-image-1.0` (generative studio lighting & cleanup)
-- No other dependencies: the container multi-stage build compiles the React SPA with Node 26 and serves it alongside the Python 3.12 FastAPI backend. First build takes about 2–3 minutes.
+- No other dependencies: the container multi-stage build compiles the React SPA with Node 26 and serves it alongside the Python 3.12 FastAPI backend. First build takes a few minutes.
 
 ### Step-by-Step Setup with Docker Compose
 
@@ -124,7 +124,7 @@ Follow these instructions to run the entire stack locally using Docker Compose o
 
 If you prefer to run services directly on your host machine:
 
-- **Requirements**: Python 3.12, Node.js 20+
+- **Requirements**: Python 3.12 (container) — 3.12 or newer for local dev (tested through 3.14), Node.js 20+
 
 1. **Terminal 1 — FastAPI Backend (port 8100)**:
    ```bash
@@ -149,7 +149,8 @@ If you prefer to run services directly on your host machine:
 3. **Running the Test Suite**:
    ```bash
    # Run backend offline test suite (256 tests) inside container:
-   docker exec -e META_MOCK=true katalogkilat-api pytest apps/api/tests -q
+   docker compose -p katalogkilat exec -e META_MOCK=true api pytest apps/api/tests -q
+   # (Or by container name: docker exec -e META_MOCK=true katalogkilat-api pytest apps/api/tests -q)
 
    # Verify frontend TypeScript build:
    npm --prefix apps/web run build
@@ -165,9 +166,9 @@ If you prefer to run services directly on your host machine:
 | `401 invalid_api_key` | Invalid or expired Meta Model API key | The pipeline fails at Stage A (`concepts_failed`). Check `MODEL_API_KEY` in `.env` for typos, extra quotes, or leading/trailing whitespace. Test the key directly: `curl -H "Authorization: Bearer $MODEL_API_KEY" https://api.meta.ai/v1/models`. |
 | `404 model_not_found` | Account lacks model entitlement | Your Meta account lacks entitlement to `muse-spark-1.3-contributor`, `sam-3.1`, or `muse-image-1.0`. The service surfaces this access problem immediately and does not retry. |
 | CSV image links broken / dead | Mismatched `BASE_URL` | The exported CSV builds absolute image URLs from `BASE_URL`. For local testing, ensure `BASE_URL=http://localhost:8180` in `.env`. Re-export the catalog after correcting. |
-| Port 8180 already in use | Another process binds 8180 | Update the port binding in `docker-compose.yml` (e.g. `"127.0.0.1:8182:8000"`) and update `BASE_URL` to match (`http://localhost:8182`). |
-| Long processing time (~4–5 min) | High model count and sequential audits | Pack A processes 16 products across 2 photos with streaming segmentation and two-stage fidelity audits per item (~270 seconds). This is normal. Do not reload the progress page during processing. |
-| Images fail to load on `/p/` | Data volume permission or missing job | Check that `./data` exists and is writable. Healthy jobs serve verified JPEG artifacts (`image/jpeg`); missing artifacts return an SVG placeholder. |
+| Port 8180 or container name conflict | Another process binds port 8180, or a container named `katalogkilat-api` already exists | Change the host port in `docker-compose.yml` (e.g. `"127.0.0.1:8182:8000"`) AND update `BASE_URL` in `.env` to match (`http://localhost:8182`). If a container named `katalogkilat-api` already exists from an earlier run, remove it with `docker rm -f katalogkilat-api` or remove the pinned `container_name: katalogkilat-api` line in `docker-compose.yml`. |
+| Long processing time (~5 min) | High model count and sequential audits | Pack A processes 16 products across 2 photos with streaming segmentation and two-stage fidelity audits per item (about 4.5–6 minutes live). This is normal. Do not reload the progress page during processing. |
+| Images fail to load on `/p/` | Data volume permission or missing job | Check that `./data` exists and is writable. Healthy jobs serve verified JPEG artifacts (`image/jpeg`); missing artifacts return a deterministic 1024×1024 JPEG placeholder. |
 | `mock: true` in `/api/health` | `META_MOCK` is not `false` | When `META_MOCK` is unset or not `false`, the server runs in mock mode using fixtures. Ensure `META_MOCK=false` in `.env` and restart the container. |
 
 ---
@@ -314,10 +315,10 @@ flowchart TD
 | Output Artifact | Format | Consumers | Key Specification |
 | :--- | :--- | :--- | :--- |
 | **Meta Commerce Catalog Feed** | `.csv` | Meta Commerce Manager, Facebook Shop, Instagram Shop, WhatsApp Catalog | 11 canonical columns (`id,title,description,availability,condition,price,link,image_link,brand,product_type,additional_image_link`), UTF-8, CRLF, strict Price Law formatting (`{price} IDR`) |
-| **Product Photo Archive** | `.zip` | E-commerce marketplaces, archival storage, bulk marketing uploads | 1:1 studio JPEGs, clean cut-out JPEGs, secondary angle photos, with `catalog.csv` bundled at root |
-| **Instagram Caption Pack** | `.txt` | Instagram feed posts, carousels, Stories, and Reels | Engaging promotional copy with Indonesian pricing, bulleted key specifications, and slugified category hashtags |
+| **Product Photo Archive** | `.zip` | E-commerce marketplaces, archival storage, bulk marketing uploads | 1:1 studio JPEGs, clean cut-out JPEGs, secondary angle photos, with `katalog-{job_id}.csv` bundled at root |
+| **Instagram Caption Pack** | `.txt` | Instagram feed posts, carousels, Stories, and Reels | Ready-to-post caption blocks with Indonesian pricing, description prose, WhatsApp ordering contact, and slugified hashtags |
 | **WhatsApp Price List** | `.txt` | WhatsApp Business broadcasts, community groups, direct chats | Chat-ready broadcast format with Markdown typography (`*bold*`, `_italic_`), `"harga via chat"` handling, and `wa.me` links |
-| **Public Product Gallery** | `/p/{job_id}/{sku}` | Mobile buyers via shared links | Responsive web storefront rendering multi-angle photo carousels, full specs, and one-tap WhatsApp order buttons |
+| **Public Product Gallery** | `/p/{job_id}/{sku}` | Mobile buyers via shared links | Responsive standalone storefront rendering multi-angle photo carousel, store chip, description prose, category/condition chips, and one-tap WhatsApp order button |
 
 ### REST API Endpoints
 
