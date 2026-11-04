@@ -917,13 +917,32 @@ def _mount_assets() -> None:
 _mount_assets()
 
 
+def _root_static_file(full_path: str) -> Path | None:
+    """Return the build-root file named by ``full_path``, or ``None``.
+
+    Only a single path segment qualifies. The candidate is resolved and must
+    sit directly in the resolved ``STATIC_DIR`` (no traversal, no
+    subdirectory, no symlink pointing elsewhere) and be a regular file.
+    ``index.html`` is left to the shell fallback.
+    """
+    if not full_path or "/" in full_path or full_path == INDEX_FILE.name:
+        return None
+    try:
+        candidate = (STATIC_DIR / full_path).resolve()
+        if candidate.parent != STATIC_DIR.resolve() or not candidate.is_file():
+            return None
+    except (OSError, ValueError):
+        return None
+    return candidate
+
+
 @app.api_route(
     "/{full_path:path}",
     methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     response_model=None,
     include_in_schema=False,
 )
-async def spa_catch_all(full_path: str) -> Response:
+async def spa_catch_all(full_path: str, request: Request) -> Response:
     """Serve the SPA shell for unknown non-API paths, 404 for unknown API paths.
 
     A deep link such as ``/review`` must survive a browser refresh, so any
@@ -931,9 +950,16 @@ async def spa_catch_all(full_path: str) -> Response:
     must never look like a working route, so it returns the standard error
     shape instead of HTML. The same holds for ``/assets/*``: a missing file
     is a 404, never the HTML shell.
+
+    A single-segment path naming a regular file directly inside the build
+    directory (``/favicon.svg``) is served as that file, for GET and HEAD only.
     """
     if full_path.split("/", 1)[0] in RESERVED_PREFIXES:
         return _not_found(full_path)
+    if request.method in ("GET", "HEAD"):
+        static_file = _root_static_file(full_path)
+        if static_file is not None:
+            return FileResponse(static_file)
     if INDEX_FILE.is_file():
         return FileResponse(INDEX_FILE)
     return _not_found(full_path)

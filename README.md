@@ -12,6 +12,7 @@
 
 > [!IMPORTANT]
 > **Live Web Application**: **[https://metahackathon.my.id](https://metahackathon.my.id)**  
+> **Demo Video** (about 2 minutes, one live run): [https://youtu.be/tqBzocmc53E](https://youtu.be/tqBzocmc53E)  
 > **API Health Probe**: `https://metahackathon.my.id/api/health` → `{"ok":true,"mock":false}`  
 > **Viewing Mode**: Mobile device or browser window resized to phone width (360–430 px) is recommended for the full-screen native mobile experience. On wider desktop viewports (≥768 px), the application is automatically presented inside a centered iPhone device frame.  
 > **Hosting Duration**: The live deployment is hosted on an isolated cloud server through **2026-11-14**.

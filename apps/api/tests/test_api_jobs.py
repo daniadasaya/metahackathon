@@ -40,7 +40,7 @@ class AsgiResponse:
 
     status_code: int
     body: bytes
-
+    content_type: str | None = None
     def json(self) -> object:
         """Decode the body as JSON."""
         return json.loads(self.body)
@@ -59,7 +59,7 @@ async def _call_asgi(method: str, path: str) -> AsgiResponse:
 
     scope = {
         "type": "http",
-        "asgi": {"version": "3.0"},
+        "asgi": {"version": "3.0", "spec_version": "2.4"},
         "http_version": "1.1",
         "method": method,
         "scheme": "http",
@@ -90,7 +90,18 @@ async def _call_asgi(method: str, path: str) -> AsgiResponse:
         for m in messages
         if m["type"] == "http.response.body"
     )
-    return AsgiResponse(status_code=int(start["status"]), body=body)  # type: ignore[arg-type]
+    return AsgiResponse(
+        status_code=int(start["status"]),  # type: ignore[arg-type]
+        body=body,
+        content_type=next(
+            (
+                value.decode("latin-1")
+                for name, value in start.get("headers", [])  # type: ignore[attr-defined]
+                if name == b"content-type"
+            ),
+            None,
+        ),
+    )
 
 
 def _get(path: str) -> AsgiResponse:
@@ -277,3 +288,37 @@ def test_health_returns_the_declared_shape() -> None:
     body = response.json()
     assert body == {"ok": True, "mock": True}
     assert HealthResponse.model_validate(body).mock is True
+
+
+# --- 6. root-level build files are served, everything else stays the shell ---
+
+
+def test_root_static_file_is_served_and_the_shell_is_kept(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``/favicon.svg`` is the file; deep links, traversal and ``/api`` keep their answers."""
+    static = tmp_path / "static"
+    static.mkdir()
+    index_html = b'<!doctype html><div id="root"></div>'
+    svg = b'<svg xmlns="http://www.w3.org/2000/svg"></svg>'
+    (static / "index.html").write_bytes(index_html)
+    (static / "favicon.svg").write_bytes(svg)
+    (tmp_path / "secret").write_bytes(b"top secret")
+    monkeypatch.setattr(main, "STATIC_DIR", static)
+    monkeypatch.setattr(main, "INDEX_FILE", static / "index.html")
+
+    favicon = _get("/favicon.svg")
+    assert favicon.status_code == 200
+    assert favicon.content_type is not None
+    assert favicon.content_type.startswith("image/svg+xml")
+    assert favicon.body == svg
+
+    assert _get("/review").body == index_html
+    assert _get("/index.html").body == index_html
+
+    for traversal in ("/..%2fsecret", "/%2e%2e/secret", "/../secret", "/sub/../../secret"):
+        assert b"top secret" not in _get(traversal).body
+
+    nope = _get("/api/nope")
+    assert nope.status_code == 404
+    assert nope.json()["error"]["code"] == "not_found"

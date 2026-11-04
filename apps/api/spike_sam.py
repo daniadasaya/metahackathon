@@ -21,10 +21,20 @@ a local photo directory with
 ``META_MOCK=false``, one short noun phrase per request (1-2 phrases per
 photo, derived from the fixture concept phrases for that scene). Prints
 per-concept mask counts, saves overlay PNGs of each mask over the REAL photo
-(mask in translucent red + bbox in blue), and saves the first response's raw
-``output_text`` to ``/tmp/opencode/spike-captured-response.txt``. Every overlay
+(mask in translucent red + bbox in blue), and can save (see SPIKE_SAVE_RAW) the first response's raw
+``output_text`` to ``/tmp/spike-captured-response.txt``. Every overlay
 then gets inspected via vision — a decode check alone is not a correctness
 claim (visual inspection required).
+
+Environment variables (all optional, LIVE run only):
+
+- ``SPIKE_FOTOS``: directory of ``*.jpg`` photos to sweep
+  (default ``/tmp/spike_foto``).
+- ``SPIKE_SAVE_RAW``: set to ``1`` to make one extra raw ``sam-3.1`` call
+  and write its ``output_text`` to the capture file, only if that file does
+  not exist yet.
+- ``SPIKE_CAPTURE``: path of that capture file
+  (default ``/tmp/spike-captured-response.txt``).
 """
 
 from __future__ import annotations
@@ -436,13 +446,13 @@ def _live_phrases(photo_path: Path) -> list[str]:
 
 
 def _run_live_all(out_dir: Path | None = None) -> int:
-    """Live spike over all 6 photos under /tmp/g1foto/."""
+    """Live spike over every ``*.jpg`` under ``SPIKE_FOTOS`` (default ``/tmp/spike_foto``)."""
     live_dir = Path(os.environ.get("SPIKE_FOTOS", "/tmp/spike_foto"))
     photos = sorted(live_dir.glob("*.jpg")) if live_dir.is_dir() else []
     if not photos:
         print(f"LIVE: no photos under {live_dir} (copy sample photos there first)")
         return 2
-    out_dir = out_dir or Path("/tmp/opencode/spike_sam-overlays")
+    out_dir = out_dir or Path("/tmp/spike_sam-overlays")
     capture: dict[str, bool] = {}
     total_masks = 0
     total_failures = 0
@@ -470,7 +480,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="SAM segmentation spike.")
     parser.add_argument("--pack", default="a", choices=("a", "b", "c"))
     parser.add_argument("--photo", default=1, type=int, choices=(1, 2))
-    parser.add_argument("--out", default="/tmp/opencode/spike_sam")
+    parser.add_argument("--out", default="/tmp/spike_sam")
     parser.add_argument("--live", action="store_true")
     args = parser.parse_args(argv)
 

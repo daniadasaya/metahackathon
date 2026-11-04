@@ -11,12 +11,11 @@
 #   ./scripts/nuke.sh --apply --with-tunnel      # also delete tunnel + apex/www DNS
 #
 # The normal invocation, from a laptop:
-#   ssh personal 'cd /home/ubuntu/katalogkilat && ./scripts/nuke.sh --apply'
+#   ssh <host> 'cd ~/katalogkilat && ./scripts/nuke.sh --apply'
 #
 # Hard limits, enforced below rather than promised:
 #   * never stops, removes or reconfigures adguardhome, wg-easy or cloudflared
-#   * never deletes a tunnel other than the one named in .env, and never the
-#     djanc.uk tunnel
+#   * never deletes a tunnel other than the one named in .env
 #   * never removes a path outside the project directory
 #   * never touches firewall rules, Docker images or networks it does not own
 #
