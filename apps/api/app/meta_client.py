@@ -501,7 +501,7 @@ def _output_text_of(response: Any) -> str:
     return text.strip()
 
 
-async def _parse_sam_output(output_text: str) -> list[Any]:
+async def _parse_sam_output_inner(output_text: str) -> list[Any]:
     """Parse one ``output_text`` grammar line into mask records.
 
     Lazy-imports the installed ``meta-sam-parser`` package (>=0.0.6 for
@@ -546,19 +546,85 @@ async def _parse_sam_output(output_text: str) -> list[Any]:
     return [r for r in result.records if getattr(r, "kind", None) == "mask"]
 
 
+async def _parse_sam_output(output_text: str) -> list[Any]:
+    """Offloaded wrapper: run the SAM streaming parse in a worker thread.
+
+    ``_parse_sam_output_inner`` drives the async ``parse_responses_stream``
+    parser and the per-mask ``decode_mask_to_raster`` below is also CPU-heavy
+    (5.69 s of a 5.77 s live call); both must never block the event loop.
+    Exceptions (``MetaLiveUnavailable``) propagate unchanged; records are
+    plain objects so crossing threads is fine.
+    """
+    return await asyncio.to_thread(
+        lambda: asyncio.run(_parse_sam_output_inner(output_text))
+    )
+
+
+# 256-byte translate table: 0 -> 0, any non-zero -> 255. Identical output
+# to ``bytes(255 if b else 0 for b in raster)`` with no per-pixel Python loop.
+_ZERO_ONE_TO_0_255: bytes = bytes((0,) + (255,) * 255)
+
+
 def _raster_to_mode1_png(raster: bytes, width: int, height: int) -> bytes:
     """Encode a 0/1 raster as a mode-1 PNG (matches the ``MaskResult`` wire)."""
     if len(raster) != width * height:
         raise MetaLiveUnavailable(
             f"segment_concept: raster length {len(raster)} != {width}x{height}"
         )
-    lum = Image.frombytes(
-        "L", (width, height), bytes(255 if b else 0 for b in raster)
-    )
+    lum = Image.frombytes("L", (width, height), raster.translate(_ZERO_ONE_TO_0_255))
     img = lum.convert("1")
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)
     return buf.getvalue()
+
+
+def _mask_record_to_result(record: Any, wanted: str) -> MaskResult | None:
+    """Decode one SAM mask record into a ``MaskResult`` (sync, worker thread).
+
+    CPU-bound: ``decode_mask_to_raster`` (C/Python range decode over millions
+    of pixels), the foreground-pixel count, and the mode-1 PNG encode. Same
+    exceptions and same results as the inline loop it replaces; ``None``
+    means the record is filtered out (low confidence or low coverage).
+    ``decode_mask_to_raster`` returns bytes of 0/1 only (one_bit and
+    lossless branches both emit ``bytes(bit)``/``bytes(value >= 129 ...)``),
+    so ``raster.count(1)`` equals the old ``sum(1 for b in raster if b)``.
+    """
+    from meta_sam_parser import decode_mask_to_raster
+
+    try:
+        raster = decode_mask_to_raster(record.mask)
+    except Exception as exc:
+        raise MetaLiveUnavailable(
+            f"segment_concept: mask payload of record {record.object_id!r} "
+            f"did not decode: {exc}"
+        ) from exc
+    if len(raster) != record.mask.width * record.mask.height:
+        raise MetaLiveUnavailable(
+            f"segment_concept: raster length {len(raster)} != "
+            f"{record.mask.width}x{record.mask.height}"
+        )
+    score = float(record.confidence if record.confidence is not None else 0.0)
+    if score < 0.70:
+        return None
+    fg_pixels = raster.count(1)
+    mask_area = record.mask.width * record.mask.height
+    if mask_area <= 0 or (fg_pixels / mask_area) < 0.38:
+        return None
+    png = _raster_to_mode1_png(raster, record.mask.width, record.mask.height)
+    return MaskResult(
+        concept=wanted,
+        bbox=(
+            int(record.bounds.left),
+            int(record.bounds.top),
+            int(record.bounds.right) - 1,
+            int(record.bounds.bottom) - 1,
+        ),
+        width=record.mask.width,
+        height=record.mask.height,
+        revision=record.revision,
+        score=float(score),
+        mask_png_base64=base64.b64encode(png).decode("ascii"),
+    )
 
 
 async def _live_discover_concepts(
@@ -578,7 +644,7 @@ async def _live_discover_concepts(
     concept. Temp/``json_object``/vision shape exactly as hypothesized.
     """
     client = _live_client()
-    data_url = _data_url(image_bytes)
+    data_url = await asyncio.to_thread(_data_url, image_bytes)
 
     async def _call() -> Any:
         return await client.chat.completions.create(
@@ -669,6 +735,7 @@ async def _live_segment_concept(
     if not wanted:
         return []
     client = _live_client()
+    data_url = await asyncio.to_thread(_data_url, image_bytes)
 
     async def _call() -> Any:
         return await client.responses.create(  # type: ignore[attr-defined]
@@ -679,7 +746,7 @@ async def _live_segment_concept(
                     "role": "user",
                     "content": [
                         {"type": "input_text", "text": wanted},
-                        {"type": "input_image", "image_url": _data_url(image_bytes)},
+                        {"type": "input_image", "image_url": data_url},
                     ],
                 }
             ],
@@ -689,8 +756,6 @@ async def _live_segment_concept(
 
     response = await _live_request(_call, what="segment_concept")
     try:
-        from meta_sam_parser import decode_mask_to_raster
-
         output_text = _output_text_of(response)
         records = await _parse_sam_output(output_text)
     except MetaModelNotFound:
@@ -704,44 +769,9 @@ async def _live_segment_concept(
         ) from exc
     results: list[MaskResult] = []
     for record in records:
-        try:
-            raster = decode_mask_to_raster(record.mask)
-        except Exception as exc:
-            raise MetaLiveUnavailable(
-                f"segment_concept: mask payload of record {record.object_id!r} "
-                f"did not decode: {exc}"
-            ) from exc
-        if len(raster) != record.mask.width * record.mask.height:
-            raise MetaLiveUnavailable(
-                f"segment_concept: raster length {len(raster)} != "
-                f"{record.mask.width}x{record.mask.height}"
-            )
-        score = float(record.confidence if record.confidence is not None else 0.0)
-        if score < 0.70:
-            continue
-        fg_pixels = sum(1 for b in raster if b)
-        mask_area = record.mask.width * record.mask.height
-        if mask_area <= 0 or (fg_pixels / mask_area) < 0.38:
-            continue
-        png = _raster_to_mode1_png(
-            raster, record.mask.width, record.mask.height
-        )
-        results.append(
-            MaskResult(
-                concept=wanted,
-                bbox=(
-                    int(record.bounds.left),
-                    int(record.bounds.top),
-                    int(record.bounds.right) - 1,
-                    int(record.bounds.bottom) - 1,
-                ),
-                width=record.mask.width,
-                height=record.mask.height,
-                revision=record.revision,
-                score=float(score),
-                mask_png_base64=base64.b64encode(png).decode("ascii"),
-            )
-        )
+        result = await asyncio.to_thread(_mask_record_to_result, record, wanted)
+        if result is not None:
+            results.append(result)
     return results
 
 
@@ -816,7 +846,7 @@ async def _live_verify_fidelity(
     """
     client = _live_client()
     if not cleaned_png:
-        first = _data_url(original_png)
+        first = await asyncio.to_thread(_data_url, original_png)
 
         async def _call() -> Any:
             return await client.chat.completions.create(
@@ -870,8 +900,9 @@ async def _live_verify_fidelity(
                 ],
             )
     else:
-        first = _data_url(original_png)
-        second = _data_url(cleaned_png)
+        first, second = await asyncio.to_thread(
+            lambda: (_data_url(original_png), _data_url(cleaned_png))
+        )
 
         async def _call() -> Any:  # noqa: F811 - mode branch redefines the factory
             return await client.chat.completions.create(
@@ -1088,7 +1119,7 @@ async def _live_extract_product(
     (first response and P6 repair retry) go through it.
     """
     client = _live_client()
-    data_url = _data_url(clean_png)
+    data_url = await asyncio.to_thread(_data_url, clean_png)
     captions_text = _captions_text(context.seller_captions)
     # ExtractContext carries seller_captions (JSON, which bundles the
     # Stage A scene note in its "general" text), concept, and visible_text —
