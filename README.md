@@ -41,9 +41,9 @@ Follow this step-by-step walkthrough to evaluate the complete end-to-end user ex
 3. **Review Screen (`/review`) & The Strict Price Law Test**:
    - The review screen displays cards for all extracted products, showing studio photos, fidelity badges (`Lolos cek` for passed `muse-image-1.0` edits or `Foto standar` for composite fallbacks), bilingual descriptions, and canonical categories.
    - **Test the Strict Price Law**:
-     - Products whose price was explicitly visible on printed price tags in the photo (specifically, the 4 phones next to the visible "Rp 1.500.000" card) are prefilled.
-     - Products with only an AI market suggestion display grey helper text **"Saran AI: Rp... — periksa lagi"** while their price input field remains **strictly empty**.
-     - Scroll to the sticky bottom bar: a summary counter reports progress (e.g. *"4 produk siap · 12 belum ada harga"* / *"4 products ready · 12 missing a price"*). When any item lacks a price, a warning button lists the unpriced items (e.g. *"KK-0001 · HP Second… dan 11 lainnya belum ada harga"*) and opens a bottom sheet listing every unpriced SKU.
+     - `price_hint_idr` pre-fills only when the amount is printed in that product's own photo (visible text) or written in the caption attached to that product's own photo; a price that appears only in the general caption never pre-fills. For Pack A, four products carrying the printed `Rp 1.500.000` tag in the photo (KK-0004, KK-0005, KK-0006, KK-0011) are pre-filled with that price. Five products whose cut-out was incomplete (acrylic display stand fused into the phone's silhouette, bite out of the body, or partial mask) are switched OFF by default by the composite guard and shown as excluded (`Tidak dimasukkan`); the seller can inspect them and toggle them back on at any time.
+     - Products with an AI market suggestion or general-caption price display grey helper text **"Saran AI: Rp... — periksa lagi"** while their price input field remains **strictly empty**.
+     - Scroll to the sticky bottom bar: a summary counter reports progress reflecting active items (for Pack A at initial review: *"3 produk siap · 8 belum ada harga"* / *"3 products ready · 8 missing a price"*, because three of the four pre-filled phones are among the 11 active items). When any included item lacks a price, a warning button lists the unpriced items (*"KK-0003 · HP Smartphone Second Gold Kondisi Normal Siap… dan 7 lainnya belum ada harga"*) and opens a bottom sheet listing every unpriced SKU.
      - The primary action button **"Lanjut"** ("Continue") is **strictly blocked** (`aria-disabled="true"`). Tapping it automatically moves focus to the price input of the first unpriced product.
      - Type a price for each product (e.g., `150000`) or toggle **"Harga via chat"** ("Price via chat") for items sold upon customer inquiry. Once all products have a confirmed price or via-chat status, the blocked button immediately unlocks.
    - *(Multi-Angle Merging)*: Notice the **"Gabung foto ke produk lain"** ("Merge photo into another product") button on product cards. Tapping it opens an inline picker sheet to select a target product. When secondary photos of the same item are merged into a single SKU, the card gains controls to promote a secondary angle to primary ("Utama") or unmerge ("Pisahkan").
@@ -51,10 +51,10 @@ Follow this step-by-step walkthrough to evaluate the complete end-to-end user ex
 
 4. **Export Screen (`/export`) & File Verification**:
    - Enter a store name (e.g. `Toko Demo`) and a WhatsApp phone number with international digits only (e.g. `6281234567890`).
-   - Tap **"Ekspor katalog"** ("Export catalog"). In about 3 seconds, all four export files and public share links are compiled.
+   - Tap **"Ekspor katalog"** ("Export catalog"). In about 2–3 seconds, all four export files and public share links are compiled (for Pack A: 16 found, 11 exported by default; the 5 switched-off items remain excluded unless toggled on by the seller).
    - **What to verify in each export deliverable**:
-     - **`katalog-meta.csv` (Meta Commerce Catalog Feed)**: Open the downloaded CSV. It contains exactly 11 canonical columns (`id,title,description,availability,condition,price,link,image_link,brand,product_type,additional_image_link`). All prices are formatted strictly as `{integer} IDR` (e.g. `150000 IDR`). Products marked "Harga via chat" are **excluded from the CSV** (no `0 IDR` placeholders). No AI-suggested price appears anywhere.
-     - **`katalog-kilat-images.zip` (Photo Archive)**: Contains clean studio JPEGs (`KK-0001.jpg`), clean crops (`KK-0001-crop.jpg`), and secondary angles, with `katalog-{job_id}.csv` bundled at the root.
+     - **`katalog-meta.csv` (Meta Commerce Catalog Feed)**: Open the downloaded CSV. It contains exactly 11 canonical columns (`id,title,description,availability,condition,price,link,image_link,brand,product_type,additional_image_link`), with 11 rows for Pack A's included items. All prices are formatted strictly as `{integer} IDR` (e.g. `150000 IDR`). Products marked "Harga via chat" are **excluded from the CSV** (no `0 IDR` placeholders). No AI-suggested price appears anywhere.
+     - **`katalog-kilat-images.zip` (Photo Archive)**: Contains clean studio JPEGs (`KK-0003.jpg`), clean crops (`KK-0003-crop.jpg`), and secondary angles (23 items total: 11 studio shots + 11 crops + 1 CSV for Pack A), with `katalog-{job_id}.csv` bundled at the root.
      - **`katalog-…-captions.txt` (Instagram Captions)**: Ready-to-copy caption blocks containing product title, confirmed price (or `"harga via chat"`), description prose, WhatsApp ordering line with seller phone number, and slugified category/brand hashtags separated by dividers.
      - **`katalog-…-whatsapp.txt` (WhatsApp Broadcast List)**: Chat-ready broadcast text with Markdown formatting, confirmed prices, and direct inquiry links.
      - **Public Product Page (`/p/{job_id}/{sku}`)**: Under **"Tautan produk"** ("Product links", tap to expand), click one of the share links. It opens a clean, standalone mobile product storefront rendering the studio hero photo (with a scroll-snap carousel track and count badge for merged angles), store chip, product name, confirmed price (or `"harga via chat"`), description prose, category/condition chips, OpenGraph link-preview tags, system-matched light/dark styling, and a pinned bottom bar with a one-tap **"Pesan via WhatsApp"** order button pointing to `wa.me/{phone}`.
@@ -159,6 +159,20 @@ If you prefer to run services directly on your host machine:
 
 ---
 
+## Known Limitations
+
+- **Processing time scales with product count**: Processing duration grows directly with the number of detected products and model calls. Pack A (2 photos, 16 products) takes about 5–6.5 minutes on the live pipeline, while a heavier run of six large photos took about 12–13 minutes.
+- **Upload constraints and normalization**: At most 30 photos are accepted per job, capped at 10 MB per file. Uploaded images are resized to a maximum of 2,400 px on the long side (using Lanczos downsampling) and re-encoded as JPEG (quality 90). Any undecodable file causes the entire upload to be rejected with the specific filename identified.
+- **Incomplete cut-out guard**: When the fidelity pre-gate or post-gate falls back to a deterministic composite, any cut-out with alpha coverage below the 80% threshold (`COMPOSITE_MIN_COVERAGE = 0.80`) is automatically switched OFF by default in the Review screen, leaving the seller to inspect the crop and toggle it on manually if acceptable. In the Pack A run, five of sixteen products were switched off due to incomplete cut-outs (acrylic display stand fused into the silhouette or bites out of the body), and one of those five carried a printed tag price.
+- **Echoed product names**: Extracted product names can echo a product line from the caption or a neighbouring product (observed in testing: ten unbranded cosmetic bottles labeled "MOCK-UP" in the photo were named "Skincare Endless Pure …" when that phrase appeared in the general caption). Sellers should review product names before export.
+- **Model extraction accuracy**: Extracted product names and brands can occasionally be swapped or misattributed when multiple visually similar items appear in the same photo (observed in testing when two similar Glossier cosmetic products swapped names). Product condition (`new` or `used`) is an AI estimate from visual cues and should be reviewed before export.
+- **Commerce Manager feed validation**: The generated 11-column catalog feed CSV has been validated against the documented Meta Commerce Manager feed specification by automated tests, but has not been imported into a live Meta Commerce Manager account in this project.
+- **Temporary single-key deployment**: The public demo deployment is hosted under a temporary VPS lease valid until 2026-11-14 and operates on a single shared Meta API key; concurrent multi-photo submissions will contend for API concurrency and experience extended queue times.
+- **Offline test suite**: The backend test suite runs against frozen, recorded fixtures for deterministic offline execution without network access; it does not constitute a live availability check against Meta Model API endpoints.
+- **Serialized segmentation parsing**: Response parsing for `sam-3.1` streamed instance segmentation is serialized in Python across concepts, meaning large multi-product photos spend the majority of their overall processing time in the segmentation stage.
+
+---
+
 ## 🔧 Troubleshooting
 
 | Issue | Cause | Solution |
@@ -183,7 +197,7 @@ Social-commerce sellers across Indonesia run high-volume retail businesses entir
 | **Product Isolation** | Manual cropping & background removal per item | Automated concept discovery (`muse-spark-1.3-contributor`) + streamed instance segmentation (`sam-3.1`) |
 | **Studio Cleanup** | Unchecked generative AI that can hallucinate details | `muse-image-1.0` guarded by a **Two-Stage Fidelity Gate** + deterministic Pillow fallback |
 | **Catalog Copy & Specs** | Manual typing per SKU | `POST /v1/responses` + **Web Search Grounding** + `json_schema` bilingual extraction |
-| **Pricing Trust** | AI guesses or manual spreadsheet entry | **Strict Price Law**: only seller captions/tags pre-fill; AI estimates are helper text only |
+| **Pricing Trust** | AI guesses or manual spreadsheet entry | **Strict Price Law**: only amounts printed in a product's photo or written in that photo's own caption pre-fill; general captions and AI estimates are helper text only |
 | **Multi-Angle Items** | Duplicate rows or manual URL pasting | Interactive **Multi-Angle SKU Merge** in mobile review → `additional_image_link` |
 
 ---
@@ -289,14 +303,14 @@ flowchart TD
 > [!IMPORTANT]
 > **Strict Price Law (Zero Invented Prices)**
 > AI models frequently hallucinate prices when examining retail items. In social commerce, an incorrect price destroys customer trust. Katalog Kilat enforces an absolute architectural boundary: **AI estimates never pre-fill price fields and never reach any export**.
-> Only numbers explicitly provided in seller captions or printed on visible in-photo price tags (`price_hint_idr`) can pre-fill review inputs. Unpriced items strictly block catalog export until confirmed by the seller.
+> Only numbers printed in that product's own photo (visible text) or written in the caption attached to that product's own photo (`price_hint_idr`) can pre-fill review inputs. A price that appears only in the general caption never pre-fills — it becomes grey helper text (`Saran AI: Rp… — periksa lagi`), leaving the field empty. Unpriced items strictly block catalog export until confirmed by the seller.
 
 ### Price Law Truth Table
 
 | Field | Origin | Review UI Behavior | Export Behavior (CSV / ZIP / IG / WA) |
 | :--- | :--- | :--- | :--- |
-| `price_hint_idr` | Explicit seller caption or printed price tag in photo | Pre-fills the price input (`--price-verified`) | Exported once confirmed as `price_idr` |
-| `price_suggestion_idr` | AI market estimate (vision / `web_search`) | Grey helper text (`Saran AI: Rp… — periksa lagi`) | **Never** pre-fills; **physically absent** from export request schema |
+| `price_hint_idr` | Amount printed in that product's photo (visible text) or caption attached to that product's photo (never general caption) | Pre-fills the price input (`--price-verified`) | Exported once confirmed as `price_idr` |
+| `price_suggestion_idr` | AI market estimate (vision / `web_search`) or general-caption price | Grey helper text (`Saran AI: Rp… — periksa lagi`) | **Never** pre-fills; **physically absent** from export request schema |
 | `price_idr` | Seller-confirmed integer IDR | Editable mono input (`Rp150.000`) | Formatted as `{price_idr} IDR` in CSV and `Rp150.000` in IG/WA |
 | `price_via_chat = true` | Seller toggle on Review card | Collapses price input to `"Harga via chat"` | Excluded from CSV (`0 IDR` is forbidden); rendered as `"harga via chat"` in IG/WA; photo kept in ZIP |
 | `price_idr = null` & `price_via_chat = false` | Unpriced item | Warning border + SKU named in sticky bar | **Blocks export** on both client CTA and `POST /api/jobs/{id}/export` (`400 price_missing`) |
