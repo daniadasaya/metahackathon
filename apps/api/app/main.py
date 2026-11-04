@@ -527,6 +527,197 @@ async def get_product_image(job_id: str, sku: str) -> Response:
     return Response(content=data, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=3600"})
 
 
+# --- public product page ----------------------------------------------------
+# The page a buyer opens from a shared link: one self-contained document, one
+# inline stylesheet, no script, no font, no image host, no request of any kind
+# beyond the product JPEGs. Every interpolated value goes through :func:`_esc`
+# because the export record carries seller-authored text (name, description,
+# store name) and this page is public.
+
+# The palette mirrors apps/web/src/styles/tokens.css. ``--accent`` is spent on
+# the primary button and on the focus ring, nothing else.
+_PRODUCT_PAGE_CSS = """
+*,*::before,*::after{box-sizing:border-box}
+:root{color-scheme:light;--bg:#fff;--surf:#f3f4f7;--ink:#111218;--ink2:#505560;--muted:#5a5f6b;--line:#e6e8ee;--accent:#4f46ef;--on-accent:#fff}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0e0f13;--surf:#1a1c22;--ink:#f5f5f8;--ink2:#c4c6d0;--muted:#b4b6c1;--line:#343741;--accent:#a6a1ff;--on-accent:#111125}}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:480px;margin:0 auto;padding:16px 16px calc(96px + env(safe-area-inset-bottom))}
+.hero{position:relative;margin:0 0 16px}
+.track{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:20px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.track::-webkit-scrollbar{display:none}
+.track:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.slide{position:relative;flex:0 0 100%;scroll-snap-align:start;aspect-ratio:1/1;border-radius:20px;overflow:hidden;background:var(--surf)}
+.slide::after{content:"";position:absolute;inset:0;border-radius:20px;box-shadow:inset 0 0 0 1px var(--line);pointer-events:none}
+.slide img{display:block;width:100%;height:100%;object-fit:contain}
+.count{position:absolute;right:10px;bottom:10px;padding:3px 9px;border-radius:999px;background:rgba(17,18,24,.7);color:#fff;font-size:11px;font-weight:600;letter-spacing:.02em}
+.chip{display:inline-block;max-width:100%;margin:0 0 6px;padding:4px 10px;border-radius:999px;background:var(--surf);color:var(--ink2);font-size:12px;font-weight:600;overflow-wrap:anywhere}
+h1{margin:0 0 8px;font-size:22px;line-height:1.25;font-weight:800;letter-spacing:-.02em;overflow-wrap:anywhere}
+.price{margin:0;font-size:26px;line-height:1.2;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.price-chat{font-size:17px;font-weight:700;color:var(--ink2)}
+.desc{margin:16px 0 0;color:var(--ink2);line-height:1.6;white-space:pre-line;overflow-wrap:anywhere}
+.facts{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 0;padding:0;list-style:none}
+.facts li{padding:5px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:12px;font-weight:600;overflow-wrap:anywhere}
+.foot{margin:24px 0 0;color:var(--muted);font-size:12px;text-align:center}
+.bar{position:fixed;left:0;right:0;bottom:0;border-top:1px solid var(--line);background:var(--bg);padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
+.bar-in{max-width:480px;margin:0 auto}
+.cta,.quiet{display:flex;align-items:center;justify-content:center;height:52px;border-radius:14px;font-size:16px;font-weight:700}
+.cta{background:var(--accent);color:var(--on-accent);text-decoration:none}
+.cta:active{opacity:.85}
+.cta:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.quiet{margin:0;background:var(--surf);color:var(--muted);font-weight:600}
+.empty{margin:24px 0 0;padding:28px 20px;border-radius:20px;background:var(--surf);text-align:center}
+.wrap-empty{display:flex;flex-direction:column;justify-content:center;min-height:100vh;padding-bottom:16px}
+.wrap-empty .empty{margin:0}
+.empty-sku{margin:0 0 8px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.06em}
+.empty h1{margin:0;font-size:20px}
+.empty-note{margin:8px 0 0;color:var(--ink2);font-size:14px}
+"""
+
+
+def _esc(value: object) -> str:
+    """Escape one interpolated value for HTML text or a quoted attribute."""
+    return _html.escape(str(value), quote=True)
+
+
+def _page_head(
+    *,
+    title: str,
+    description: str,
+    page_url: str,
+    site_name: str,
+    image_url: str | None,
+) -> str:
+    """Render the document head: link-preview metadata, then the inline sheet.
+
+    ``og:image`` is emitted only when there is a real artefact to point at, and
+    it is absolute by construction — a relative URL previews as nothing.
+    """
+    image = f'<meta property="og:image" content="{_esc(image_url)}">\n' if image_url else ""
+    return (
+        '<!doctype html>\n<html lang="id">\n<head>\n'
+        '<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+        f"<title>{_esc(title)}</title>\n"
+        '<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme:light)">\n'
+        '<meta name="theme-color" content="#0e0f13" media="(prefers-color-scheme:dark)">\n'
+        f'<meta name="description" content="{_esc(description)}">\n'
+        '<meta property="og:type" content="product">\n'
+        f'<meta property="og:site_name" content="{_esc(site_name)}">\n'
+        f'<meta property="og:title" content="{_esc(title)}">\n'
+        f'<meta property="og:description" content="{_esc(description)}">\n'
+        f'<meta property="og:url" content="{_esc(page_url)}">\n'
+        f"{image}"
+        f"<style>{_PRODUCT_PAGE_CSS}</style>\n"
+        "</head>\n"
+    )
+
+
+def _product_page_html(
+    *,
+    job_id: str,
+    sku: str,
+    name: str,
+    price_text: str,
+    price_is_text: bool,
+    store_name: str,
+    description: str,
+    facts: list[str],
+    image_urls: list[str],
+    wa_url: str | None,
+    base: str,
+) -> str:
+    """Render the storefront page for one found product.
+
+    ``image_urls[0]`` is the primary shot (the promoted angle when the seller
+    promoted one); the rest are merged angles and ride in the same scroll-snap
+    track, so a swipe walks every photo the seller merged.
+    """
+    page_url = f"{base}/p/{job_id}/{sku}"
+    site_name = store_name or "Katalog Kilat"
+    title = f"{name} · {store_name}" if store_name else f"{name} · Katalog Kilat"
+    og_description = f"{price_text} · {store_name}" if store_name else price_text
+
+    slides: list[str] = []
+    for index, url in enumerate(image_urls):
+        alt = name if index == 0 else f"{name} — foto {index + 1}"
+        lazy = " loading='lazy'" if index else ""
+        slides.append(
+            f'<div class="slide"><img src="{_esc(url)}" alt="{_esc(alt)}"{lazy} decoding="async"></div>'
+        )
+    slides_html = "".join(slides)
+    track_attrs = ' tabindex="0" aria-label="Galeri foto produk"' if len(image_urls) > 1 else ""
+    count = (
+        f'<span class="count">{len(image_urls)} foto</span>' if len(image_urls) > 1 else ""
+    )
+    chip = f'<span class="chip">{_esc(store_name)}</span>\n' if store_name else ""
+    description_html = f'<p class="desc">{_esc(description)}</p>\n' if description else ""
+    facts_items = "".join(f"<li>{_esc(fact)}</li>" for fact in facts)
+    facts_html = f'<ul class="facts">{facts_items}</ul>\n' if facts_items else ""
+    price_class = "price price-chat" if price_is_text else "price"
+    if wa_url:
+        action = (
+            f'<a class="cta" href="{_esc(wa_url)}" rel="noopener" target="_blank">'
+            "Pesan via WhatsApp</a>"
+        )
+    else:
+        action = '<p class="quiet">Hubungi toko</p>'
+
+    return (
+        _page_head(
+            title=title,
+            description=og_description,
+            page_url=page_url,
+            site_name=site_name,
+            image_url=image_urls[0],
+        )
+        + "<body>\n"
+        f'<main class="wrap" data-sku="{_esc(sku)}">\n'
+        '<div class="hero">\n'
+        f'<div class="track"{track_attrs}>{slides_html}</div>\n'
+        f"{count}\n"
+        "</div>\n"
+        f"{chip}"
+        f"<h1>{_esc(name)}</h1>\n"
+        f'<p class="{price_class}">{_esc(price_text)}</p>\n'
+        f"{description_html}"
+        f"{facts_html}"
+        '<p class="foot">Dibuat dengan Katalog Kilat</p>\n'
+        "</main>\n"
+        f'<div class="bar"><div class="bar-in">{action}</div></div>\n'
+        "</body>\n</html>\n"
+    )
+
+
+def _missing_product_page_html(*, job_id: str, sku: str, base: str) -> str:
+    """Render the graceful page for a SKU the export record does not carry.
+
+    A shared link outlives the job it pointed at. The page says so in a styled
+    card, names the SKU the visitor was given, and offers no action it cannot
+    honour — no invented number, no fabricated price.
+    """
+    note = "Tautan ini mungkin sudah kedaluwarsa, atau produknya sudah tidak dijual lagi."
+    return (
+        _page_head(
+            title=f"{sku} · Katalog Kilat",
+            description="Produk belum tersedia.",
+            page_url=f"{base}/p/{job_id}/{sku}",
+            site_name="Katalog Kilat",
+            image_url=None,
+        )
+        + "<body>\n"
+        f'<main class="wrap wrap-empty" data-sku="{_esc(sku)}">\n'
+        '<div class="empty">\n'
+        f'<p class="empty-sku">{_esc(sku)}</p>\n'
+        "<h1>Produk belum tersedia</h1>\n"
+        f'<p class="empty-note">{_esc(note)}</p>\n'
+        "</div>\n"
+        '<p class="foot">Dibuat dengan Katalog Kilat</p>\n'
+        "</main>\n"
+        "</body>\n</html>\n"
+    )
+
+
 @app.get("/p/{job_id}/{sku}")
 async def get_product_page(job_id: str, sku: str) -> Response:
     if not exporter._safe_component(job_id) or not _validate_sku(sku):
@@ -535,19 +726,14 @@ async def get_product_page(job_id: str, sku: str) -> Response:
     base_sku = sku.replace("-crop", "")
     record = exporter.read_export_record(job_id)
     img_sku = sku
-    name = sku
-    price_text = ""
-    wa_number = None
-    via_chat = False
-    price_idr = None
+    product: dict[str, Any] | None = None
     extra_image_urls: list[str] = []
+    seller: dict[str, Any] = {}
     if record:
         record_products = record.get("products", [])
         for prod in record_products:
             if prod.get("sku") == sku or prod.get("sku") == base_sku:
-                name = prod.get("name", name)
-                price_idr = prod.get("price_idr")
-                via_chat = bool(prod.get("price_via_chat", False))
+                product = prod
                 # A promoted angle photo names its image in clean_url, not in sku.
                 m = exporter._SKU_IN_URL_RE.search(str(prod.get("clean_url") or ""))
                 if m:
@@ -567,35 +753,56 @@ async def get_product_page(job_id: str, sku: str) -> Response:
                 m = exporter._SKU_IN_URL_RE.search(str(prod.get("clean_url") or ""))
                 child_img_sku = m.group(1) if m else child_sku
                 extra_image_urls.append(f"{base}/p/{job_id}/{child_img_sku}.jpg")
-        seller = record.get("seller") or {}
-        wa_number = seller.get("wa_number")
-    if via_chat or price_idr is None:
-        price_text = "harga via chat"
+        raw_seller = record.get("seller")
+        seller = raw_seller if isinstance(raw_seller, dict) else {}
+
+    if product is None:
+        html = _missing_product_page_html(job_id=job_id, sku=sku, base=base)
     else:
-        price_text = exporter.format_price_display(int(price_idr))
-    # WhatsApp button
-    if wa_number:
-        text = f"Halo, saya mau tanya {name} ({sku})"
-        wa_url = f"https://wa.me/{wa_number}?text=" + _urlparse.quote(text, safe="")
-        button = f'<a href="{wa_url}">WhatsApp</a>'
-    else:
-        button = "<p>hubungi toko</p>"
-    img_url = f"{base}/p/{job_id}/{img_sku}.jpg"
-    safe_name = _html.escape(str(name), quote=True)
-    gallery = "".join(
-        f'<img src="{_html.escape(url, quote=True)}" alt="{safe_name}" width="256" />'
-        for url in extra_image_urls
-    )
-    html = (
-        "<!doctype html><html><head><meta charset='utf-8'>"
-        f"<title>{safe_name}</title></head><body>"
-        f'<img src="{_html.escape(img_url, quote=True)}" alt="{safe_name}" width="256" />'
-        f"{gallery}"
-        f"<h1>{safe_name}</h1>"
-        f"<p>{_html.escape(price_text)}</p>"
-        f"{button}"
-        "</body></html>"
-    )
+        name = str(product.get("name") or sku)
+        price_idr = product.get("price_idr")
+        via_chat = bool(product.get("price_via_chat", False))
+        # Price Law: the seller's confirmed value, or the words "harga via chat".
+        # A hint, a suggestion and a zero never reach this page.
+        if via_chat or price_idr is None:
+            price_text = "harga via chat"
+        else:
+            price_text = exporter.format_price_display(int(price_idr))
+        store_name = str(seller.get("store_name") or "").strip()
+        wa_number = str(seller.get("wa_number") or "").strip()
+        wa_url = None
+        if wa_number:
+            text = f"Halo, saya mau tanya {name} ({sku})"
+            wa_url = f"https://wa.me/{wa_number}?text=" + _urlparse.quote(text, safe="")
+        attributes = product.get("attributes")
+        attributes = attributes if isinstance(attributes, dict) else {}
+        condition = {"new": "Baru", "used": "Bekas"}.get(str(product.get("condition") or ""))
+        candidates = (
+            product.get("category"),
+            product.get("brand"),
+            attributes.get("color"),
+            attributes.get("size"),
+            attributes.get("variant"),
+            condition,
+            "Stok habis" if product.get("availability") == "out of stock" else None,
+        )
+        facts = [str(value).strip() for value in candidates if value and str(value).strip()]
+        description = str(product.get("description_id") or "").strip() or str(
+            product.get("description_en") or ""
+        ).strip()
+        html = _product_page_html(
+            job_id=job_id,
+            sku=sku,
+            name=name,
+            price_text=price_text,
+            price_is_text=via_chat or price_idr is None,
+            store_name=store_name,
+            description=description,
+            facts=facts,
+            image_urls=[f"{base}/p/{job_id}/{img_sku}.jpg", *extra_image_urls],
+            wa_url=wa_url,
+            base=base,
+        )
     return Response(content=html, media_type="text/html; charset=utf-8", headers={"Cache-Control": "public, max-age=3600"})
 
 
