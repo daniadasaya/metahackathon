@@ -15,7 +15,7 @@ seller's own words.
 >   the seller's confirmed value. A missing price stays missing.
 
 **Status: shipped.** Prompts P1–P6 below are implemented in `apps/api/app/meta_client.py` and verified
-live against `https://api.meta.ai/v1` (`muse-spark-1.3`, `sam-3.1`, `muse-image-1.0`). The prompts below
+live against `https://api.meta.ai/v1` (`muse-spark-1.3-contributor`, `sam-3.1`, `muse-image-1.0`). The prompts below
 are self-contained. Line breaks inside a prompt body are part of the prompt — do not reflow them.
 
 Any change after live testing is appended here as a **new version** with the date and what changed.
@@ -61,10 +61,14 @@ the rest of the catalog continues.
 
 ## 2. Master prompt and API surface matrix
 
+The stage letters in this file (A concepts, B segmentation, C cut-out, D cleanup, E extraction) are the
+backend stages. The README groups them into five progress steps shown in the app, so the letters differ
+between the two documents.
+
 | ID | Pipeline Stage | Model ID | API Endpoint & Mode | Temp | Input → Output | Core Guardrail |
 | :--- | :--- | :--- | :--- | :---: | :--- | :--- |
 | **P1** | A — concept discovery | `muse-spark-1.3-contributor` | `POST /v1/chat/completions`, vision | 0.4 | photo + captions → `concepts[]`, `scene_note`, `visible_text` | Short English noun phrases; never a comma inside a phrase |
-| **P2** | B — segmentation | `sam-3.1` | `POST /v1/responses`, streamed, parsed with `meta-sam-parser` | n/a | one concept phrase → mask records with own boxes | One phrase per request; confidence and fill filters; one re-run only |
+| **P2** | B — segmentation | `sam-3.1` | Non-streaming `POST /v1/responses`, response parsed with `meta-sam-parser` | n/a | one concept phrase → mask records with own boxes | One phrase per request; confidence and fill filters; one re-run only |
 | **P3** | D — studio cleanup | `muse-image-1.0` | `POST /v1/images/edits`, `n=1`, PNG out | n/a | Stage C crop → studio PNG | Preserve product exactly; never redesign |
 | **P4a** | D — pre-cleanup crop gate | `muse-spark-1.3-contributor` | `POST /v1/chat/completions`, vision | 0.0 | candidate cut-out in, strict JSON verdict out | Reject fragments, merged items, clutter before cleanup |
 | **P4b** | D — post-cleanup edit gate | `muse-spark-1.3-contributor` | `POST /v1/chat/completions`, two images in | 0.0 | reference + studio edit in, strict JSON verdict out | All three checks must be true; fail means composite |
@@ -190,7 +194,7 @@ presentations); P5's copy named hands and rice-field backgrounds.
 
 | Model | Endpoint | Temperature | Output Format | Retry Policy |
 | :--- | :--- | :---: | :--- | :--- |
-| `sam-3.1` | `POST /v1/responses`, streamed via `meta-sam-parser` | n/a | Mask records carrying their own boxes and dimensions | Exactly one re-run with a more specific phrase on zero masks; never a loop |
+| `sam-3.1` | Non-streaming `POST /v1/responses`, response parsed with `meta-sam-parser` | n/a | Mask records carrying their own boxes and dimensions | Exactly one re-run with a more specific phrase on zero masks; never a loop |
 
 ### Active production prompt — P2 Version 3
 
@@ -223,7 +227,9 @@ Post-parse filtering in `meta_client.py::_live_segment_concept`, applied after `
   no joining of two concepts with a comma.
 - One concept phrase per request. A request carries one phrase.
 - `metadata: {"mask_encoding": "one_bit"}`.
-- `stream = true`; the stream must be consumed through `meta-sam-parser`.
+- `stream = false`: a non-streaming `POST /v1/responses`. The `output_text` grammar line is parsed with
+  `meta-sam-parser` (`parse_responses_stream`), which the adapter feeds with synthetic delta, done, and
+  completed events built from that single line.
 - Refinement is a **re-run with a more specific phrase** (e.g. `"red smartphone"`), never an edit to this
   prompt's shape. Stage B does this once automatically when a concept returns zero masks and the scene
   note suggests a distinguishing attribute — exactly one re-run, never a loop, never a phrase ladder.
@@ -649,12 +655,13 @@ wear or captions stating "second", "bekas", "seken", "preloved",
 "batangan", "minus" are "used" (mention any stated defect honestly, without
 photo meta-commentary).
 Return ONLY valid JSON matching the schema: name, description_id,
-description_en, category (one of: "Handphone & Tablet", "Komputer & Laptop",
-"Audio", "Fashion Pria", "Fashion Wanita", "Sepatu", "Tas",
-"Makanan & Minuman", "Kecantikan", "Rumah Tangga", "Elektronik Lainnya",
-"Lainnya"), brand (string or null), condition ("new" | "used"), attributes
-{color, size, variant}, price_hint_idr (int|null), price_suggestion_idr
-(int|null), confidence ("high" | "medium" | "low").
+description_en, category (one of: "Handphone & Tablet", "Aksesoris HP",
+"Komputer & Laptop", "Audio", "Elektronik Lainnya", "Pakaian",
+"Fashion Pria", "Fashion Wanita", "Sepatu", "Tas", "Makanan & Minuman",
+"Kecantikan", "Rumah Tangga", "Lainnya"), brand (string or null),
+condition ("new" | "used"), attributes {color, size, variant},
+price_hint_idr (int|null), price_suggestion_idr (int|null), confidence
+("high" | "medium" | "low").
 ```
 
 Version 4 category restriction (all Version 2 and Version 3 rules still apply; Version 4 only adds
@@ -666,7 +673,7 @@ category (binding): choose exactly one taxonomy entry from the list below; never
 
 ### Canonical Indonesian category taxonomy — fourteen values, exact spelling
 
-| Canonical Category | Target Products | Deterministic Normalizer Keywords |
+| Canonical Category | Target Products | Deterministic Normalizer Keywords (examples, not the full list; `_CATEGORY_KEYWORDS` in `meta_client.py` holds more, such as `iphone`, `handphone`, `phone`) |
 | :--- | :--- | :--- |
 | `Handphone & Tablet` | Smartphones, tablets, sealed phone retail boxes (BNIB) | `smartphone`, `tablet`, `ponsel`, `hp` (word-boundary match) |
 | `Aksesoris HP` | Phone cases, chargers, cables, power banks, screen protectors, adapters, generic accessories | `phone case`, `casing`, `tempered glass`, `screen protector`, `charger`, `kabel`, `power bank`, `adapter`, `accessories`, `aksesori` |
@@ -674,8 +681,8 @@ category (binding): choose exactly one taxonomy entry from the list below; never
 | `Audio` | TWS and earbud charging cases, earbuds, headphones, speakers | `charging case`, `earbud`, `headphone`, `speaker` |
 | `Elektronik Lainnya` | TVs, cameras, consoles | `tv`, `kamera`, `konsol` |
 | `Pakaian` | General apparel | `kaos`, `jaket`, `dress`, `hijab` |
-| `Fashion Pria` | Men's fashion items | Model-assigned; no keyword override |
-| `Fashion Wanita` | Women's fashion items | Model-assigned; no keyword override |
+| `Fashion Pria` | Men's fashion items | `pria`, `men` |
+| `Fashion Wanita` | Women's fashion items | `wanita`, `women` |
 | `Sepatu` | Shoes, sneakers | `sepatu`, `sneakers` |
 | `Tas` | Bags, wallets | `tas`, `dompet` |
 | `Makanan & Minuman` | Noodles, food, drinks, coffee | `mie`, `makanan`, `minuman`, `kopi` |
@@ -900,7 +907,7 @@ No explanation, no markdown fences.
 
 | Field / Flag | Source of Truth | Pre-fills Review Input? | Exported to CSV? | Exported to IG / WhatsApp? | Enforcement Rule |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| `price_hint_idr` | A price the seller wrote in captions, or visible in `visible_text`, for THIS product | Yes — the only pre-fill source | Only after the seller confirms it (as `price_idr`) | Only after the seller confirms it | Never populated from `web_search`; never attach another item's price; phone numbers, model numbers, and spec figures are never prices |
+| `price_hint_idr` | A price that appears in that photo's own `visible_text` or in that photo's own caption, and that belongs to THIS product. The general caption never qualifies; a hint found only there is demoted to `price_suggestion_idr` | Yes — the only pre-fill source | Only after the seller confirms it (as `price_idr`) | Only after the seller confirms it | Never populated from `web_search`; never attach another item's price; phone numbers, model numbers, and spec figures are never prices |
 | `price_suggestion_idr` | AI market estimate from `web_search` or confident recognition | No — grey helper text (`"Saran AI: Rp… — periksa lagi"`) | No | No | Never pre-fills, never exports |
 | `price_idr` | The seller's confirmed value | Shows the confirmed value | Yes — the only exported price | Yes, where applicable | If missing, it stays missing; no code path computes or defaults it |
 | `price_via_chat = true` | Seller checks "Harga via chat" | No numeric price shown | Excluded from the CSV | WhatsApp list shows `"harga via chat"` | Never emit `0 IDR` as a stand-in for an unknown price |

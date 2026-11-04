@@ -4,7 +4,7 @@
 
 | Hackathon Track | Problem Statement | Meta AI Models Used | Core Output |
 | :--- | :--- | :--- | :--- |
-| **Indie Developer** | **Build for Your World** (Social Commerce) | `muse-spark-1.3-contributor` · `sam-3.1` · `muse-image-1.0` | Meta Commerce Manager 11-Column CSV, Studio Photo ZIP, IG Captions, WhatsApp Price List, Public Gallery |
+| **Indie Developer** | **Build for Your World** (Social Commerce) | `muse-spark-1.3-contributor` · `sam-3.1` · `muse-image-1.0` | Meta catalog feed CSV (11 columns), Studio Photo ZIP, IG Captions, WhatsApp Price List, Public product pages |
 
 ---
 
@@ -30,8 +30,8 @@ Follow this step-by-step walkthrough to evaluate the complete end-to-end user ex
 
 2. **Progress Screen (`/jobs/{job_id}`)**:
    - The screen displays a live 5-stage progress timeline:
-     - **A — Spotting products** (*"Mengenali produk"*): `muse-spark-1.3-contributor` discovers product concepts (`smartphone`, `earphones`, `charger`) and transcribes visible text.
-     - **B — Cutting each product out** (*"Memotong tiap produk"*): `sam-3.1` streams instance segmentation masks (one concept per request), followed by deterministic Pillow alpha cut-outs.
+     - **A — Spotting products** (*"Mengenali produk"*): `muse-spark-1.3-contributor` discovers product concepts (for Pack A, e.g. `smartphone`, `charging cable`, `charging case`, `phone case` in photo 1 and `smartphone`, `smartphone box`, `power bank`, `charging cable` in photo 2) and transcribes visible text.
+     - **B — Cutting each product out** (*"Memotong tiap produk"*): `sam-3.1` returns instance segmentation masks through a non-streaming `POST /v1/responses` call parsed with `meta-sam-parser` (one concept per request), followed by deterministic Pillow alpha cut-outs.
      - **C — Tidying photos** (*"Merapikan foto"*): Two-stage fidelity gate audits crops before and after `muse-image-1.0` studio edits, falling back to deterministic composites on rejection.
      - **D — Writing the catalog** (*"Menulis katalog"*): `muse-spark-1.3-contributor` runs search-grounded (`web_search`) structured extraction over Meta's Responses API into canonical categories.
      - **E — Catalog result** (*"Hasil katalog"*): Aggregates tidied products into ready-to-review catalog cards.
@@ -57,11 +57,11 @@ Follow this step-by-step walkthrough to evaluate the complete end-to-end user ex
      - **`katalog-meta.csv` (Meta Commerce Catalog Feed)**: Open the downloaded CSV. It contains exactly 11 canonical columns (`id,title,description,availability,condition,price,link,image_link,brand,product_type,additional_image_link`), with exactly one row per exported product. All prices are formatted strictly as `{integer} IDR` (e.g. `150000 IDR`). Products marked "Harga via chat" are **strictly absent from the CSV** (no `0 IDR` placeholders). No AI-suggested price appears anywhere.
      - **`katalog-kilat-images.zip` (Photo Archive)**: Contains clean studio JPEGs, clean crops, and any secondary angles, with `katalog-{job_id}.csv` bundled at the root. The archive contains exactly `2 × products + 1` members for single-angle products (one studio JPEG + one crop JPEG per exported product, plus the CSV manifest).
      - **`katalog-…-captions.txt` (Instagram Captions)**: Ready-to-copy caption blocks containing product title, confirmed price (or `"harga via chat"`), description prose, WhatsApp ordering line with seller phone number, and slugified category/brand hashtags separated by dividers.
-     - **`katalog-…-whatsapp.txt` (WhatsApp Broadcast List)**: Chat-ready broadcast text with Markdown formatting, confirmed prices, and direct inquiry links.
-     - **Public Product Page (`/p/{job_id}/{sku}`)**: Under **"Tautan produk"** ("Product links", tap to expand), click one of the share links. It opens a clean, standalone mobile product storefront rendering the studio hero photo (with a scroll-snap carousel track and count badge for merged angles), store chip, product name, confirmed price (or `"harga via chat"`), description prose, category/condition chips, OpenGraph link-preview tags, system-matched light/dark styling, and a pinned bottom bar with a one-tap **"Pesan via WhatsApp"** order button pointing to `wa.me/{phone}`.
+     - **`katalog-…-whatsapp.txt` (WhatsApp Broadcast List)**: Chat-ready broadcast text with Markdown formatting and confirmed prices (or `"harga via chat"`). The list shows at most 30 products, followed by a `+N produk lainnya di katalog` line when more were exported, and ends with a single `https://wa.me/?text=…` share link that carries the whole list. There are no per-product links.
+     - **Public Product Page (`/p/{job_id}/{sku}`)**: Under **"Tautan produk"** ("Product links", tap to expand), click one of the share links. It opens a clean, standalone mobile product page rendering the studio hero photo (with a scroll-snap carousel track and count badge for merged angles), store chip, product name, confirmed price (or `"harga via chat"`), description prose, category/condition chips, OpenGraph link-preview tags, system-matched light/dark styling, and a pinned bottom bar with a one-tap **"Pesan via WhatsApp"** order button pointing to `wa.me/{phone}`.
    - *Additional Sample Packs & Custom Photos*:
      - You can also upload your own multi-product photos (JPG, PNG, WebP) on the Upload screen. Processing time scales with the number of products.
-     - Sample packs are available on the Upload screen: **Paket B** (clothing rack), **Paket C** (cardboard snack box / "Kardus snack"), and **Paket D** (two opposite-side photos of gadget accessories designed specifically to showcase multi-angle merging).
+     - Sample packs are available on the Upload screen: **Paket B** (clothing rack), **Paket C** (cardboard snack box / "Kardus snack"), and **Paket D** (two opposite-side photos of gadget accessories designed specifically to showcase multi-angle merging; this merge demo only works with `META_MOCK=false`).
 
 ---
 
@@ -74,7 +74,7 @@ Follow these instructions to run the entire stack locally using Docker Compose o
 - **Docker & Docker Compose v2**: Docker Engine 24+ with Compose v2.
 - **Meta Model API Key**: An active API key with access to:
   - `muse-spark-1.3-contributor` (concept discovery, fidelity audit, grounded catalog extraction)
-  - `sam-3.1` (streaming instance segmentation)
+  - `sam-3.1` (instance segmentation, non-streaming `POST /v1/responses`)
   - `muse-image-1.0` (generative studio lighting & cleanup)
 - No other dependencies: the container multi-stage build compiles the React SPA with Node 26 and serves it alongside the Python 3.12 FastAPI backend. First build takes a few minutes.
 
@@ -96,7 +96,7 @@ Follow these instructions to run the entire stack locally using Docker Compose o
    - `META_MOCK`: Set to `false` for live inference against `api.meta.ai`.
    
    > [!NOTE]
-   > `docker-compose.yml` defaults `META_MOCK` to `true` when unset so a bare clone boots without a key, while `.env.example` explicitly sets `META_MOCK=false`. When `META_MOCK=false`, the container executes live against the Meta Model API. When `mock: true`, the pipeline runs offline against recorded test fixtures (useful for offline plumbing tests, but not a live demo).
+   > `docker-compose.yml` defaults `META_MOCK` to `true` when unset so a bare clone boots without a key, while `.env.example` explicitly sets `META_MOCK=false`. When `META_MOCK=false`, the container executes live against the Meta Model API. When `mock: true`, the pipeline runs offline against recorded test fixtures (useful for offline plumbing tests, but not a live demo). Mock mode replays the recorded Pack A, B, and C responses for any input photo (the photo is hashed into one of the three packs), and Pack D's multi-photo merge only works live.
 
 3. **Build and start the container**:
    ```bash
@@ -125,7 +125,7 @@ Follow these instructions to run the entire stack locally using Docker Compose o
 
 If you prefer to run services directly on your host machine:
 
-- **Requirements**: Python 3.12 (container) — 3.12 or newer for local dev (tested through 3.14), Node.js 20+
+- **Requirements**: Python 3.12 (container) — 3.12 or newer for local dev (tested through 3.14), Node.js 20.19+ (or 22.12+, the range Vite 8 requires)
 
 1. **Terminal 1 — FastAPI Backend (port 8100)**:
    ```bash
@@ -149,7 +149,10 @@ If you prefer to run services directly on your host machine:
 
 3. **Running the Test Suite**:
    ```bash
-   # Run backend offline test suite inside container (the full offline suite passes):
+   # Run the backend offline test suite from the repository root, inside the venv from step 1 (recorded fixtures, no key or network):
+   pytest apps/api/tests
+
+   # Docker alternative: run the same suite inside the running container:
    docker compose -p katalogkilat exec -e META_MOCK=true api pytest apps/api/tests -q
 
    # Verify frontend TypeScript build (install dependencies first if not already done):
@@ -163,14 +166,16 @@ If you prefer to run services directly on your host machine:
 ## Known Limitations
 
 - **Processing time scales with product count**: Processing duration grows directly with the number of detected products and model calls. Pack A (2 photos, roughly sixteen products) takes about 4.5–6.5 minutes on the live pipeline, while a heavier run of six large photos took about 12–13 minutes.
-- **Upload constraints and normalization**: At most 30 photos are accepted per job, capped at 10 MB per file. Uploaded images are resized to a maximum of 2,400 px on the long side (using Lanczos downsampling) and re-encoded as JPEG (quality 90). Any undecodable file causes the entire upload to be rejected with the specific filename identified.
+- **Upload constraints and normalization**: At most 30 photos are accepted per job, capped at 10 MB per file. Uploaded images are resized to a maximum of 2,400 px on the long side (using Lanczos downsampling, never upscaled) and rotated according to EXIF orientation. A JPEG that is already within 2,400 px and has no rotation is kept byte-identical; every other image is re-encoded as JPEG (quality 90). Any undecodable file causes the entire upload to be rejected with the specific filename identified.
 - **Incomplete cut-out guard**: When the fidelity pre-gate or post-gate falls back to a deterministic composite, any cut-out with alpha coverage below the 80% threshold (`COMPOSITE_MIN_COVERAGE = 0.80`) is automatically switched OFF by default in the Review screen, leaving the seller to inspect the crop and toggle it on manually if acceptable. Across live Pack A runs, a few products (typically five to seven of roughly sixteen) are switched off due to incomplete cut-outs (such as an acrylic display stand fused into the silhouette, a bite out of the body, or a partial mask), and one of those switched-off products may carry a printed tag price.
 - **Echoed product names**: Extracted product names can echo a product line from the caption or a neighbouring product (observed in testing: ten unbranded cosmetic bottles labeled "MOCK-UP" in the photo were named "Skincare Endless Pure …" when that phrase appeared in the general caption). Sellers should review product names before export.
 - **Model extraction accuracy**: Extracted product names and brands can occasionally be swapped or misattributed when multiple visually similar items appear in the same photo (observed in testing when two similar Glossier cosmetic products swapped names). Product condition (`new` or `used`) is an AI estimate from visual cues and should be reviewed before export.
-- **Commerce Manager feed validation**: The generated 11-column catalog feed CSV has been validated against the documented Meta Commerce Manager feed specification by automated tests, but has not been imported into a live Meta Commerce Manager account in this project.
+- **Commerce Manager feed validation**: The generated 11-column catalog feed CSV is formatted to Meta's documented catalog feed fields and covered by self-consistency tests (header against the code's own column list, column order, `150000 IDR` price format, no `0 IDR`). It has not been validated by an actual Commerce Manager import, and ingestion by Facebook Shop, Instagram Shop, or WhatsApp Catalog has not been tested.
+- **Job time budget**: Each job has a time budget (`JOB_TIME_BUDGET_SECONDS`, 600 s). Once it is spent, photos and concepts not yet started in concept discovery and segmentation are skipped without an error entry, and products not yet cleaned are given the deterministic composite instead of a generative edit. Catalog extraction still runs for every product. The app shows no dedicated notice for a skipped photo, so a photo that yields no products on a heavy run may have been skipped rather than empty.
+- **Data use**: The contributor model `muse-spark-1.3-contributor` is priced lower because the inputs and outputs sent to it are used to train Meta's models. Photos and captions uploaded to the live site, or to your own deployment with your key, are sent to that model.
 - **Temporary single-key deployment**: The public demo deployment is hosted under a temporary VPS lease valid until 2026-11-14 and operates on a single shared Meta API key; concurrent multi-photo submissions will contend for API concurrency and experience extended queue times.
 - **Offline test suite**: The backend test suite runs against frozen, recorded fixtures for deterministic offline execution without network access; it does not constitute a live availability check against Meta Model API endpoints.
-- **Serialized segmentation parsing**: Response parsing for `sam-3.1` streamed instance segmentation is serialized in Python across concepts, meaning large multi-product photos spend the majority of their overall processing time in the segmentation stage.
+- **Segmentation cost**: Segmentation is the slowest stage on large multi-product photos. Mask parsing and decoding for `sam-3.1` are CPU-heavy and run in worker threads so the server stays responsive.
 
 ---
 
@@ -182,7 +187,7 @@ If you prefer to run services directly on your host machine:
 | `404 model_not_found` | Account lacks model entitlement | Your Meta account lacks entitlement to `muse-spark-1.3-contributor`, `sam-3.1`, or `muse-image-1.0`. The service surfaces this access problem immediately and does not retry. |
 | CSV image links broken / dead | Mismatched `BASE_URL` | The exported CSV builds absolute image URLs from `BASE_URL`. For local testing, ensure `BASE_URL=http://localhost:8180` in `.env`. Re-export the catalog after correcting. |
 | Port 8180 or container name conflict | Another process binds port 8180, or a container named `katalogkilat-api` already exists | Change the host port in `docker-compose.yml` (e.g. `"127.0.0.1:8182:8000"`) AND update `BASE_URL` in `.env` to match (`http://localhost:8182`). If a container named `katalogkilat-api` already exists from an earlier run, remove it with `docker rm -f katalogkilat-api` or remove the pinned `container_name: katalogkilat-api` line in `docker-compose.yml`. |
-| Long processing time (~4.5–6.5 min) | High model count and sequential audits | Live processing involves streaming segmentation, two-stage fidelity audits, and grounded extraction per item (about 4.5–6.5 minutes live depending on the pack and API load). This is normal. |
+| Long processing time (~4.5–6.5 min) | High model count and sequential audits | Live processing involves segmentation, two-stage fidelity audits, and grounded extraction per item (about 4.5–6.5 minutes live depending on the pack and API load). This is normal. |
 | Images fail to load on `/p/` | Data volume permission or missing job | Check that `./data` exists and is writable. Healthy jobs serve verified JPEG artifacts (`image/jpeg`); missing artifacts return a deterministic 1024×1024 JPEG placeholder. |
 | `mock: true` in `/api/health` | `META_MOCK` is not `false` | When `META_MOCK` is unset or not `false`, the server runs in mock mode using fixtures. Ensure `META_MOCK=false` in `.env` and restart the container. |
 
@@ -195,7 +200,7 @@ Social-commerce sellers across Indonesia run high-volume retail businesses entir
 | Dimension | Traditional Catalog Workflow | ⚡ Katalog Kilat |
 | :--- | :--- | :--- |
 | **Photo Input** | Clean, 1-product-per-photo studio shots required | Raw, messy multi-product counter/rack/box photos |
-| **Product Isolation** | Manual cropping & background removal per item | Automated concept discovery (`muse-spark-1.3-contributor`) + streamed instance segmentation (`sam-3.1`) |
+| **Product Isolation** | Manual cropping & background removal per item | Automated concept discovery (`muse-spark-1.3-contributor`) + instance segmentation (`sam-3.1`, non-streaming `POST /v1/responses`) |
 | **Studio Cleanup** | Unchecked generative AI that can hallucinate details | `muse-image-1.0` guarded by a **Two-Stage Fidelity Gate** + deterministic Pillow fallback |
 | **Catalog Copy & Specs** | Manual typing per SKU | `POST /v1/responses` + **Web Search Grounding** + `json_schema` bilingual extraction |
 | **Pricing Trust** | AI guesses or manual spreadsheet entry | **Strict Price Law**: only amounts printed in a product's photo or written in that photo's own caption pre-fill; general captions and AI estimates are helper text only |
@@ -211,7 +216,7 @@ Katalog Kilat detects individual items from cluttered counter photos, runs gener
 
 | Raw Multi-Product Seller Photo | Pipeline Step | Output Image | Fidelity Inspection & Result |
 | :---: | :---: | :---: | :--- |
-| <img src="apps/web/public/samples/a/photo1.jpg" width="220" alt="Raw Seller Photo" /> | **Stage B: Cut-out**<br>*(KK-0004)* | <img src="apps/web/public/samples/showcase/a-kk0004-crop.jpg" width="220" alt="Cut-out Crop" /> | **Input to Fidelity Gate**: Segmented smartphone instance with clean edges and transparent background. |
+| <img src="apps/web/public/samples/a/photo1.jpg" width="220" alt="Raw Seller Photo" /> | **Stage B: Cut-out**<br>*(KK-0004)* | <img src="apps/web/public/samples/showcase/a-kk0004-crop.jpg" width="220" alt="Cut-out Crop" /> | **Input to Fidelity Gate**: a blue smartphone seen from the back, cut out and flattened on white. |
 | *(Raw counter photo: 6 smartphones, cables, earbuds, and Rp 1.500.000 price card)* | **Stage C: Studio Shot**<br>*(Fidelity PASS)* | <img src="apps/web/public/samples/showcase/a-kk0004-studio.jpg" width="220" alt="Studio Cleaned" /> | **Fidelity Gate PASS (`muse-image-1.0`)**: 1:1 off-white studio lighting. Inspector audits confirm `same_product: true`, `color_match: true`, `logo_text_match: true`. |
 | <img src="apps/web/public/samples/a/photo1.jpg" width="220" alt="Raw Seller Photo" /> | **Stage B: Cut-out**<br>*(KK-0006)* | <img src="apps/web/public/samples/showcase/a-kk0006-crop.jpg" width="220" alt="Occluded Cut-out" /> | **Input to Fidelity Gate**: Smartphone cut-out notched on the bottom-left corner by the price sign. |
 | *(Occluded item detected)* | **Stage C: Fallback**<br>*(Fidelity REJECT)* | <img src="apps/web/public/samples/showcase/a-kk0006-composite.jpg" width="220" alt="Composite Fallback" /> | **Fidelity Pre-Gate REJECT → Pillow Composite**: Pre-gate catches the missing corner before calling generative edit. Deterministic composite prevents AI hallucination. |
@@ -241,7 +246,7 @@ flowchart TD
     subgraph Pipeline ["2. Five-Stage Meta AI Pipeline"]
         direction TB
         StageA["<b>Stage A: Spotting Products</b>\n(<i>Mengenali produk</i>)\nmuse-spark-1.3-contributor\n• Foreground concept phrases\n• Scene context & visible price text"]
-        StageB["<b>Stage B: Cutting Each Product Out</b>\n(<i>Memotong tiap produk</i>)\nsam-3.1 (Streamed Responses) & Pillow\n• 1 concept per request\n• Alpha cut-out & 8% bbox padding"]
+        StageB["<b>Stage B: Cutting Each Product Out</b>\n(<i>Memotong tiap produk</i>)\nsam-3.1 (non-streaming POST /v1/responses, meta-sam-parser) & Pillow\n• 1 concept per request\n• Alpha cut-out & 8% bbox padding"]
         
         subgraph StageC ["Stage C: Tidying Photos (<i>Merapikan foto</i>)"]
             PreGate{"Pre-Gate Check\nmuse-spark-1.3-contributor\n(Is crop intact?)"}
@@ -260,11 +265,11 @@ flowchart TD
     end
 
     subgraph Outputs ["4. Ready-to-Sell Outputs"]
-        CSV["Meta Commerce CSV\n(11 Columns, Commerce Manager Ready)"]
+        CSV["Meta Catalog Feed CSV\n(11 columns, Meta feed format)"]
         ZIP["Photo ZIP Archive\n(Studio JPEGs + Crop JPEGs + CSV)"]
         IG["Instagram Caption Pack\n(Formatted captions + hashtags)"]
-        WA["WhatsApp Broadcast List\n(Formatted prices + wa.me links)"]
-        Gallery["Public Web Storefront\n(/p/{job_id}/{sku} mobile page)"]
+        WA["WhatsApp Broadcast List\n(Formatted prices + one wa.me share link)"]
+        Gallery["Public Product Pages\n(/p/{job_id}/{sku} mobile page)"]
     end
 
     Photos --> StageA
@@ -289,13 +294,15 @@ flowchart TD
 
 ### 5-Stage Pipeline Matrix
 
+The stage letters A–E are the five progress steps shown in the app. The backend splits step B into segmentation and cut-out and step C into cleanup, so stage letters in code comments can differ from the ones used here.
+
 | Stage | Owner Model / Engine | API Surface | Input → Output | Engineering Guardrail |
 | :--- | :--- | :--- | :--- | :--- |
 | **Stage A: Spotting Products** (*Mengenali produk*) | `muse-spark-1.3-contributor` | Vision Chat Completion | Raw multi-product photo + seller captions → Noun concept phrases, scene notes, visible text | Foreground-only focus; ignores display stands, mannequins, hands, and background clutter |
-| **Stage B: Cutting Each Product Out** (*Memotong tiap produk*) | `sam-3.1` + Pillow (Non-generative) | Streamed Responses (`meta-sam-parser`) + Local Python | Single concept phrase + photo → Binary masks → Alpha cut-outs with 8% bbox padding | 1 concept per request; automatic retry on zero-mask results; IoU deduplication; pinhole hole-filling |
-| **Stage C: Tidying Photos** (*Merapikan foto*) | `muse-image-1.0` + `muse-spark-1.3-contributor` + Pillow | Image Editing (`POST /v1/images/generations/edits`) + Vision Audit | Alpha cut-out + 2-panel reference → 1:1 studio JPEG or deterministic Pillow composite | **Two-Stage Fidelity Gate**: Pre-Gate rejects occluded crops; Post-Gate verifies `same_product`, `color_match`, `logo_text_match`; automatic fallback to deterministic composite |
+| **Stage B: Cutting Each Product Out** (*Memotong tiap produk*) | `sam-3.1` + Pillow (Non-generative) | Non-streaming Responses (`POST /v1/responses`, parsed with `meta-sam-parser`) + Local Python | Single concept phrase + photo → Binary masks → Alpha cut-outs with 8% bbox padding | 1 concept per request; automatic retry on zero-mask results; IoU deduplication; pinhole hole-filling |
+| **Stage C: Tidying Photos** (*Merapikan foto*) | `muse-image-1.0` + `muse-spark-1.3-contributor` + Pillow | Image Editing (`POST /v1/images/edits`) + Vision Audit | Alpha cut-out + 2-panel reference → 1:1 studio JPEG or deterministic Pillow composite | **Two-Stage Fidelity Gate**: Pre-Gate rejects occluded crops; Post-Gate verifies `same_product`, `color_match`, `logo_text_match`; automatic fallback to deterministic composite |
 | **Stage D: Writing the Catalog** (*Menulis katalog*) | `muse-spark-1.3-contributor` | Responses API (`POST /v1/responses`) | Clean image + visible text + captions → Structured `ProductEntry` JSON | Search Grounding (`web_search`) in Indonesian region; `json_schema` output; 14 canonical Indonesian categories; zero price invention |
-| **Stage E: Catalog Result** (*Hasil katalog*) | Backend Pipeline Engine | Internal aggregation | Verified images + extracted product entries → Review-ready catalog cards | Consistency verification; SKU assignment; composite guard coverage checks |
+| **Stage E: Catalog Result** (*Hasil katalog*) | Backend Pipeline Engine | Internal aggregation | Verified images + extracted product entries → Review-ready catalog cards | Collects the tidied products into review-ready catalog cards; products whose composite cut-out covers too little of the frame arrive switched off (composite guard, applied during cleanup) |
 
 ---
 
@@ -325,15 +332,15 @@ flowchart TD
 
 ## Catalog Outputs & API Surface
 
-### Downloadable Outputs & Public Storefront
+### Downloadable Outputs & Public Product Pages
 
 | Output Artifact | Format | Consumers | Key Specification |
 | :--- | :--- | :--- | :--- |
-| **Meta Commerce Catalog Feed** | `.csv` | Meta Commerce Manager, Facebook Shop, Instagram Shop, WhatsApp Catalog | 11 canonical columns (`id,title,description,availability,condition,price,link,image_link,brand,product_type,additional_image_link`), UTF-8, CRLF, strict Price Law formatting (`{price} IDR`) |
+| **Meta Commerce Catalog Feed** | `.csv` | Meta Commerce Manager catalog feed upload (not yet imported in a live account) | 11 canonical columns (`id,title,description,availability,condition,price,link,image_link,brand,product_type,additional_image_link`), UTF-8, CRLF, strict Price Law formatting (`{price} IDR`) |
 | **Product Photo Archive** | `.zip` | E-commerce marketplaces, archival storage, bulk marketing uploads | 1:1 studio JPEGs, clean cut-out JPEGs, secondary angle photos, with `katalog-{job_id}.csv` bundled at root |
 | **Instagram Caption Pack** | `.txt` | Instagram feed posts, carousels, Stories, and Reels | Ready-to-post caption blocks with Indonesian pricing, description prose, WhatsApp ordering contact, and slugified hashtags |
-| **WhatsApp Price List** | `.txt` | WhatsApp Business broadcasts, community groups, direct chats | Chat-ready broadcast format with Markdown typography (`*bold*`, `_italic_`), `"harga via chat"` handling, and `wa.me` links |
-| **Public Product Gallery** | `/p/{job_id}/{sku}` | Mobile buyers via shared links | Responsive standalone storefront rendering multi-angle photo carousel, store chip, description prose, category/condition chips, and one-tap WhatsApp order button |
+| **WhatsApp Price List** | `.txt` | WhatsApp Business broadcasts, community groups, direct chats | Chat-ready broadcast format with Markdown typography (`*bold*`, `_italic_`), `"harga via chat"` handling, and a single `wa.me` share link at the end (list capped at 30 items) |
+| **Public Product Pages** | `/p/{job_id}/{sku}` | Mobile buyers via shared links | Responsive standalone product page rendering multi-angle photo carousel, store chip, description prose, category/condition chips, and one-tap WhatsApp order button |
 
 ### REST API Endpoints
 
@@ -390,7 +397,7 @@ metahackathon/
 | :--- | :--- |
 | [`docs/prompts-final.md`](docs/prompts-final.md) | Final prompt versions and execution specifications for Meta Model API calls. |
 | [`apps/api/openapi.json`](apps/api/openapi.json) | Committed OpenAPI contract specifying all 9 routes and 28 schema components. |
-| [`apps/web/design/brandkit.md`](apps/web/design/brandkit.md) | Interface notes, design tokens, responsive behavior, and native mobile layout guidelines. |
+| [`apps/web/design/brandkit.md`](apps/web/design/brandkit.md) | Interface notes, responsive behavior, and native mobile layout guidelines in short prose (the design tokens live in [`apps/web/src/styles/tokens.css`](apps/web/src/styles/tokens.css)). |
 | [`LICENSE`](LICENSE) | Proprietary License & Hackathon Evaluation Grant terms. |
 
 ---
