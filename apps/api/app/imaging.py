@@ -29,6 +29,7 @@ __all__ = [
     "cut_out",
     "cutout",
     "composite",
+    "alpha_coverage",
     "export_jpg",
     "png_to_jpg",
     "to_jpg",
@@ -694,6 +695,32 @@ def composite(cutout_png_bytes: bytes) -> bytes:
     buf = io.BytesIO()
     out.save(buf, format="PNG", optimize=True)
     return buf.getvalue()
+
+
+def alpha_coverage(png_bytes: bytes) -> float:
+    """How much of its own bounding box a cut-out's opaque silhouette fills.
+
+    A mask that bites a chunk out of a product leaves a silhouette filling far
+    less of the box it occupies, and :func:`composite` renders that hole
+    faithfully: the deterministic fallback is honest about the damage, and the
+    damage is still there. This ratio is the pipeline's only evidence of the
+    tear once Stage C has run, measured on the exact PNG the composite is built
+    from.
+
+    The cut-out carries the 8% padding margin, so a tight product scores below
+    1.0; the pipeline's threshold is calibrated against real cut-outs rather
+    than against this function. A fully transparent image scores ``0.0``.
+    """
+    with Image.open(io.BytesIO(png_bytes)) as im:
+        alpha = im.convert("RGBA").getchannel("A")
+    solid = alpha.point(lambda value: 255 if value > MASK_THRESHOLD else 0)
+    box = solid.getbbox()
+    if box is None:
+        return 0.0
+    box_area = (box[2] - box[0]) * (box[3] - box[1])
+    if box_area <= 0:
+        return 0.0
+    return solid.histogram()[255] / box_area
 
 
 # ---------------------------------------------------------------------------

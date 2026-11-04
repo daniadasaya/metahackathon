@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import io
 import json
+import re
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,6 +22,16 @@ JOB_TIME_BUDGET_SECONDS = 600.0
 AREA_MIN = 0.01
 AREA_MAX = 0.90
 IOU_THRESHOLD = 0.85
+
+#: A composite enters the catalog switched on only when its cut-out fills at
+#: least this much of its own bounding box. Calibrated on the 31 products of the
+#: live job job-18de6a923213: the five visibly torn composites measured 0.517,
+#: 0.629, 0.645, 0.735 and 0.772; the sound ones 0.916, 0.921 and 0.926, plus one
+#: long tapered tube at 0.642 whose box is mostly empty by shape. 0.80 catches
+#: all five torn and switches off one sound product out of 26. ``muse-image``
+#: output is never judged here: the gate already passed it, and a diagonal phone
+#: in a wide box measures ~0.46 without being damaged.
+COMPOSITE_MIN_COVERAGE = 0.80
 
 def job_dir(job_id: str) -> Path:
     return JOBS_DIR / job_id
@@ -244,13 +255,36 @@ def _ref_bytes_for(job_id, sku):
         return path.read_bytes()
     return _crop_bytes_for(job_id, sku)
 
+
+def _apply_composite_guard(product: Product, crop_bytes: bytes) -> Product:
+    """Switch a product off when its composite renders a torn cut-out.
+
+    The fidelity gate rejecting a Muse Image edit is correct, but the fallback
+    rebuilds the studio shot from the *same* mask: when the mask itself ate a
+    bite out of the product, the deterministic composite is a faithful picture
+    of damaged goods. Such a product still reaches Review — the seller sees it,
+    switched off, carrying the ``Foto standar`` badge — but it is not part of
+    the catalog until the seller says so.
+
+    A gate-passed edit is never judged here; only the composite path is, and
+    the measurement is the cut-out's own alpha coverage. Idempotent: the same
+    crop always yields the same answer, so a re-run or a retry cannot flip a
+    product back on.
+    """
+    if product.cleanup_method != schemas.CleanupMethod.COMPOSITE:
+        product.included = True
+        return product
+    product.included = imaging.alpha_coverage(crop_bytes) >= COMPOSITE_MIN_COVERAGE
+    return product
+
+
 async def _run_stage_d_one(job_id, product, crop_bytes, sem, deadline, prev_product=None, errors=None):
     clean_path = job_dir(job_id) / "clean" / f"{product.sku}.png"
     clean_path.parent.mkdir(parents=True, exist_ok=True)
     if clean_path.is_file() and prev_product is not None and getattr(prev_product, "fidelity", None) is not None:
         product.cleanup_method = prev_product.cleanup_method
         product.fidelity = prev_product.fidelity
-        return product
+        return _apply_composite_guard(product, crop_bytes)
     cleaned_bytes = None
     verdict = None
     if clean_path.is_file():
@@ -258,7 +292,7 @@ async def _run_stage_d_one(job_id, product, crop_bytes, sem, deadline, prev_prod
         if prev_product is not None and getattr(prev_product, "fidelity", None) is None:
             product.cleanup_method = schemas.CleanupMethod.COMPOSITE
             product.fidelity = None
-            return product
+            return _apply_composite_guard(product, crop_bytes)
         cleaned_bytes = cached
     pre_verdict = None
     if cleaned_bytes is None and time.monotonic() <= deadline:
@@ -297,7 +331,7 @@ async def _run_stage_d_one(job_id, product, crop_bytes, sem, deadline, prev_prod
         product.cleanup_method = schemas.CleanupMethod.MUSE_IMAGE
         product.fidelity = verdict
         clean_path.write_bytes(cleaned_bytes)
-        return product
+        return _apply_composite_guard(product, crop_bytes)
 
     # Everything else — a pre-gate rejection, a post-gate rejection, an adapter
     # failure, or a spent deadline — ends in the deterministic composite, which
@@ -310,7 +344,7 @@ async def _run_stage_d_one(job_id, product, crop_bytes, sem, deadline, prev_prod
     product.cleanup_method = schemas.CleanupMethod.COMPOSITE
     product.fidelity = verdict if verdict is not None else pre_verdict
     clean_path.write_bytes(cleaned_bytes)
-    return product
+    return _apply_composite_guard(product, crop_bytes)
 
 def _without_price_prose(entry: ProductEntry) -> ProductEntry:
     """Return ``entry`` with price sentences removed from both descriptions.
@@ -328,6 +362,137 @@ def _without_price_prose(entry: ProductEntry) -> ProductEntry:
         return entry
     return entry.model_copy(
         update={"description_id": description_id, "description_en": description_en}
+    )
+
+
+# ---------------------------------------------------------------------------
+# Price attribution — a hint is only a price the seller tied to THIS product
+# ---------------------------------------------------------------------------
+#
+# Iron Law §1.1: ``price_hint_idr`` is a price the seller wrote for that item,
+# or one printed in that item's photo. Stage E reads the whole caption blob, so
+# one general sentence — "Skincare Endless Pure Rp 189.000, kaos polos Rp
+# 65.000" — used to land as a pre-filled price on every product of the matching
+# category: ten unrelated MOCK-UP bottles shipped at 189000 IDR in the live job
+# job-18de6a923213, which is exactly the failure Price Law exists to prevent.
+#
+# The model cannot be trusted to scope a number, so the pipeline checks it
+# against the two places a number can be tied to one product:
+#
+# * the photo's ``visible_text`` (what Stage A read off the pixels), and
+# * that photo's own caption (``captions["photos"][index]``).
+#
+# The general caption is deliberately excluded. A number that appears only
+# there fails both tests for every product, so it can never become a hint on
+# one product, let alone on two — the strict reading of the rule, and the only
+# version that cannot depend on the order the concurrent Stage E calls finish
+# in.
+
+#: ``Rp189.000`` and ``Rp. 189.000`` need the marker detached before scanning;
+#: the amount itself never starts against a letter.
+_CURRENCY_MARKER_RE = re.compile(r"\b(rp|idr)\.?\s*", re.IGNORECASE)
+
+#: One amount token: ``35.000``, ``35000``, ``1,5``, ``189rb``, ``1.5jt``.
+_AMOUNT_TOKEN_RE = re.compile(
+    r"(?<![\w.])"
+    r"(\d{1,3}(?:[.,]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?)"
+    r"\s*(ribu|ribuan|rb|juta|jutaan|jt|k)?"
+    r"(?![\w])",
+    re.IGNORECASE,
+)
+
+#: Magnitude words that scale an amount into rupiah.
+_SCALES = {
+    "rb": 1_000,
+    "ribu": 1_000,
+    "ribuan": 1_000,
+    "k": 1_000,
+    "jt": 1_000_000,
+    "juta": 1_000_000,
+    "jutaan": 1_000_000,
+}
+
+#: Below this, a number is a size, a capacity or a count, never a price.
+MIN_PRICE_AMOUNT = 1_000
+
+
+def _amount_value(raw: str, magnitude: str | None) -> int:
+    """Parse one Indonesian amount token into integer rupiah.
+
+    Dots group thousands, a comma is the decimal (``1.500.000`` → 1500000,
+    ``1,5 juta`` → 1500000), and a trailing magnitude word scales the value
+    (``189rb`` → 189000). A separator with one or two trailing digits is read
+    as a decimal, which is the only reading that keeps ``1.5jt`` at 1.5.
+    """
+    if "," in raw and "." in raw:
+        decimal = "," if raw.rfind(",") > raw.rfind(".") else "."
+    elif "," in raw:
+        decimal = "," if len(raw.rsplit(",", 1)[1]) <= 2 else ""
+    elif "." in raw:
+        decimal = "." if len(raw.rsplit(".", 1)[1]) <= 2 else ""
+    else:
+        decimal = ""
+    if decimal:
+        whole, fraction = raw.rsplit(decimal, 1)
+        value = float(whole.replace(".", "").replace(",", "") + "." + fraction)
+    else:
+        value = float(raw.replace(".", "").replace(",", ""))
+    scale = _SCALES.get((magnitude or "").lower(), 1)
+    return int(round(value * scale))
+
+
+def _price_amounts(text: str | None) -> set[int]:
+    """Every amount in ``text`` that could be a rupiah price, normalised.
+
+    ``"Rp 1.500.000"``, ``"1500000"``, ``"1,5 juta"`` and ``"189rb"`` all yield
+    the integer they denote, so an attribution test is one set membership
+    rather than four spellings. Numbers below :data:`MIN_PRICE_AMOUNT` are
+    dropped: ``30 ml``, ``177 ml`` and ``SPF 30`` are not prices.
+
+    A cached ``concepts.json`` is untrusted JSON, so anything that is not text
+    carries no amount rather than raising mid-job.
+    """
+    if not isinstance(text, str) or not text:
+        return set()
+    spaced = _CURRENCY_MARKER_RE.sub(r"\1 ", text)
+    amounts = set()
+    for match in _AMOUNT_TOKEN_RE.finditer(spaced):
+        value = _amount_value(match.group(1), match.group(2))
+        if value >= MIN_PRICE_AMOUNT:
+            amounts.add(value)
+    return amounts
+
+
+def _with_attributable_price(
+    entry: ProductEntry,
+    product: Product,
+    concepts_per_photo: list[Any],
+    photo_captions: list[Any],
+) -> ProductEntry:
+    """Keep ``entry.price_hint_idr`` only when it is tied to this product.
+
+    A hint the seller did not tie to the item is demoted, never deleted: it
+    moves to ``price_suggestion_idr`` (the grey ``Saran AI`` helper that never
+    pre-fills a field and never reaches an export) when no suggestion is
+    already there. The seller still sees the number; the seller decides.
+
+    Runs at the one point where an entry is applied to a product, so a fresh
+    extraction and a cached ``entries.json`` written by an older build are
+    normalised identically. Idempotent: a demoted entry has no hint left to
+    demote.
+    """
+    hint = entry.price_hint_idr
+    if hint is None:
+        return entry
+    attributable = _price_amounts(_visible_text_for(product, concepts_per_photo))
+    index = product.source_photo_index
+    if isinstance(photo_captions, list) and 0 <= index < len(photo_captions):
+        attributable |= _price_amounts(photo_captions[index])
+    if hint in attributable:
+        return entry
+    suggestion = entry.price_suggestion_idr if entry.price_suggestion_idr is not None else hint
+    return entry.model_copy(
+        update={"price_hint_idr": None, "price_suggestion_idr": suggestion}
     )
 
 
@@ -626,6 +791,7 @@ async def run_pipeline(job_id, photos, captions):
             entry = None
         if entry is not None:
             entry = _without_price_prose(entry)
+            entry = _with_attributable_price(entry, product, concepts_per_photo, photo_caps)
             entries[product.sku] = entry
             product.name = entry.name
             product.description_id = entry.description_id
@@ -728,6 +894,7 @@ async def toggle_cleanup_product(job_id, sku):
         else:
             product.fidelity = verdict
         clean_path.write_bytes(cleaned)
+    product = _apply_composite_guard(product, crop_bytes)
     state.products[idx] = product
     state.updated_at = _now()
     _write_job(job_id, state)

@@ -14,16 +14,18 @@ export type JobState = components['schemas']['JobState'];
 export type ErrorCode = components['schemas']['ErrorCode'];
 export type SamplePack = 'a' | 'b' | 'c' | 'd';
 
-/** A failed API call, reduced to the closed `code`; `null` when the body was not the envelope. */
+/** A failed API call, including the server's message for extracting actionable details. */
 export class ApiError extends Error {
   readonly status: number;
   readonly code: ErrorCode | null;
+  readonly serverMessage: string | null;
 
-  constructor(status: number, code: ErrorCode | null) {
+  constructor(status: number, code: ErrorCode | null, serverMessage: string | null = null) {
     super(code ?? `http_${status}`);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
+    this.serverMessage = serverMessage;
   }
 }
 
@@ -33,15 +35,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 async function toApiError(response: Response): Promise<ApiError> {
   let code: ErrorCode | null = null;
+  let serverMessage: string | null = null;
   try {
     const body: unknown = await response.json();
-    if (isRecord(body) && isRecord(body['error']) && typeof body['error']['code'] === 'string') {
-      code = body['error']['code'] as ErrorCode;
+    if (isRecord(body) && isRecord(body['error'])) {
+      if (typeof body['error']['code'] === 'string') code = body['error']['code'] as ErrorCode;
+      if (typeof body['error']['message'] === 'string') serverMessage = body['error']['message'];
     }
   } catch {
     // Not JSON: the status alone is all we know.
   }
-  return new ApiError(response.status, code);
+  return new ApiError(response.status, code, serverMessage);
 }
 
 /**
